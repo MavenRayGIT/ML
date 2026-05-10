@@ -451,7 +451,7 @@ Priority events: CTA clicks, contact form submits, blog reads.
 ```
 Build command:  npm run build
 Output dir:     dist
-Node version:   18
+Node version:   22 (Astro 6 requires >=22.12.0; `NODE_VERSION=22` on Pages)
 ```
 
 Auto-deploy: main → production. All other branches → preview.

@@ -35,7 +35,7 @@ Output goes to `site/dist/` (ignored by git).
 - **Root directory:** `agentsites/sustainedoutcomes/site`
 - **Build command:** `npm run build`
 - **Output directory:** `dist`
-- **Node version:** 18 (set in the Cloudflare project settings)
+- **Node version:** **22** (Pages env var `NODE_VERSION=22`). Astro 6 requires Node `>=22.12.0`; Node 18 builds will fail.
 
 ## Stack (already added)
 

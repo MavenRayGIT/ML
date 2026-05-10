@@ -218,7 +218,7 @@ Branch: main       → auto-deploy to production
 Branch: staging    → auto-deploy to preview URL
 Build command:     npm run build
 Output directory:  dist
-Node version:      18
+Node version:      22 (Astro 6 requires >=22.12.0; set `NODE_VERSION=22` on Cloudflare Pages)
 ```
 
 Never merge to main directly. All changes via PR from staging.
