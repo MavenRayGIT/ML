@@ -9,7 +9,7 @@
 2. Go to the app folder (copy-paste, then Enter):
 
    ```bash
-   cd /Users/jpielak/Documents/PROJECTS/ML_System/ML/ml/agentsites/sustainedoutcomes/site
+   cd /Users/jpielak/Documents/PROJECTS/ML_System/ML/agentsites/sustainedoutcomes/site
    ```
 
 3. Start the dev server:
@@ -24,7 +24,7 @@
 ## Build (same as Cloudflare will run)
 
 ```bash
-cd /Users/jpielak/Documents/PROJECTS/ML_System/ML/ml/agentsites/sustainedoutcomes/site
+cd /Users/jpielak/Documents/PROJECTS/ML_System/ML/agentsites/sustainedoutcomes/site
 npm run build
 ```
 
@@ -32,7 +32,7 @@ Output goes to `site/dist/` (ignored by git).
 
 ## Cloudflare Pages (when you connect the repo)
 
-- **Root directory:** `ml/agentsites/sustainedoutcomes/site`
+- **Root directory:** `agentsites/sustainedoutcomes/site`
 - **Build command:** `npm run build`
 - **Output directory:** `dist`
 - **Node version:** 18 (set in the Cloudflare project settings)

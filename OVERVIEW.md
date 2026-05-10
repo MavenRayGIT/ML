@@ -1,5 +1,7 @@
 # ML_System
 
+> **Layout note:** This repo (`MavenRayGIT/ML`) keeps `agentsites/`, `library/`, and `templates/` at the **repository root**. There is no nested `ml/ml` folder.
+
 The global infrastructure folder for Mack & Lee's design + development system.
 
 ## Purpose

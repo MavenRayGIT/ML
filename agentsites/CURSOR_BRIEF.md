@@ -20,8 +20,8 @@ You build the structure. Claude maintains it.
 
 ## Reading Order — Do This Before Writing Any Code
 
-Read these files in order. **Locally** they live under `agentsites/` at the
-workspace root; **on git** (`MavenRayGIT/ML`) they live under `ml/agentsites/`.
+Read these files in order. They live under **`agentsites/`** at the repository
+root of `MavenRayGIT/ML` (same path locally and on GitHub).
 
 1. `ML_AGENTS.md` — global rules for how to work on M&L projects
 2. `ML_ARCHITECTURE.md` — stack decisions, workflow, delivery process
@@ -235,8 +235,8 @@ Your job is to build a clean, well-documented, token-driven codebase
 that Claude can read and edit confidently. Comments in components
 help Claude understand what each prop does and where content lives.
 
-The `ml/agentsites/` docs (local: `agentsites/`) are Claude's reference — keep
-them in the repo, outside the Astro `dist/` output.
+The `agentsites/` docs are Claude's reference — keep them in the repo, outside
+the Astro `dist/` output.
 
 ---
 
