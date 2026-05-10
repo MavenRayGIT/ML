@@ -1,0 +1,49 @@
+---
+description: Mack & Lee design + dev conventions for this project
+alwaysApply: true
+---
+
+# Mack & Lee conventions
+
+Read these files at the start of any non-trivial task in this project, in order:
+
+1. `../ML_System/AGENTS.md` — global agent instructions.
+2. `../ML_System/ARCHITECTURE.md` — workflow + library promotion process.
+3. `../ML_System/library/NAMING.md` — module naming convention (`type_variant_v[n]`).
+4. `../ML_System/library/REGISTRY.md` — promoted modules available globally.
+5. `AGENTS.md` and `MODULES.md` in this project root.
+6. `DESIGN.md` for current design context.
+
+## Figma write policy
+
+Never make edits in Figma without explicit user permission per request. Writes burn tokens. Propose the change, wait for greenlight, then execute. Reads (screenshots, design context for a specific node) are fine; metadata calls on the document root are not.
+
+## Module reuse (search order)
+
+Before building anything new:
+
+1. Check this project's `MODULES.md` for project-scoped modules.
+2. Check the global `../ML_System/library/REGISTRY.md` for promoted modules.
+
+If a match exists, import or reference it. Never duplicate.
+
+## Naming
+
+New modules follow `type_variant_v[n]`. Variants of the same module use Figma Component Properties, not separate components. See `../ML_System/library/NAMING.md`.
+
+## Build target
+
+WordPress + Breakdance. Default to building modules as Breakdance Global Blocks; fall back to custom code only when Breakdance can't express the design.
+
+For custom code modules (build phase): place in `wp-content/themes/<theme>/modules/<name>/`. File names match the registry entry.
+
+## Tokens
+
+Pull from the Figma `M&L Tokens` Variables collection. CTAs/links use `aqua-500` (`#19ECDF`). Type is black. Background white. Single accent only at wireframe stage.
+
+## Decision defaults
+
+- **Project-scope vs global-scope**: default project. Promote later.
+- **New module vs variant**: same layout, different content placement → variant. Different grid count or anchor points → new module.
+- **Wireframe vs mockup**: wireframes are desktop only. Mobile starts at mockup phase.
+- **Image vs placeholder**: wireframes use `#D9D9D9` rectangles. Real imagery enters at mockup phase.

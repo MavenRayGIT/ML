@@ -1,0 +1,296 @@
+# ANALYTICS — M&L Standard v1
+> Global analytics, tracking, and reporting standard for all M&L client sites.
+> Lives in ML_System. Per-project implementation goes in project HANDOFF.md.
+> Version this document as the standard evolves — all clients inherit upgrades.
+
+---
+
+## Philosophy
+
+Every M&L site ships with:
+1. **Data collection** — what's happening on the site
+2. **Tracking** — which actions matter and are they happening
+3. **Reporting** — plain-English summaries the client actually reads
+4. **Insights** — actionable recommendations, not just numbers
+
+The goal is not dashboards. The goal is decisions.
+Clients should receive a monthly summary that tells them
+what's working, what isn't, and what to do next —
+without logging into anything.
+
+---
+
+## Stack — v1
+
+| Layer | Tool | Why | Cost |
+|-------|------|-----|------|
+| Primary analytics | GA4 | Industry standard, free, powerful | Free |
+| Privacy analytics | Cloudflare Web Analytics | GDPR-friendly, no cookies, built-in | Free |
+| Tag management | Google Tag Manager | Centralizes all tracking, no code deploys needed | Free |
+| Session recording | Microsoft Clarity | Heatmaps, session replays, free forever | Free |
+| Form tracking | Native GA4 events | No plugin needed on Astro | Free |
+| Reporting | Claude API + GA4 Data API | AI-generated plain English summaries | ~$1-2/mo |
+| Report delivery | Email (n8n scheduled) | Ken receives, no login required | Included in n8n |
+
+**Total added cost: ~$0-2/mo per client**
+
+---
+
+## Implementation Checklist — Every M&L Site
+
+### Setup (one-time, done at build phase)
+- [ ] GA4 property created, linked to client domain
+- [ ] GTM container created, GTM snippet in `Base.astro`
+- [ ] GA4 tag fired via GTM (not direct gtag)
+- [ ] Cloudflare Web Analytics enabled in CF dashboard
+- [ ] Microsoft Clarity project created, snippet via GTM
+- [ ] GA4 Data API credentials stored as environment variables
+- [ ] n8n monthly report workflow configured
+- [ ] Report delivery email confirmed with client
+
+### Per landing page (every lander Claude creates)
+- [ ] `ga4EventName` defined in frontmatter
+- [ ] Conversion event tag in GTM
+- [ ] Goal configured in GA4
+
+### Monthly (automated)
+- [ ] GA4 Data API pull (n8n scheduled, 1st of month)
+- [ ] Claude generates executive summary
+- [ ] Summary emailed to client
+
+---
+
+## GA4 Configuration — v1
+
+### Properties to configure at setup
+```
+Property name:     [Client Name] — Website
+Data retention:    14 months
+Enhanced measurement: ON
+  - Page views
+  - Scrolls
+  - Outbound clicks
+  - Site search
+  - Video engagement
+  - File downloads
+```
+
+### Standard events to track on every site
+```
+page_view          — automatic via GTM
+scroll             — 25%, 50%, 75%, 90% depth
+click_cta          — any CTA button click
+  Parameters:
+    cta_text:      button label
+    cta_location:  section name (hero, cta_band, etc.)
+    cta_href:      destination
+form_submit        — contact/support form submissions
+  Parameters:
+    form_id:       form identifier
+    form_location: page + section
+outbound_click     — any external link
+  Parameters:
+    link_url:      destination URL
+    link_text:     anchor text
+blog_read          — scroll 75%+ on a blog post
+  Parameters:
+    post_title:    post title
+    post_category: content category
+```
+
+### Landing page events
+```
+lander_view        — page_view on any /lander/* route
+lander_convert     — defined per lander in frontmatter
+  Parameters:
+    lander_slug:   page slug
+    lander_goal:   goal type (form_submit | click | scroll)
+    ga4_event:     custom event name from schema
+```
+
+### GTM trigger naming convention
+```
+Trigger: CTA Click — [Section] — [Page]
+Tag:     GA4 Event — [event_name]
+```
+
+---
+
+## Landing Page Schema
+
+Every landing page created via Claude pipeline
+must define these fields in frontmatter:
+
+```ts
+---
+// Required
+title:           string   // page <title>
+slug:            string   // /path (e.g. /oakland-outdoors-summer)
+headline:        string   // H1
+subheadline:     string   // supporting line
+heroImage:       string   // URL or /public path
+ctaText:         string   // button label
+ctaHref:         string   // form anchor, mailto, or URL
+trackingGoal:    'form_submit' | 'click' | 'scroll_depth'
+ga4EventName:    string   // e.g. 'oakland_outdoors_summer_signup'
+
+// Recommended
+deadline:        date?    // shows urgency element if set
+metaTitle:       string   // defaults to title if omitted
+metaDescription: string
+ogImage:         string   // defaults to heroImage if omitted
+
+// Optional
+formId:          string?  // if goal is form_submit
+redirectUrl:     string?  // post-conversion redirect
+utmSource:       string?  // pre-populate UTM for sharing
+---
+```
+
+Claude validates this schema before creating the page.
+If required fields are missing, Claude asks before proceeding.
+
+---
+
+## Monthly Executive Summary — Format
+
+Delivered by email on the 1st of each month.
+Generated by Claude API from GA4 Data API pull.
+Plain English. No charts. No dashboard login required.
+
+```
+Subject: [Site Name] — [Month] Summary
+
+Hi [Name],
+
+Here's what happened on your site in [Month].
+
+TRAFFIC
+[X] visitors — [up/down X% from last month]
+[X] page views — average [X] pages per visit
+Top source: [organic/direct/social/referral]
+
+TOP PAGES
+1. [page] — [X] views
+2. [page] — [X] views
+3. [page] — [X] views
+
+BLOG
+[X] blog posts published
+Most read: "[title]" — [X] views
+[If 0 posts: "No posts published this month.
+Consider publishing one — your blog drives X% of traffic."]
+
+CALLS TO ACTION
+"Request a Meeting" clicked [X] times
+[Landing page if exists]: [X] conversions ([X]% rate)
+
+WHAT'S WORKING
+[1-2 sentences from Claude based on data]
+
+WHAT TO FOCUS ON NEXT MONTH
+[1-2 actionable recommendations from Claude]
+
+Questions? Reply to this email or message me in Claude.
+
+— [Agency name] + Claude
+```
+
+---
+
+## Reporting Cadence — v1
+
+| Report | Frequency | Delivery | Generated by |
+|--------|-----------|----------|--------------|
+| Executive summary | Monthly | Email | Claude API + n8n |
+| Landing page report | Per campaign | Email on deadline | Claude API + n8n |
+| Annual review | Yearly | PDF via email | Claude API |
+
+### v2 additions (future)
+- Weekly traffic spike alerts
+- Real-time conversion notifications
+- Quarterly benchmark vs. industry
+- SEO keyword movement report
+- Social referral breakdown
+
+---
+
+## Privacy & Compliance — v1
+
+- Cloudflare Web Analytics: cookieless, GDPR compliant by default
+- GA4: cookie consent banner required for EU visitors
+  - Use `@astrojs/partytown` to load GTM off main thread
+  - Cookie consent via `cookie-consent` lightweight library
+- Microsoft Clarity: anonymizes IPs by default
+- No personal data stored in repo or Claude pipeline
+- Form submissions: go to client email only, not stored
+
+---
+
+## Environment Variables — Per Project
+
+```bash
+# .env (never committed to repo)
+GA4_PROPERTY_ID=        # e.g. 123456789
+GA4_API_CREDENTIALS=    # service account JSON (base64 encoded)
+GTM_CONTAINER_ID=       # e.g. GTM-XXXXXXX
+CLARITY_PROJECT_ID=     # e.g. abc123xyz
+N8N_REPORT_WEBHOOK=     # n8n webhook URL for report trigger
+CLIENT_REPORT_EMAIL=    # where monthly report goes
+```
+
+---
+
+## n8n Report Workflow — v1
+
+```
+Schedule: 1st of month, 8am client timezone
+  ↓
+HTTP Request: GA4 Data API
+  → date_range: previous month
+  → dimensions: pagePath, sessionSource, eventName
+  → metrics: sessions, pageviews, conversions
+  ↓
+Claude API (Haiku 4.5):
+  → system prompt: SITE.md + report format template
+  → user: [GA4 data as JSON]
+  → output: formatted email text
+  ↓
+Send Email (SMTP or SendGrid):
+  → to: CLIENT_REPORT_EMAIL
+  → subject: [Site] — [Month] Summary
+  → body: Claude output
+  ↓
+Log: report sent, timestamp, token usage
+```
+
+---
+
+## Sustained Outcomes — v1 Implementation Notes
+
+- **GA4 property:** create before Cursor build begins
+- **GTM:** single container, fire GA4 + Clarity
+- **Priority events for SO:**
+  - `click_cta` on "Request a Meeting" (hero + CTA band)
+  - `click_cta` on "Fund This Work"
+  - `blog_read` on all blog posts
+  - `outbound_click` on Erb Foundation + Detroit Outdoors links
+- **Landing pages:** Oakland Outdoors registration (v1 lander)
+- **Report email:** Ken's preferred email
+- **Tone of report:** conversational, non-technical
+  (Ken is mission-focused, not metrics-focused —
+  frame data around impact, not vanity metrics)
+
+---
+
+## Versioning
+
+| Version | Status | What changed |
+|---------|--------|--------------|
+| v1 | Current | GA4, GTM, Clarity, monthly email report, lander schema |
+| v2 | Planned | Weekly alerts, SEO reporting, social breakdown |
+| v3 | Planned | Cross-client benchmarking, predictive insights |
+
+When this document is updated, note the version and
+apply relevant changes to all active client projects.
+
