@@ -18,6 +18,26 @@ You build the structure. Claude maintains it.
 
 ---
 
+## Current state (May 2026)
+
+Read this before reading anything else — it tells you what already exists.
+
+- **Repo:** `MavenRayGIT/ML`, cloned to `/Users/jpielak/Documents/PROJECTS/ML_System/ML`.
+- **Astro app location:** `agentsites/sustainedoutcomes/site/` — this is the Cloudflare Pages **build root**, not the repo root.
+- **Stack installed:** Astro 6, **Tailwind CSS v4** (`@tailwindcss/vite`, CSS-based config in `src/styles/global.css`), `@astrojs/mdx`, `@astrojs/partytown`. Local `npm run build` works.
+- **Live URL (staging environment):** <https://sustained-outcomes.mackandlee.com>. Currently serves a **hand-rolled placeholder** (a "Sustained Outcomes" headline with "In development" eyebrow). The real homepage from `HANDOFF_v2.md` is **not** built yet — it's still on Step 1 of the Build Order below.
+- **Cloudflare Pages:** connected to `main`, **Root directory** `agentsites/sustainedoutcomes/site`, **Build** `npm run build`, **Output** `dist`, **`NODE_VERSION=22`**.
+- **Image assets already in repo:** 6 photos in `site/src/assets/` (`image 3.jpg`, `image 6.jpg`, `image 9.jpg`, `image 10.jpg`, `image 11.jpg`, `image 12.jpg`). **Spaces in filenames work but should be renamed** (e.g. `hero-erb.jpg`) before referencing in components.
+- **User context:** the M&L partner driving this project is a **designer, not a developer**. Prefer step-by-step instructions when running anything outside Cursor (terminal commands, Cloudflare dashboard clicks, etc.).
+
+## Open items / known divergences from the spec
+
+- **`staging` branch does not exist yet.** The brief specifies `staging` → PR → `main`, but everything so far has been pushed directly to `main`. Create the `staging` branch and configure Cloudflare branch deploys *before* starting real page work.
+- **Tailwind v4, not v3.** The `tailwind.config.mjs` snippets in `HANDOFF_v2.md` are written in legacy v3 style (`theme.extend.colors`, etc.). The installed Tailwind is **v4**, which uses **`@theme { … }`** inside `src/styles/global.css`. Translate the token *values* exactly; the *form* will be CSS, not a JS config.
+- **`ContactAmber`, `ContactModal`, and the blog modules** listed in `MODULES.md` and the Amendments section of `HANDOFF_v2.md` are **planned**, not built. Don't assume they exist.
+
+---
+
 ## Reading Order — Do This Before Writing Any Code
 
 Read these files in order. They live under **`agentsites/`** at the repository
