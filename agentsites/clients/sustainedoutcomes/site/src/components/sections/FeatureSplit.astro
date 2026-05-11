@@ -159,4 +159,19 @@ const reveal = angled ? 'angle-shift' : 'header';
   .feature-split-angled {
     clip-path: polygon(0% 10%, 100% 0%, 100% 90%, 0% 100%);
   }
+
+  /* Subpixel seam fix.
+     On the 50/50 grid, certain viewport widths land the cell boundary
+     on a half-pixel and the browser rounds it as a 1px gap — exposing
+     the page bg (white) between the image cell and the text cell. We
+     bleed the image 1px past each side of its cell so the image
+     content covers the seam regardless of rounding direction. The
+     section's `overflow: hidden` clips the outer 1px at the page edges
+     so the bleed is invisible there. */
+  .feature-split-image img {
+    left: -1px;
+    right: -1px;
+    width: auto;
+    max-width: none;
+  }
 </style>

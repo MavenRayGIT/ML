@@ -3,8 +3,18 @@
  * BlogPreview.astro — "Latest Insights" 3-card row from the blog.
  *
  * Per HANDOFF.md → Component Map → BlogPreview. The card row used to
- * stagger in from the left (`row-shift`), but per 2026-05-11 review
- * the slide-in felt fussy on this section — cards now render static.
+ * stagger in from the left (`row-shift`); the slide-in was dropped on
+ * 2026-05-11 — cards now render static.
+ *
+ * Card-image-contract hover (Corporate_Elegant, refined 2026-05-11):
+ *   - Card outer height is FIXED — never changes on hover.
+ *   - Image wrapper shrinks vertically ~30% on hover.
+ *   - Body excerpt is line-clamped at rest (3 lines); on hover the
+ *     clamp lifts and `max-height` transitions to take up the space
+ *     the image released. Result: same card footprint, image
+ *     compresses, more excerpt text reveals.
+ *   - Transition: 250ms `--ease-default` on both height + max-height
+ *     so they animate together as one motion.
  *
  * Modules are dumb — this component takes a `posts` array via prop.
  * The caller (homepage / blog landing) reads from `astro:content` and
@@ -16,7 +26,7 @@
  *   - Centered "Latest Insights" header (Mona Sans Bold 40px).
  *   - 3-col grid of cards: image overflows top, title, body, TextLink.
  *   - Cards: white bg, drop shadow rgba(0,0,0,0.08).
- *   - Mobile: 1-col stack.
+ *   - Mobile: 1-col stack (hover behaviour suppressed via @media).
  */
 
 import type { ImageMetadata } from 'astro';
@@ -60,8 +70,10 @@ const {
       {posts.map((post) => (
         <li class="blog-card group relative flex flex-col bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
           {/* Image overflows the top of the card per the HANDOFF spec —
-              negative margin-top pulls it up out of the card bounds. */}
-          <div class="blog-card-image relative -mt-6 aspect-[4/3] w-full overflow-hidden">
+              negative margin-top pulls it up out of the card bounds.
+              Height is fixed (not aspect-ratio) so the hover transition
+              has a concrete pixel target to animate to. */}
+          <div class="blog-card-image relative -mt-6 w-full overflow-hidden">
             <Image
               src={post.image}
               alt={post.imageAlt ?? ''}
@@ -81,10 +93,12 @@ const {
                 {post.title}
               </a>
             </h3>
-            <p class="mt-3 flex-1 font-body text-body leading-[1.6] text-black">
-              {post.excerpt}
-            </p>
-            <div class="mt-6">
+            <div class="blog-card-excerpt mt-3 overflow-hidden">
+              <p class="blog-card-excerpt-text font-body text-body leading-[1.6] text-black">
+                {post.excerpt}
+              </p>
+            </div>
+            <div class="mt-auto pt-6">
               <TextLink href={post.href}>{linkText}</TextLink>
             </div>
           </div>
@@ -93,3 +107,60 @@ const {
     </ul>
   </div>
 </section>
+
+<style>
+  /* ----- Card-image-contract hover --------------------------------- */
+  /* Lock the card height so the image-shrink + excerpt-grow exchange
+     keeps the footprint exactly the same. The 500px value covers the
+     worst-case content (2-line title + 3-line clamped excerpt + chip
+     link + p-6) plus the 24px image overflow above the card. */
+  .blog-card {
+    height: 500px;
+  }
+
+  /* Image cell — 260px at rest. Hover compresses to 182px (–30%).
+     `object-cover` on the image absorbs the crop with minimal subject
+     drift. */
+  .blog-card-image {
+    height: 260px;
+    transition: height var(--duration-base) var(--ease-default);
+  }
+  .blog-card:hover .blog-card-image {
+    height: 182px;
+  }
+
+  /* Excerpt wrapper — owns the height transition. Initial clamp:
+     3 lines × 24px (text-body lh) = 72px. On hover: +78px to match
+     the image's freed space (260 → 182 = 78px) so the card footprint
+     stays exactly the same. `overflow: hidden` clips the truncated
+     copy; the inner <p> carries the line-clamp so we still get the
+     "…" ellipsis at rest. */
+  .blog-card-excerpt {
+    max-height: 72px;
+    transition: max-height var(--duration-base) var(--ease-default);
+  }
+  .blog-card:hover .blog-card-excerpt {
+    max-height: 150px;
+  }
+
+  .blog-card-excerpt-text {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+  }
+  .blog-card:hover .blog-card-excerpt-text {
+    -webkit-line-clamp: unset;
+  }
+
+  /* Mobile: 1-col stack, hover is not a meaningful gesture on touch.
+     Let the card breathe naturally instead — auto height, plain
+     image aspect, excerpt unclamped. */
+  @media (max-width: 767.98px) {
+    .blog-card                        { height: auto; }
+    .blog-card-image                  { height: auto; aspect-ratio: 4 / 3; }
+    .blog-card:hover .blog-card-image { height: auto; }
+    .blog-card-excerpt                { max-height: none; }
+    .blog-card-excerpt-text           { -webkit-line-clamp: unset; display: block; }
+  }
+</style>

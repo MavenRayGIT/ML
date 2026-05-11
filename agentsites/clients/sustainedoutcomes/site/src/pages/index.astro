@@ -107,11 +107,12 @@ const serviceItems = [
 ];
 
 // TODO Step 6 — replace with `getCollection('blog', sortByDate).slice(0, 3)`
-// once the content collection is wired.
+// once the content collection is wired. Excerpts are intentionally longer
+// than 3 lines so the card-image-contract hover has copy to reveal.
 const latestPosts = [
   {
     title: 'Why ecological values belong in operating strategy',
-    excerpt: 'A short piece on putting sustainability above the line — not as a side project, but in the strategy itself.',
+    excerpt: 'Sustainability has spent too long below the line — a side project, a comms exercise, a quarterly slide. We argue for putting it above the line: written into the operating strategy itself, governed alongside revenue and risk, and reviewed with the same cadence as the rest of the plan.',
     image: blogImage1,
     imageAlt: '',
     href: '/blog/ecological-values-in-strategy',
@@ -119,7 +120,7 @@ const latestPosts = [
   },
   {
     title: 'The slow work of access',
-    excerpt: 'Notes from a season working with land-trust partners on what real "access to nature" looks like — and what it asks of us.',
+    excerpt: 'Notes from a season working with land-trust partners on what real "access to nature" looks like — and what it asks of us. The honest answer is that the work moves at the speed of trust, not the speed of programming, and the institutions best positioned to do it are usually the ones least set up to wait.',
     image: blogImage2,
     imageAlt: '',
     href: '/blog/slow-work-of-access',
@@ -127,7 +128,7 @@ const latestPosts = [
   },
   {
     title: 'Three patterns we keep seeing in mission-driven CRMs',
-    excerpt: 'Tooling failures repeat across organizations. Three patterns we ran into this quarter and the cheapest fix for each.',
+    excerpt: 'Tooling failures repeat across mission-driven organizations with surprising consistency. We pulled three patterns we ran into this quarter — duplicate constituent records nobody owns, marketing automation diverging from the system of record, and ops dashboards everyone distrusts — and the cheapest credible fix for each.',
     image: blogImage3,
     imageAlt: '',
     href: '/blog/three-crm-patterns',

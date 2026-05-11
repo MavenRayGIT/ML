@@ -57,14 +57,17 @@ Tailwind v4 exposes these as `duration-quick`, `duration-base`, `ease-default`, 
 
 ### Card hover — `card-image-contract`
 
-- Card's outer container height is **fixed** — does not change on hover.
-- Image wrapper has a baseline height (e.g. 243px on `BlogPreview` cards, 227px on `FocusAreas` cards).
-- On card hover: image wrapper height shrinks ~8px (~3%). `object-cover` absorbs the crop — image content barely shifts.
-- Copy area below the image is flex-grow, gains exactly those ~8px of vertical space.
-- Transition: 250ms `--ease-default`, both directions.
-- **No** shadow change, **no** scale, **no** translate.
+Refined 2026-05-11: the effect is now a deliberate ~30% image shrink with an excerpt reveal (the earlier "barely-noticeable 3%" was too subtle to register).
 
-Net effect: card "settles into itself" on hover — image compresses a touch, copy area opens a touch, same footprint.
+- Card's outer container height is **fixed** — does not change on hover.
+- Image wrapper has a baseline height. On `BlogPreview` cards that's **260px**.
+- On card hover: image wrapper height shrinks to **~70% of baseline** (260 → 182 on BlogPreview, a 78px drop). `object-cover` absorbs the crop.
+- Body excerpt is **line-clamped at 3 lines** at rest (`max-height` matches the clamp). On hover, the clamp is removed and `max-height` grows by exactly the pixels the image released — so the card footprint is unchanged.
+- Transition: 250ms `--ease-default` on both `height` and `max-height`. The image shrink + excerpt grow read as one synchronized motion.
+- **No** shadow change, **no** scale, **no** translate.
+- Mobile (< 768px): hover is not a meaningful gesture; the contract is suppressed via `@media` and cards render with auto height + unclamped copy.
+
+Net effect: card "trades vertical real estate" on hover — image compresses, more excerpt copy reveals, same footprint.
 
 ---
 
@@ -192,6 +195,5 @@ Functional state changes (Nav state, modal open/close) still occur — just inst
 
 ## Open / refinement notes
 
-- The `card-image-contract` height delta (8px) is a starting point — refine after seeing it on real BlogPreview cards.
 - The `angle-shift` magnitude (±24px each direction, ±48px total) is calibrated to Whitestone's blue-panel scale. Refine if it reads as too strong or too weak in context.
 - Italic font weights are not yet shipped (`public/fonts/` ships uprights only — the italic source files exist under `src/assets/fonts/` and can be added when prose blockquotes / `<em>` need them).
