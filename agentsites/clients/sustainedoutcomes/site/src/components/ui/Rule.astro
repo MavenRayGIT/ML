@@ -1,0 +1,38 @@
+---
+/**
+ * Rule.astro — 1px horizontal rule with color prop.
+ *
+ * Per HANDOFF.md → Footer: divider `#F2F7E5` (cream) 1px.
+ * Reused as section dividers, eyebrow lead-rules, list separators.
+ *
+ * Renders <hr> for semantic correctness, styled as a solid 1px line
+ * (background-color, not border) for predictable rendering.
+ *
+ *   <Rule />                 → 1px gray-light (default)
+ *   <Rule color="amber" />   → 1px amber `#FFC560`
+ *   <Rule color="cream" />   → 1px cream `#F2F7E5` (footer rule)
+ */
+
+type RuleColor = 'amber' | 'green-dark' | 'cream' | 'gray-light' | 'black' | 'white';
+
+export interface Props {
+  color?: RuleColor;
+  class?: string;
+}
+
+const { color = 'gray-light', class: className = '' } = Astro.props;
+
+const colorBg: Record<RuleColor, string> = {
+  'amber':      'bg-amber',
+  'green-dark': 'bg-green-dark',
+  'cream':      'bg-cream',
+  'gray-light': 'bg-gray-light',
+  'black':      'bg-black',
+  'white':      'bg-white',
+};
+---
+
+<hr
+  aria-hidden="true"
+  class:list={['h-px w-full border-0', colorBg[color], className]}
+/>

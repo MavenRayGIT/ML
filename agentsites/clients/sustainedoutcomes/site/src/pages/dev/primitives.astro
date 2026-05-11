@@ -1,0 +1,276 @@
+---
+/**
+ * /dev/primitives — visual review for every UI primitive.
+ *
+ * Not shipped to production navigation. `noindex` on the page itself.
+ * Each section demonstrates a primitive on relevant backgrounds.
+ * When adding a new primitive, add a matching section here so it
+ * gets visual sign-off before composing it into a section module.
+ */
+import Base from '../../layouts/Base.astro';
+import Button from '../../components/ui/Button.astro';
+import TextLink from '../../components/ui/TextLink.astro';
+import InlineLink from '../../components/ui/InlineLink.astro';
+import SectionEyebrow from '../../components/ui/SectionEyebrow.astro';
+import Rule from '../../components/ui/Rule.astro';
+---
+
+<Base title="Dev — Primitives" description="Visual review for UI primitives." noindex>
+  <main class="min-h-screen bg-gray-bg pb-section">
+    <div class="bg-black px-margin py-4 text-white">
+      <p class="font-body text-body-sm">
+        <span class="font-semibold uppercase tracking-eyebrow text-amber">Dev</span>
+        <span class="mx-2 text-gray-mid">/</span>
+        <span>Primitives — visual review</span>
+      </p>
+    </div>
+
+    <div class="mx-auto max-w-content px-margin pt-section-xs">
+      <h1 class="font-display text-hero mb-4">Primitives</h1>
+      <p class="font-body text-body-lg text-black/70 max-w-[60ch]">
+        Step 3 deliverables. Each primitive is shown on the backgrounds it's
+        expected to appear on. Hover to verify motion (250ms color crossfade
+        on buttons; 250ms translateX on TextLink chevron; amber highlight on
+        InlineLink).
+      </p>
+
+      {/* ============ BUTTONS ============ */}
+      <section class="mt-section">
+        <SectionEyebrow withLeadRule>Buttons</SectionEyebrow>
+        <h2 class="font-display text-h2-lg mt-3 mb-2">Five variants</h2>
+        <p class="font-body text-body text-black/70">
+          Libre Franklin SemiBold 11px, +1.5% tracking, ALL CAPS, 12×24px padding, 2px corners.
+        </p>
+        <Rule class="my-8" />
+
+        <div class="space-y-8">
+          <div>
+            <p class="font-body text-body-sm text-gray-mid mb-3">On white background</p>
+            <div class="flex flex-wrap gap-4 rounded bg-white p-8">
+              <Button variant="amber-fill" href="#">Request a meeting</Button>
+              <Button variant="green-fill" href="#">Meet Ken</Button>
+              <Button variant="green-outline" href="#">Learn more</Button>
+            </div>
+          </div>
+
+          <div>
+            <p class="font-body text-body-sm text-gray-mid mb-3">On dark green background</p>
+            <div class="flex flex-wrap gap-4 rounded bg-green-dark p-8">
+              <Button variant="amber-fill" href="#">Request a meeting</Button>
+              <Button variant="amber-outline" href="#">Learn more</Button>
+            </div>
+          </div>
+
+          <div>
+            <p class="font-body text-body-sm text-gray-mid mb-3">On hero photo / overlay (ghost)</p>
+            <div
+              class="flex flex-wrap gap-4 rounded p-8"
+              style="background:#3a3320"
+            >
+              <Button variant="amber-ghost" href="#">Watch the video</Button>
+              <Button variant="amber-fill" href="#">Get involved</Button>
+            </div>
+          </div>
+
+          <div>
+            <p class="font-body text-body-sm text-gray-mid mb-3">As <code>&lt;button&gt;</code> (no href)</p>
+            <div class="flex flex-wrap gap-4 rounded bg-white p-8">
+              <Button variant="green-fill" type="submit">Submit</Button>
+              <Button variant="amber-fill" modal="contact">Get in touch</Button>
+            </div>
+            <p class="font-body text-caption text-gray-mid mt-2">
+              Modal-trigger button writes <code>data-modal="contact"</code>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ============ TEXT LINK ============ */}
+      <section class="mt-section">
+        <SectionEyebrow withLeadRule>Text Link</SectionEyebrow>
+        <h2 class="font-display text-h2-lg mt-3 mb-2">Amber chevron + nudge-right hover</h2>
+        <p class="font-body text-body text-black/70">
+          Standalone section CTAs. Libre Franklin SemiBold 13px, black label, amber chevron.
+        </p>
+        <Rule class="my-8" />
+
+        <div class="space-y-3 rounded bg-white p-8">
+          <div><TextLink href="#">Read the article</TextLink></div>
+          <div><TextLink href="#">Learn more</TextLink></div>
+          <div><TextLink href="#">Meet the team</TextLink></div>
+        </div>
+      </section>
+
+      {/* ============ INLINE LINK ============ */}
+      <section class="mt-section">
+        <SectionEyebrow withLeadRule>Inline Link</SectionEyebrow>
+        <h2 class="font-display text-h2-lg mt-3 mb-2">Amber underline + highlight hover</h2>
+        <p class="font-body text-body text-black/70">
+          Inline links inside body copy. Default amber underline; hover swaps to amber
+          background highlight behind the text — text colour stays black.
+        </p>
+        <Rule class="my-8" />
+
+        <div class="rounded bg-white p-8">
+          <p class="font-body text-body-lg max-w-[60ch]">
+            Ken Jacobsen partners with mission-driven organizations on
+            <InlineLink href="#">sustainability strategy</InlineLink>,
+            <InlineLink href="#">access-to-nature programming</InlineLink>, and
+            <InlineLink href="#">cohort-based business innovation</InlineLink>.
+            Every engagement starts with a conversation.
+          </p>
+        </div>
+      </section>
+
+      {/* ============ SECTION EYEBROW ============ */}
+      <section class="mt-section">
+        <SectionEyebrow withLeadRule>Section Eyebrow</SectionEyebrow>
+        <h2 class="font-display text-h2-lg mt-3 mb-2">ALL CAPS, +3% tracking</h2>
+        <p class="font-body text-body text-black/70">
+          Mona Sans SemiBold 11px. Optional 32px lead rule.
+        </p>
+        <Rule class="my-8" />
+
+        <div class="space-y-6 rounded bg-white p-8">
+          <div>
+            <SectionEyebrow>What we do</SectionEyebrow>
+            <p class="font-body text-caption text-gray-mid mt-2">Default — black, no rule</p>
+          </div>
+          <div>
+            <SectionEyebrow withLeadRule>What we do</SectionEyebrow>
+            <p class="font-body text-caption text-gray-mid mt-2">Black with lead rule</p>
+          </div>
+          <div>
+            <SectionEyebrow color="amber" withLeadRule>Get involved</SectionEyebrow>
+            <p class="font-body text-caption text-gray-mid mt-2">Amber with lead rule (e.g. CTA band on dark green)</p>
+          </div>
+        </div>
+
+        <div class="mt-4 space-y-6 rounded bg-green-dark p-8">
+          <div>
+            <SectionEyebrow color="cream">What we do</SectionEyebrow>
+            <p class="font-body text-caption text-cream/60 mt-2">Cream — over dark green nav state</p>
+          </div>
+          <div>
+            <SectionEyebrow color="amber" withLeadRule>Get involved</SectionEyebrow>
+            <p class="font-body text-caption text-cream/60 mt-2">Amber with rule — over dark green CTA band</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ============ RULE ============ */}
+      <section class="mt-section">
+        <SectionEyebrow withLeadRule>Rule</SectionEyebrow>
+        <h2 class="font-display text-h2-lg mt-3 mb-2">1px horizontal rule</h2>
+        <p class="font-body text-body text-black/70">
+          Six colour options matching the brand palette. Default gray-light.
+        </p>
+        <Rule class="my-8" />
+
+        <div class="space-y-6 rounded bg-white p-8">
+          <div>
+            <p class="font-body text-body-sm text-gray-mid mb-2">gray-light (default)</p>
+            <Rule />
+          </div>
+          <div>
+            <p class="font-body text-body-sm text-gray-mid mb-2">amber</p>
+            <Rule color="amber" />
+          </div>
+          <div>
+            <p class="font-body text-body-sm text-gray-mid mb-2">green-dark</p>
+            <Rule color="green-dark" />
+          </div>
+          <div>
+            <p class="font-body text-body-sm text-gray-mid mb-2">black</p>
+            <Rule color="black" />
+          </div>
+        </div>
+
+        <div class="mt-4 space-y-6 rounded bg-green-dark p-8">
+          <div>
+            <p class="font-body text-body-sm text-cream/60 mb-2">cream — footer rule (over dark green)</p>
+            <Rule color="cream" />
+          </div>
+          <div>
+            <p class="font-body text-body-sm text-cream/60 mb-2">white</p>
+            <Rule color="white" />
+          </div>
+        </div>
+      </section>
+
+      {/* ============ TYPE SCALE SAMPLER ============ */}
+      <section class="mt-section">
+        <SectionEyebrow withLeadRule>Type Scale</SectionEyebrow>
+        <h2 class="font-display text-h2-lg mt-3 mb-2">All --text-* tokens</h2>
+        <p class="font-body text-body text-black/70">
+          Visual reference for every type-scale token defined in <code>global.css</code> per <code>HANDOFF.md</code> Type Scale.
+        </p>
+        <Rule class="my-8" />
+
+        <div class="space-y-8 rounded bg-white p-8">
+          <div>
+            <p class="font-body text-caption text-gray-mid">text-hero · 72/0.85 · -3% · 700 · Mona Sans</p>
+            <p class="font-display text-hero mt-2">Strategy rooted in purpose</p>
+          </div>
+          <div>
+            <p class="font-body text-caption text-gray-mid">text-h2-lg · 48/44 · -3% · 700 · Mona Sans</p>
+            <p class="font-display text-h2-lg mt-2">Sustainable business innovation</p>
+          </div>
+          <div>
+            <p class="font-body text-caption text-gray-mid">text-h2 · 40/1.05 · -3% · 700 · Mona Sans</p>
+            <p class="font-display text-h2 mt-2">Three areas of focus</p>
+          </div>
+          <div>
+            <p class="font-body text-caption text-gray-mid">text-card · 24/1.15 · -3% · 700 · Mona Sans</p>
+            <p class="font-display text-card mt-2">Access to nature</p>
+          </div>
+          <div>
+            <p class="font-body text-caption text-gray-mid">text-card-sm · 20/0.85 · -3% · 700 · Mona Sans</p>
+            <p class="font-display text-card-sm mt-2">Latest insights</p>
+          </div>
+          <div>
+            <p class="font-body text-caption text-gray-mid">text-eyebrow · 11/1 · +3% · 600 · Mona Sans · ALL CAPS</p>
+            <p class="font-display text-eyebrow uppercase mt-2">What we do</p>
+          </div>
+          <div>
+            <p class="font-body text-caption text-gray-mid">text-body-lg · 16/26 · 400 · Libre Franklin</p>
+            <p class="font-body text-body-lg mt-2 max-w-[60ch]">
+              Mission-focused advisory services for organizations bringing people closer to the
+              natural world. Ken Jacobsen partners with leadership teams from cohort design to launch.
+            </p>
+          </div>
+          <div>
+            <p class="font-body text-caption text-gray-mid">text-body · 15/24 · 400 · Libre Franklin</p>
+            <p class="font-body text-body mt-2 max-w-[60ch]">
+              Mission-focused advisory services for organizations bringing people closer to the
+              natural world. Ken Jacobsen partners with leadership teams from cohort design to launch.
+            </p>
+          </div>
+          <div>
+            <p class="font-body text-caption text-gray-mid">text-body-sm · 14/22 · 400 · Libre Franklin</p>
+            <p class="font-body text-body-sm mt-2 max-w-[60ch]">
+              Mission-focused advisory services for organizations bringing people closer to the
+              natural world.
+            </p>
+          </div>
+          <div>
+            <p class="font-body text-caption text-gray-mid">text-nav · 13/1 · 600 · Libre Franklin</p>
+            <p class="font-body text-nav mt-2">Consulting · Initiatives · About · Blog</p>
+          </div>
+          <div>
+            <p class="font-body text-caption text-gray-mid">text-footer · 13/1.4 · 400 · Libre Franklin</p>
+            <p class="font-body text-footer mt-2">© 2026 Sustained Outcomes</p>
+          </div>
+          <div>
+            <p class="font-body text-caption text-gray-mid">text-btn · 11/1 · +1.5% · 600 · Libre Franklin · ALL CAPS</p>
+            <p class="font-body text-btn uppercase mt-2">Request a meeting</p>
+          </div>
+          <div>
+            <p class="font-body text-caption text-gray-mid">text-caption · 12/1.4 · 400 · Libre Franklin</p>
+            <p class="font-body text-caption mt-2">Photo credit: Ken Jacobsen</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</Base>

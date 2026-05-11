@@ -1,0 +1,82 @@
+---
+/**
+ * Button.astro — primary CTA primitive.
+ *
+ * Five variants per HANDOFF.md → Button Variants (node 141:898).
+ * All buttons: Libre Franklin SemiBold 11px, +1.5% tracking, ALL CAPS,
+ * border-radius 2px, padding 12px 24px. Hover: 250ms color crossfade,
+ * no scale or lift (per ANIMATION.md → Corporate_Elegant).
+ *
+ * Polymorphic: renders <a> if `href` is provided, <button> otherwise.
+ * For modal triggers (ContactModal), set `modal="contact"` — this writes
+ * `data-modal` for the modal opener script to read.
+ *
+ * Copy via slot (never hardcoded):
+ *   <Button variant="amber-fill" href="/contact">Request a meeting</Button>
+ */
+
+// Variants per HANDOFF.md → Button Variants:
+//   amber-fill     — Hero primary, light-bg primary
+//   green-fill     — Light-bg primary (Meet Ken, Submit)
+//   amber-outline  — Dark-section secondary
+//   green-outline  — Light-bg secondary
+//   amber-ghost    — Hero secondary CTA (over imagery)
+type ButtonVariant = 'amber-fill' | 'green-fill' | 'amber-outline' | 'green-outline' | 'amber-ghost';
+
+export interface Props {
+  variant?: ButtonVariant;
+  /** When set, renders as <a>. When omitted, renders as <button>. */
+  href?: string;
+  /** Native button type — only applied when rendered as <button>. */
+  type?: 'button' | 'submit' | 'reset';
+  /** Marks this as a modal trigger; opener script reads `data-modal`. */
+  modal?: string;
+  ariaLabel?: string;
+  /** Pass-through for layout / spacing utilities. */
+  class?: string;
+}
+
+const {
+  variant = 'amber-fill',
+  href,
+  type,
+  modal,
+  ariaLabel,
+  class: className = '',
+} = Astro.props;
+
+const Tag = href ? 'a' : 'button';
+
+const base = [
+  'inline-flex items-center justify-center',
+  'font-body text-btn uppercase',
+  'rounded-[2px]',
+  'px-6 py-3',
+  'transition-colors duration-quick ease-default',
+  'cursor-pointer select-none',
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber',
+].join(' ');
+
+const variantClasses: Record<ButtonVariant, string> = {
+  'amber-fill':
+    'bg-amber text-black hover:bg-amber-pale',
+  'green-fill':
+    'bg-green-dark text-amber hover:bg-amber hover:text-green-dark',
+  'amber-outline':
+    'bg-transparent border border-amber text-amber hover:bg-amber hover:text-green-dark',
+  'green-outline':
+    'bg-transparent border border-green-dark text-black hover:bg-green-dark hover:text-amber',
+  'amber-ghost':
+    'bg-[rgba(52,49,3,0.49)] border border-amber text-amber hover:bg-amber hover:text-black hover:border-amber',
+};
+---
+
+<Tag
+  class:list={[base, variantClasses[variant], className]}
+  href={href}
+  type={!href ? (type ?? 'button') : undefined}
+  aria-label={ariaLabel}
+  data-modal={modal}
+>
+  <slot />
+</Tag>

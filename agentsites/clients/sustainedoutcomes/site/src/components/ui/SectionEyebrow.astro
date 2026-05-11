@@ -1,0 +1,59 @@
+---
+/**
+ * SectionEyebrow.astro — ALL CAPS section label.
+ *
+ * Per HANDOFF.md → Type Scale:
+ *   Mona Sans SemiBold 11px, +3% tracking, ALL CAPS, black (default).
+ *
+ * Optional lead rule (the 32px horizontal amber/black/etc. rule placed
+ * immediately to the left of the label) — see ANIMATION.md → Barely
+ * noticeable accents. The rule itself is static here; the reveal-on-entry
+ * scaleX animation lives on the parent section's `data-reveal="header"`.
+ *
+ * Copy via slot:
+ *   <SectionEyebrow>What we do</SectionEyebrow>
+ *   <SectionEyebrow color="amber" withLeadRule>Get involved</SectionEyebrow>
+ */
+
+type EyebrowColor = 'black' | 'amber' | 'white' | 'cream';
+
+export interface Props {
+  color?: EyebrowColor;
+  /** Render a short horizontal rule to the left of the label. */
+  withLeadRule?: boolean;
+  class?: string;
+}
+
+const {
+  color = 'black',
+  withLeadRule = false,
+  class: className = '',
+} = Astro.props;
+
+const textColor: Record<EyebrowColor, string> = {
+  black:  'text-black',
+  amber:  'text-amber',
+  white:  'text-white',
+  cream:  'text-cream',
+};
+
+const ruleBg: Record<EyebrowColor, string> = {
+  black:  'bg-black',
+  amber:  'bg-amber',
+  white:  'bg-white',
+  cream:  'bg-cream',
+};
+---
+
+{withLeadRule ? (
+  <span class:list={['inline-flex items-center gap-3', className]}>
+    <span class:list={['inline-block h-px w-8', ruleBg[color]]} aria-hidden="true"></span>
+    <span class:list={['font-display text-eyebrow uppercase', textColor[color]]}>
+      <slot />
+    </span>
+  </span>
+) : (
+  <p class:list={['font-display text-eyebrow uppercase', textColor[color], className]}>
+    <slot />
+  </p>
+)}

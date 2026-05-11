@@ -1,0 +1,41 @@
+---
+/**
+ * TextLink.astro — standalone text CTA with amber chevron.
+ *
+ * Per HANDOFF.md → Link & Interactive Patterns:
+ *   Amber `>` chevron LEFT of label.
+ *   Label: Libre Franklin SemiBold 13px, black `#020302`.
+ *   Hover: chevron nudges right (Corporate_Elegant: 250ms translateX 4px).
+ *
+ * Used inline as a section CTA — "Read the article", "Learn more", etc.
+ * For inline links inside body copy, use <InlineLink> instead.
+ *
+ * Copy via slot:
+ *   <TextLink href="/blog/post-slug">Read the article</TextLink>
+ */
+
+export interface Props {
+  href: string;
+  /** Optional aria-label override; defaults to slot text. */
+  ariaLabel?: string;
+  class?: string;
+}
+
+const { href, ariaLabel, class: className = '' } = Astro.props;
+---
+
+<a
+  href={href}
+  aria-label={ariaLabel}
+  class:list={[
+    'group inline-flex items-center gap-2',
+    'font-body text-nav text-black',
+    className,
+  ]}
+>
+  <span
+    aria-hidden="true"
+    class="text-amber transition-transform duration-base ease-default group-hover:translate-x-1"
+  >&gt;</span>
+  <span><slot /></span>
+</a>

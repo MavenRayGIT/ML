@@ -1,0 +1,37 @@
+---
+/**
+ * InlineLink.astro — inline link with amber-underline + amber-highlight hover.
+ *
+ * Mirrors the `.prose a` rule from global.css, but as a component for use
+ * inside .astro files (outside MDX `.prose` containers) where the global
+ * rule wouldn't otherwise apply.
+ *
+ * Per HANDOFF.md → Link & Interactive Patterns:
+ *   Default: black text, amber underline.
+ *   Hover:   amber background highlight behind text, black copy on top.
+ *   NOT a color change on the text — highlight appears behind it.
+ *
+ * Copy via slot:
+ *   <p>...with an <InlineLink href="/about">inline link</InlineLink> here.</p>
+ */
+
+export interface Props {
+  href: string;
+  ariaLabel?: string;
+  class?: string;
+}
+
+const { href, ariaLabel, class: className = '' } = Astro.props;
+---
+
+<a
+  href={href}
+  aria-label={ariaLabel}
+  class:list={[
+    'text-black underline decoration-amber underline-offset-2',
+    'px-0.5',
+    'transition-colors duration-base ease-default',
+    'hover:bg-amber hover:no-underline',
+    className,
+  ]}
+><slot /></a>
