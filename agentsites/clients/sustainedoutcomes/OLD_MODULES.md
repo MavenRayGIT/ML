@@ -1,12 +1,12 @@
 # Sustained Outcomes — Modules
 
-> **Archived.** Module tracker for Design v1 / Breakdance Global Block naming. Current Astro section map: [`../HANDOFF_v2.md`](../HANDOFF_v2.md) and [`MODULES.md`](MODULES.md) (this folder, current).
+> **Archived.** Module tracker for Design v1 / Breakdance Global Block naming. Current Astro section map: [`HANDOFF.md`](HANDOFF.md) and [`MODULES.md`](MODULES.md) (this folder, current).
 
 Tracks every module built or used in this project's design files. Status indicates the promotion path toward the M&L global library.
 
 - **Figma source**: `Sustained Outcomes — Design v1`
-- **Naming convention**: `../../library/NAMING.md`
-- **Global library registry** (promoted only): `../../library/REGISTRY.md`
+- **Naming convention**: `../../../library/NAMING.md`
+- **Global library registry** (promoted only): `../../../library/REGISTRY.md`
 
 ## Status values
 

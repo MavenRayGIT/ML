@@ -300,7 +300,7 @@ Any developer familiar with Astro can take this over
 within a few hours of reading the documentation.
 
 **What any AI developer gets:**
-Load `ML_AGENTS.md`, `HANDOFF.md`, and `DESIGN.md`
+Load `agentsites/AGENTS.md`, `HANDOFF.md`, and `DESIGN.md`
 as context. The AI will have full understanding of
 the codebase, design system, and content rules.
 Compatible with: Cursor, GitHub Copilot, Claude Code,

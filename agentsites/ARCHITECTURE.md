@@ -53,33 +53,42 @@ tailwindcss@latest
 
 ## Track A — Folder Structure
 
+Each client folder lives at `agentsites/clients/<client>/` and contains:
+
 ```
-/src
-  /components
-    /sections          ← one .astro file per M&L module
-    /ui                ← primitives: Button, Rule, Pill, etc.
-    /layout            ← Nav, Footer
-  /content
-    /blog              ← .mdx files, one per post
-  /layouts
-    Base.astro         ← html shell, head, fonts
-    Page.astro         ← Base + Nav + Footer
-  /pages               ← routes (.astro files)
-/public
-  /fonts               ← self-hosted woff2 files
-  /images              ← static assets
-/ml                    ← M&L system files (not shipped to client)
-  AGENTS.md
-  DESIGN.md
-  MODULES.md
-  HANDOFF.md
-  ANALYTICS.md
-  CLIENT_ADMIN.md
-  ML_ADMIN.md
-  [ProjectName]_Client-AI-Instructions.md
-.env.example           ← committed, no values
-.env                   ← never committed
+clients/<client>/
+  CURSOR_BRIEF.md      ← client entry point: current state, build phase
+  AGENTS.md            ← client-specific agent overrides
+  HANDOFF.md           ← build spec: Figma → Astro, tokens, components
+  DESIGN.md            ← Figma reference, page targets, content notes
+  MODULES.md           ← module tracker
+  README.md            ← how to run the site locally
+  Welcome-and-Onboarding.md
+  Client-AI-Instructions.md
+  site/                ← Astro app (Cloudflare Pages build root)
+    src/
+      components/
+        sections/      ← one .astro file per M&L module
+        ui/            ← primitives: Button, Rule, Pill, etc.
+        layout/        ← Nav, Footer
+      content/
+        blog/          ← .mdx files, one per post
+      layouts/
+        Base.astro     ← html shell, head, fonts
+        Page.astro     ← Base + Nav + Footer
+      pages/           ← routes (.astro files)
+      styles/
+        global.css     ← Tailwind v4 @theme tokens
+      assets/          ← images optimized by Astro <Image />
+    public/
+      fonts/           ← self-hosted woff2 files
+    .env.example       ← committed, no values
+    .env               ← never committed
 ```
+
+Notes:
+- The `agentsites/clients/<client>/` markdown files are M&L's, they sit next to the site but **never ship in the bundle** (Cloudflare's build root is `site/`).
+- Shared code (when extracted on second use) lives at `agentsites/packages/` — does not exist yet.
 
 ---
 
@@ -350,10 +359,10 @@ Never silently create cross-project artifacts.
 
 ## Stack Upgrade Process
 
-When any ML_System document is updated:
+When any portfolio document under `agentsites/` is updated:
 1. Note version change in the document
 2. Apply to reference client (SO) first — validate
-3. Document what changed in ML_System changelog
+3. Document what changed in the `agentsites/` changelog
 4. Roll out to other clients at next maintenance window
 5. Update CLIENT_ADMIN.md if client-facing behavior changes
 
@@ -397,7 +406,7 @@ with any developer, AI tool, or in-house team they choose.
 
 **What travels with every site:**
 - Full source code in a GitHub repo the client owns
-- `/ml` documentation folder — all decisions documented
+- Client doc folder (`agentsites/clients/<client>/`) — all decisions documented
 - `DEVHANDOFF.md` — complete technical handoff guide
 - `CLIENT_ADMIN.md` — client content management guide
 - `[Name]_Client-AI-Instructions.md` — loadable into any AI
@@ -409,7 +418,7 @@ with any developer, AI tool, or in-house team they choose.
 - Any specific AI provider
 - M&L's n8n instance (replaceable or removable)
 
-**The `/ml` documentation is AI-agnostic.**
+**The client doc folder is AI-agnostic.**
 Claude, Copilot, Cursor, Gemini, or any future model
 can read these files and operate the site.
 

@@ -1,5 +1,13 @@
 # Architecture
 
+> **Note:** This file describes the historical M&L Breakdance-era workflow.
+> The current product line is Track A (Astro + Cloudflare + Claude pipeline) under
+> `agentsites/`. The authoritative architecture doc for Track A is
+> [`agentsites/ARCHITECTURE.md`](agentsites/ARCHITECTURE.md).
+> Read this file only for context on the older workflow.
+
+---
+
 ## Workflow
 
 1. **Discovery** — collect business requirements (emails, references, content). Output: project brief.

@@ -9,7 +9,7 @@
 2. Go to the app folder (copy-paste, then Enter):
 
    ```bash
-   cd /Users/jpielak/Documents/PROJECTS/ML_System/ML/agentsites/sustainedoutcomes/site
+   cd /Users/jpielak/Documents/PROJECTS/ML_System/ML/agentsites/clients/sustainedoutcomes/site
    ```
 
 3. Start the dev server:
@@ -24,7 +24,7 @@
 ## Build (same as Cloudflare will run)
 
 ```bash
-cd /Users/jpielak/Documents/PROJECTS/ML_System/ML/agentsites/sustainedoutcomes/site
+cd /Users/jpielak/Documents/PROJECTS/ML_System/ML/agentsites/clients/sustainedoutcomes/site
 npm run build
 ```
 
@@ -32,11 +32,11 @@ Output goes to `site/dist/` (ignored by git).
 
 ## Cloudflare Pages (when you connect the repo)
 
-- **Root directory:** `agentsites/sustainedoutcomes/site`
+- **Root directory:** `agentsites/clients/sustainedoutcomes/site`
 - **Build command:** `npm run build`
 - **Output directory:** `dist`
 - **Node version:** **22** (Pages env var `NODE_VERSION=22`). Astro 6 requires Node `>=22.12.0`; Node 18 builds will fail.
 
 ## Stack (already added)
 
-Astro, Tailwind CSS v4, MDX, Partytown (for GTM later per `HANDOFF_v2`).
+Astro, Tailwind CSS v4, MDX, Partytown (for GTM later per `HANDOFF.md`).

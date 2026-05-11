@@ -1,6 +1,6 @@
 # MODULES — Sustained Outcomes (Track A)
 
-Astro components for this project. Specs and props: [`../HANDOFF_v2.md`](../HANDOFF_v2.md). Build order: [`../CURSOR_BRIEF.md`](../CURSOR_BRIEF.md) → Build Order.
+Astro components for this project. Specs and props: [`HANDOFF.md`](HANDOFF.md). Build order: [`CURSOR_BRIEF.md`](CURSOR_BRIEF.md) → Build Order.
 
 ## Status values
 
@@ -13,7 +13,7 @@ Astro components for this project. Specs and props: [`../HANDOFF_v2.md`](../HAND
 
 | Component | Status | Notes |
 | --- | --- | --- |
-| `Button.astro` | planned | Variants per HANDOFF_v2 |
+| `Button.astro` | planned | Variants per HANDOFF.md |
 | `TextLink.astro` | planned | Amber + chevron |
 | `SectionEyebrow.astro` | planned | ALL CAPS, +3% tracking |
 | `Rule.astro` | planned | 1px rule, color prop |
@@ -30,7 +30,7 @@ Astro components for this project. Specs and props: [`../HANDOFF_v2.md`](../HAND
 
 | Component | Status | Notes |
 | --- | --- | --- |
-| `HeroFullbleed.astro` | planned | 3 variants: `photo-blocks`, `photo-gradient`, `color-only` — see HANDOFF_v2 → Amendments |
+| `HeroFullbleed.astro` | planned | 3 variants: `photo-blocks`, `photo-gradient`, `color-only` — see HANDOFF.md → Amendments |
 | `FocusAreas.astro` | planned | Layout TBD — see open questions in brief |
 | `FeatureSplit.astro` | planned | Initiatives + founder; diagonal-edge scroll animation on `init_erb` + `init_ready` |
 | `VideoSection.astro` | planned | Placeholder vs real TBD |
@@ -41,7 +41,7 @@ Astro components for this project. Specs and props: [`../HANDOFF_v2.md`](../HAND
 | `ContactModal.astro` | planned | Modal wrapper around `ContactAmber` — `data-modal="contact"` |
 | `CTABand.astro` | planned | |
 
-## Blog modules (Cursor-designed — see `../CURSOR_BRIEF.md` → Blog Templates)
+## Blog modules (Cursor-designed — see `CURSOR_BRIEF.md` → Blog Templates)
 
 | Component | Status | Notes |
 | --- | --- | --- |

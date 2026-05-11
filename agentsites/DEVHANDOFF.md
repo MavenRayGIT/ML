@@ -293,10 +293,10 @@ understand the codebase, design system, and content rules.
 Open the repo in Cursor. The `/ml` files load as context automatically.
 
 **To use with GitHub Copilot:**
-Load `ML_AGENTS.md` and `HANDOFF.md` as context files.
+Load `agentsites/AGENTS.md` and the client's `HANDOFF.md` as context files.
 
 **To use with any other AI:**
-Paste the contents of `ML_AGENTS.md`, `HANDOFF.md`,
+Paste the contents of `agentsites/AGENTS.md`, the client's `HANDOFF.md`,
 and `DESIGN.md` as system context.
 
 **To use with a human developer:**

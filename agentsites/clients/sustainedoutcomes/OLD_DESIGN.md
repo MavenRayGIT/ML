@@ -1,12 +1,12 @@
 # DESIGN — Sustained Outcomes
 
-> **Archived.** Design v1 Figma file and wireframe token snapshot (pre–Track A mockups). Authoritative visuals and tokens for build: [`../HANDOFF_v2.md`](../HANDOFF_v2.md) and [`../CURSOR_BRIEF.md`](../CURSOR_BRIEF.md).
+> **Archived.** Design v1 Figma file and wireframe token snapshot (pre–Track A mockups). Authoritative visuals and tokens for build: [`HANDOFF.md`](HANDOFF.md) and [`CURSOR_BRIEF.md`](CURSOR_BRIEF.md).
 
 ## Status
 
 - Phase: wireframes (in progress).
 - Wireframe target: desktop only. Mobile begins at mockup phase.
-- Visual style: M&L wireframe standard (see `../../ARCHITECTURE.md` → Visual standard).
+- Visual style: M&L wireframe standard (see `../../ARCHITECTURE.md` (`agentsites/ARCHITECTURE.md`) → Visual standard).
 
 ## Figma
 

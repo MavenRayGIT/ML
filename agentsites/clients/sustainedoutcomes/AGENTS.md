@@ -9,17 +9,17 @@ Project-specific instructions for AI agents working on **Sustained Outcomes** (T
 
 ## Read in this order
 
-1. [`../CURSOR_BRIEF.md`](../CURSOR_BRIEF.md)
-2. [`../ML_AGENTS.md`](../ML_AGENTS.md) — global M&L agent rules
-3. [`../ML_ARCHITECTURE.md`](../ML_ARCHITECTURE.md) — Track A workflow
-4. [`../HANDOFF_v2.md`](../HANDOFF_v2.md) — Figma → Astro, tokens, components
-5. [`../ANALYTICS.md`](../ANALYTICS.md)
+1. [`CURSOR_BRIEF.md`](CURSOR_BRIEF.md) — client entry point (current state, build phase)
+2. [`../../AGENTS.md`](../../AGENTS.md) — portfolio agent rules
+3. [`../../ARCHITECTURE.md`](../../ARCHITECTURE.md) — Track A workflow
+4. [`HANDOFF.md`](HANDOFF.md) — Figma → Astro, tokens, components
+5. [`../../ANALYTICS.md`](../../ANALYTICS.md)
 6. [`DESIGN.md`](DESIGN.md) — this folder
 7. [`MODULES.md`](MODULES.md) — this folder
 
 ## Figma write policy
 
-Never edit Figma without explicit human approval per request. See [`../ML_AGENTS.md`](../ML_AGENTS.md).
+Never edit Figma without explicit human approval per request. See [`../../AGENTS.md`](../../AGENTS.md).
 
 ## Historical / superseded docs
 

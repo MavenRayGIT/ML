@@ -7,15 +7,17 @@
 
 ## Read in this order
 
-1. `ML_AGENTS.md` — this file (global agent instructions)
-2. `ML_ARCHITECTURE.md` — workflow, stack, delivery process
-3. `ML_ANALYTICS.md` — analytics, tracking, reporting standard
+1. `AGENTS.md` — this file (portfolio agent rules)
+2. `ARCHITECTURE.md` — workflow, stack, delivery process
+3. `ANALYTICS.md` — analytics, tracking, reporting standard
 4. `ML_ADMIN.md` — internal M&L management guide
-5. `NAMING.md` — module naming convention
-6. `REGISTRY.md` — promoted modules available globally
-7. Project `AGENTS.md` — project-specific overrides
-8. Project `DESIGN.md` — design context and tokens
-9. Project `MODULES.md` — modules in flight
+5. `../library/NAMING.md` — module naming convention
+6. `../library/REGISTRY.md` — promoted modules available globally
+7. `clients/<client>/CURSOR_BRIEF.md` — client-specific entry point
+8. `clients/<client>/AGENTS.md` — client-specific overrides
+9. `clients/<client>/HANDOFF.md` — client build spec
+10. `clients/<client>/DESIGN.md` — client design context
+11. `clients/<client>/MODULES.md` — client module tracker
 
 ---
 
@@ -129,7 +131,7 @@ Lighthouse score > 90 on mobile before launch.
 
 ## Content Pipeline Rules
 
-Claude manages client content via the pipeline defined in ML_ADMIN.md.
+Claude manages client content via the pipeline defined in `ML_ADMIN.md`.
 Claude can create/edit:
 - `/src/content/blog/*.mdx`
 - `/src/pages/[lander].astro` (from schema)
@@ -159,16 +161,20 @@ Missing required fields → ask before proceeding.
 
 | Document | Location | Audience |
 |----------|----------|---------|
-| `ML_AGENTS.md` | ML_System | All agents |
-| `ML_ARCHITECTURE.md` | ML_System | All agents + M&L team |
-| `ML_ANALYTICS.md` | ML_System | All agents + M&L team |
-| `ML_ADMIN.md` | ML_System | M&L team |
-| `AGENTS.md` | Project folder | Project agents |
-| `DESIGN.md` | Project folder | Project agents |
-| `MODULES.md` | Project folder | Project agents |
-| `HANDOFF.md` | Project folder | Cursor |
-| `CLIENT_ADMIN.md` | Project folder | Client |
-| `[Name]_Client-AI-Instructions.md` | Project folder | Client's Claude |
+| `AGENTS.md` | `agentsites/` | All agents (portfolio rules) |
+| `ARCHITECTURE.md` | `agentsites/` | All agents + M&L team |
+| `ANALYTICS.md` | `agentsites/` | All agents + M&L team |
+| `ML_ADMIN.md` | `agentsites/` | M&L team |
+| `CHANGE_REQUEST.md` | `agentsites/` | M&L + pipeline |
+| `DEVHANDOFF.md` | `agentsites/` | Departing clients / their devs |
+| `CLIENT_ADMIN.md` | `agentsites/` | Template for client folders |
+| `AGENTS.md` | `agentsites/clients/<client>/` | Client-specific overrides |
+| `CURSOR_BRIEF.md` | `agentsites/clients/<client>/` | Client build entry point |
+| `HANDOFF.md` | `agentsites/clients/<client>/` | Cursor (client build spec) |
+| `DESIGN.md` | `agentsites/clients/<client>/` | Client design context |
+| `MODULES.md` | `agentsites/clients/<client>/` | Client module tracker |
+| `Welcome-and-Onboarding.md` | `agentsites/clients/<client>/` | Client onboarding |
+| `Client-AI-Instructions.md` | `agentsites/clients/<client>/` | Client's Claude prompt |
 
 ---
 

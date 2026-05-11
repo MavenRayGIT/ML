@@ -1,8 +1,7 @@
-# HANDOFF — Sustained Outcomes v2
-> Supersedes HANDOFF.md v1.
+# HANDOFF — Sustained Outcomes
 > Authoritative token values from Figma nodes 141:536 (homepage)
 > and 141:898 (brand style tile).
-> Read alongside DESIGN.md, MODULES.md, ANALYTICS.md.
+> Read alongside `DESIGN.md`, `MODULES.md`, and `../../ANALYTICS.md`.
 
 ---
 
@@ -627,7 +626,7 @@ Use this method for all future annotations on this file. Format:
 Every section is a named module per M&L convention. Pages are compositions
 of modules — not monolithic templates.
 
-**Full module registry and page map:** [`sustainedoutcomes/MODULES.md`](sustainedoutcomes/MODULES.md).
+**Full module registry and page map:** [`MODULES.md`](MODULES.md).
 
 Key principles for Cursor:
 
@@ -660,7 +659,7 @@ import FeatureSplitImageLeft from '../components/sections/FeatureSplitImageLeft.
 All project images live at:
 
 ```
-agentsites/sustainedoutcomes/site/src/assets/
+agentsites/clients/sustainedoutcomes/site/src/assets/
 ```
 
 Use Astro's `<Image />` component from `astro:assets` for **all** project

@@ -1,5 +1,16 @@
 # AGENTS
 
+> **Note:** This file is historical (pre-Track A, Breakdance-era M&L conventions).
+> For active work in `agentsites/` (Track A — Astro / Cloudflare / Claude pipeline),
+> the authoritative agent rules are in [`agentsites/AGENTS.md`](agentsites/AGENTS.md),
+> and per-client overrides live in [`agentsites/clients/<client>/AGENTS.md`](agentsites/clients/).
+> Cursor auto-loads both of those when working on files inside `agentsites/`.
+>
+> This file is kept for reference for any cross-track (library, templates) work
+> at the repo root.
+
+---
+
 Instructions for AI agents (Claude, Codex, Cursor) working on Mack & Lee projects.
 
 ## Read first, in order

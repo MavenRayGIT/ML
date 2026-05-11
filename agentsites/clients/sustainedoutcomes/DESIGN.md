@@ -2,7 +2,7 @@
 
 Track A build — design reference for **Sustained Outcomes** (Ken Jacobsen).
 
-> Token values, type scale, and component specs are duplicated in [`../HANDOFF_v2.md`](../HANDOFF_v2.md). If Figma and the handoff disagree, stop and confirm with the client / M&L before building.
+> Token values, type scale, and component specs are duplicated in [`HANDOFF.md`](HANDOFF.md). If Figma and the handoff disagree, stop and confirm with the client / M&L before building.
 
 ---
 
@@ -36,7 +36,7 @@ Teal note boxes (`bg-[#62ffe2]`, `rounded-[10px]`) placed directly on canvas. Re
 
 ---
 
-## Brand Tokens (summary — full spec in HANDOFF_v2.md)
+## Brand Tokens (summary — full spec in HANDOFF.md)
 
 ### Colors
 
@@ -79,7 +79,7 @@ src/assets/
 Local path:
 
 ```
-/Users/jpielak/Documents/PROJECTS/ML_System/ML/agentsites/sustainedoutcomes/site/src/assets
+/Users/jpielak/Documents/PROJECTS/ML_System/ML/agentsites/clients/sustainedoutcomes/site/src/assets
 ```
 
 Use Astro's `<Image />` from `astro:assets` for all images so the build pipeline can optimize and convert to WebP. Do **not** put project images in `/public/` — that bypasses optimization.
@@ -104,7 +104,7 @@ Use Astro's `<Image />` from `astro:assets` for all images so the build pipeline
 
 ## Module reference
 
-Module registry and page map: [`MODULES.md`](MODULES.md). Full build spec: [`../HANDOFF_v2.md`](../HANDOFF_v2.md).
+Module registry and page map: [`MODULES.md`](MODULES.md). Full build spec: [`HANDOFF.md`](HANDOFF.md).
 
 ---
 

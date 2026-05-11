@@ -1,7 +1,7 @@
 # CHANGE REQUEST SYSTEM — Mack & Lee
 > Defines the infrastructure and process for managing code-level
 > change requests across all Track A client sites.
-> Lives in ML_System. Referenced by ML_ADMIN.md and ML_ARCHITECTURE.md.
+> Lives in `agentsites/`. Referenced by `ML_ADMIN.md` and `ARCHITECTURE.md`.
 > Version: 1.0
 
 ---
