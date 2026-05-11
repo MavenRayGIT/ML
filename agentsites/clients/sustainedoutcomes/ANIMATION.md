@@ -189,14 +189,25 @@ Implementation lives in `FeatureSplit.astro`:
 
 A small inline script (rAF-throttled scroll listener gated by
 `IntersectionObserver`) remaps the raw scroll progress through two
-edge-specific active windows and writes each variable per frame:
+edge-specific active windows, then applies a smoothstep ease so the
+motion eases in and out at the window boundaries instead of
+starting/stopping abruptly. Each variable is written per frame:
 
 ```
-pTop = remap(p, TOP_START=0.25, TOP_END=0.50)   // 0 outside window, 0→1 inside
-pBot = remap(p, BOT_START=0.50, BOT_END=0.80)
+smoothstep(t) = t² × (3 - 2t)   // zero velocity at endpoints, no overshoot
+pTop = smoothstep(remap(p, TOP_START=0.25, TOP_END=0.50))
+pBot = smoothstep(remap(p, BOT_START=0.50, BOT_END=0.80))
 --angle-grow-top = pTop × SLOPE × section.width
 --angle-grow-bot = pBot × SLOPE × section.width
 ```
+
+Why ease inside the window? With pure linear remap inside the active
+window, slope jumps from 0 to a constant the instant `p` crosses
+`TOP_START` — that registers as a hard start. Smoothstep softens the
+entry into and exit out of motion so the edge accelerates and
+decelerates gently within its window. The hold-flat / hold-angled
+phases outside the window do the structural pacing work; the ease
+inside the window keeps the motion itself feeling refined.
 
 SLOPE = `tan(7°) ≈ 0.1228`. Width-relative so the **7° apparent
 slope** is consistent across viewport sizes — wider sections get more

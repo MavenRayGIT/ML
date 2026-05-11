@@ -384,11 +384,13 @@ const reveal = angled ? undefined : 'header';
    *
    * Each edge gets its own active window inside `p ∈ [0, 1]`. Outside
    * its window the edge holds flat (entering window) or fully angled
-   * (after window). Inside its window the edge animates linearly to
-   * `SLOPE × width`.
+   * (after window). Inside its window the edge animates from 0 to
+   * `SLOPE × width` with a smoothstep ease so the transition into
+   * and out of motion is gentle, not abrupt.
    *
    *   TOP_WINDOW = [0.25, 0.50]   — top develops first, around mid-view
    *   BOT_WINDOW = [0.50, 0.80]   — bot follows on a slow stagger
+   *   easing      = smoothstep    — t² × (3 - 2t), eases in and out
    *
    * Net feel: section enters flat, holds flat through ~25% of its
    * scroll-through, top edge then commits to motion as the section
@@ -437,6 +439,12 @@ const reveal = angled ? undefined : 'header';
       return (p - start) / (end - start);
     };
 
+    // Smoothstep — cubic Hermite ease-in-out. Zero velocity at both
+    // endpoints, no overshoot. Softens the abrupt start/stop you'd
+    // get from a pure linear remap inside the active window. Identity
+    // at 0 and 1, so it composes cleanly with `remap` above.
+    const easeInOut = (t: number): number => t * t * (3 - 2 * t);
+
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const sections = document.querySelectorAll<HTMLElement>('.feature-split-angled');
@@ -473,9 +481,11 @@ const reveal = angled ? undefined : 'header';
         if (p < 0) p = 0;
         else if (p > 1) p = 1;
 
-        // Remap raw progress into each edge's active window.
-        const pTop = remap(p, TOP_START, TOP_END);
-        const pBot = remap(p, BOT_START, BOT_END);
+        // Remap raw progress into each edge's active window, then
+        // smoothstep the result so the motion eases in/out at the
+        // window boundaries instead of starting/stopping abruptly.
+        const pTop = easeInOut(remap(p, TOP_START, TOP_END));
+        const pBot = easeInOut(remap(p, BOT_START, BOT_END));
 
         // Width-relative depth so the slope is consistent across
         // viewport sizes — wider sections get more absolute pixels,
