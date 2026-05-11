@@ -482,3 +482,252 @@ Auto-deploy: main → production. All other branches → preview.
 - [ ] Video section: is there actual video content, or placeholder for now?
 - [ ] Nav State 3 (amber bg): when does this appear — hover, active page, or specific pages?
 
+---
+
+## Amendments — From Figma Annotations (node 141:536)
+
+Annotations added directly to the Figma file as teal note boxes
+(`bg-[#62ffe2]`, `rounded-[10px]`). Read via `get_design_context`.
+All confirmed below.
+
+### Hero — 3 Variants
+
+Three hero variants exist in the design. All share the same base component
+(`HeroFullbleed.astro`) — controlled via props.
+
+**Variant A — Photo with BG blocks** (node `154:985`)
+- Full-bleed photo background
+- Semi-transparent dark green bg blocks behind headline and body copy
+- Ensures legibility regardless of photo brightness
+- Use when photo contrast cannot be guaranteed
+- `bg-[rgba(8,57,40,0.51)]` blocks behind text (already in design)
+
+**Variant B — Photo with gradient only** (original spec)
+- Full-bleed photo background
+- Top and bottom gradient overlays only
+- No bg blocks behind text
+- Use when photo is dark enough for contrast
+
+**Variant C — Color bg, no photo** (nodes `154:987`, `154:990`)
+- No image — solid or gradient color background
+- `linear-gradient(166deg, #ffffff 50.9%, rgba(252,230,149,0.49) 159.4%)`
+- Use for interior pages or when no suitable photo is available
+
+```astro
+// HeroFullbleed.astro props
+{
+  variant:   'photo-blocks' | 'photo-gradient' | 'color-only'
+  image?:    string   // required for photo variants
+  headline:  string
+  body:      string
+  primaryCta:    { text: string, href: string }
+  secondaryCta?: { text: string, href: string }
+}
+```
+
+### Scroll Animation — Diagonal Feature-Split Sections
+
+**Applies to:** (nodes `154:1007`, `154:1010`)
+- `feature-split_init1_erb` (Sustainable Business Innovation Cohort)
+- `feature-split_init2_ready` (Ready to get started block)
+- Any section using the diagonal/angled edge treatment
+
+**Animation spec:**
+- Trigger: section enters viewport (IntersectionObserver)
+- Effect: subtle vertical reveal — diagonal top and bottom edges expand
+  outward together as the section comes into view
+- The angled/diagonal lines at the top and bottom of the section should
+  collapse to center before viewport entry, then expand to full width on entry
+- Timing: ~600ms ease-out
+- Do not autoplay — only triggers once on scroll entry
+- Cursor to determine exact CSS implementation (clip-path animation or
+  transform scale recommended)
+
+```css
+/* Suggested approach */
+.feature-split-animated {
+  clip-path: polygon(0 8%, 100% 0%, 100% 92%, 0% 100%);
+  transition: clip-path 600ms ease-out;
+}
+.feature-split-animated.in-view {
+  clip-path: polygon(0 0%, 100% 0%, 100% 100%, 0% 100%);
+}
+```
+
+### Button Variants — Attention Levels
+
+**Note from annotation** (node `154:1004`):
+"options with buttons — dark and bright, depending on attention needed"
+
+Buttons have two attention tiers:
+
+**High attention** — amber fill or amber outline
+- Use for primary actions, hero CTAs, main conversion points
+- `bg-[#ffc560] text-black` (filled)
+- `border-[#ffc560] text-[#ffc560]` (outline on dark bg)
+
+**Lower attention** — dark green fill or dark green outline
+- Use for secondary actions, supporting CTAs
+- `bg-[#083928] text-[#ffc560]` (filled)
+- `border-[#083928] text-[#083928]` (outline on light bg)
+- `border-black text-black` (outline — lowest emphasis)
+
+Cursor should offer all variants via the `Button` component's `variant` prop
+as specified above in **Button Variants**.
+
+### Contact Form — Page Assignment
+
+**Note from annotation** (node `154:1013`):
+"This is for the contact page"
+
+The full split contact form (`ContactSection.astro`) belongs on `/contact`
+only — not the homepage.
+
+The homepage uses the simpler amber centered form (`ContactAmber.astro` —
+"Let's talk") *if* a contact section is needed on the homepage at all.
+Confirm with client whether the homepage needs a contact section.
+
+### Modal Contact Form — Optional Variant
+
+**Note from annotation** (node `154:1016`):
+"optional for links that might need a modal instead of going to the contact page"
+
+Build a modal variant of the contact form for use cases where navigating to
+`/contact` would interrupt the user flow.
+
+**Usage:** inline CTAs that trigger a contact form overlay without leaving
+the current page.
+
+**Implementation:**
+- Reuse `ContactAmber.astro` form fields inside a modal wrapper
+- Trigger via any CTA with `data-modal="contact"`
+- Modal: centered overlay, dark scrim, amber form panel
+- Close on scrim click or ESC key
+- Form submits to the same endpoint as the `/contact` form
+
+```astro
+// ContactModal.astro
+// Triggered by: <Button modal="contact">Get in touch</Button>
+// Same fields as ContactAmber: Name, Email, Message, Submit
+```
+
+### Figma Annotation Method — Confirmed
+
+Annotations added as teal note boxes (`bg-[#62ffe2]`, `rounded-[10px]`)
+directly on the Figma canvas are readable via `get_design_context`. This is
+the confirmed method for passing design notes to Claude and Cursor.
+
+Use this method for all future annotations on this file. Format:
+`NOTE: [instruction]`.
+
+---
+
+## Module Architecture
+
+Every section is a named module per M&L convention. Pages are compositions
+of modules — not monolithic templates.
+
+**Full module registry and page map:** [`sustainedoutcomes/MODULES.md`](sustainedoutcomes/MODULES.md).
+
+Key principles for Cursor:
+
+- Build each module as a standalone Astro component.
+- Test each module in isolation at `/dev/[module-name]`.
+- Compose pages by importing modules in the order defined in `MODULES.md`.
+- Never put page-specific logic inside a module.
+- All content via props — modules are dumb, pages are smart.
+
+```astro
+// index.astro — homepage composition example
+---
+import HeroFullbleedBlocks from '../components/sections/HeroFullbleedBlocks.astro';
+import Cards3ColImage from '../components/sections/Cards3ColImage.astro';
+import FeatureSplitImageLeft from '../components/sections/FeatureSplitImageLeft.astro';
+// ... etc
+---
+<Page>
+  <HeroFullbleedBlocks headline="Strategy Rooted in Purpose" ... />
+  <Cards3ColImage variant="centered" headline="Three Areas of Focus" items={focusAreas} />
+  <FeatureSplitImageLeft variant="dark" headline="Sustainable Business..." ... />
+  <!-- etc -->
+</Page>
+```
+
+---
+
+## Image Assets
+
+All project images live at:
+
+```
+agentsites/sustainedoutcomes/site/src/assets/
+```
+
+Use Astro's `<Image />` component from `astro:assets` for **all** project
+images. Astro's image pipeline handles optimization, WebP conversion, and
+lazy loading automatically when assets are in `src/assets/`.
+
+```astro
+---
+import { Image } from 'astro:assets';
+import heroImage from '../assets/[filename]';
+---
+<Image src={heroImage} alt="Description" />
+```
+
+Do **not** put project images in `/public/images/` — that bypasses the
+build-time optimization pipeline. `/public/` stays reserved for files that
+must be served as-is (e.g. `favicon`, font `woff2` files, OG share images
+referenced by absolute URL).
+
+---
+
+## Deployment Environment
+
+### Branches → environments
+
+| Branch | Environment | URL | Auto-deploy |
+|--------|-------------|-----|-------------|
+| `main` | Production | `sustainedoutcomes.com` (when DNS is moved) | ✅ On merge |
+| `staging` | Staging | `sustained-outcomes.mackandlee.com` | ✅ On push |
+
+Never push directly to `main`. All work goes to `staging` first. Production
+deploys via PR merge only: `staging` → `main`.
+
+### Cloudflare Pages setup
+
+One Cloudflare Pages project, two custom domains:
+
+- `sustainedoutcomes.com` → mapped to `main` branch (production).
+- `sustained-outcomes.mackandlee.com` → mapped to `staging` branch.
+
+DNS for `sustainedoutcomes.com` will point to Cloudflare Pages once the
+client owns the domain. The M&L subdomain stays active permanently as
+staging.
+
+### Workflow
+
+```
+Development (Cursor / Claude)
+    ↓ push
+staging branch
+    ↓ auto-deploy
+sustained-outcomes.mackandlee.com
+    ↓ reviewed + approved
+PR: staging → main
+    ↓ merged + auto-deploy
+sustainedoutcomes.com (live)
+```
+
+### Client review
+
+Ken reviews all changes at `sustained-outcomes.mackandlee.com` before
+anything goes live at `sustainedoutcomes.com`. This applies to both code
+changes (Cursor) and content changes (Claude pipeline — staging branch first).
+
+### Change-request pipeline
+
+The Claude pipeline commits to the `staging` branch only. Ken approves via
+the staging preview. The pipeline merges to `main` on Ken's approval. See
+[`CHANGE_REQUEST.md`](CHANGE_REQUEST.md) for the full process.
+

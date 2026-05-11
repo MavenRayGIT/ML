@@ -30,14 +30,25 @@ Astro components for this project. Specs and props: [`../HANDOFF_v2.md`](../HAND
 
 | Component | Status | Notes |
 | --- | --- | --- |
-| `HeroFullbleed.astro` | planned | |
+| `HeroFullbleed.astro` | planned | 3 variants: `photo-blocks`, `photo-gradient`, `color-only` — see HANDOFF_v2 → Amendments |
 | `FocusAreas.astro` | planned | Layout TBD — see open questions in brief |
-| `FeatureSplit.astro` | planned | Initiatives + founder |
+| `FeatureSplit.astro` | planned | Initiatives + founder; diagonal-edge scroll animation on `init_erb` + `init_ready` |
 | `VideoSection.astro` | planned | Placeholder vs real TBD |
 | `ServicesGrid.astro` | planned | |
 | `BlogPreview.astro` | planned | |
-| `ContactSection.astro` | planned | Layout TBD |
+| `ContactSection.astro` | planned | `/contact` only (full split); homepage uses `ContactAmber` if needed |
+| `ContactAmber.astro` | planned | Compact amber "Let's talk" form — homepage / inline use |
+| `ContactModal.astro` | planned | Modal wrapper around `ContactAmber` — `data-modal="contact"` |
 | `CTABand.astro` | planned | |
+
+## Blog modules (Cursor-designed — see `../CURSOR_BRIEF.md` → Blog Templates)
+
+| Component | Status | Notes |
+| --- | --- | --- |
+| `blog_landing-hero_v1` | planned | Featured post large card — top of `/blog` |
+| `blog_filter-bar_v1` | planned | Category pills + search input row |
+| `blog_detail-hero_v1` | planned | Post title, category, date, author header |
+| `blog_detail-prose_v1` | planned | MDX prose styles — body, h2, h3, pullquote, images |
 
 ## Archived module list (Design v1 / Breakdance naming)
 

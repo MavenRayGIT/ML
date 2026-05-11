@@ -258,3 +258,124 @@ the Astro `dist/` output.
 | `CHANGE_REQUEST.md` | Change request system spec |
 | `ML_ADMIN.md` | M&L internal management guide |
 
+---
+
+## Blog Templates — Cursor Responsibility
+
+Blog landing and blog detail pages are **not** designed in Figma. Cursor
+owns the design and build of these templates.
+
+### Reference
+
+- Layout/UX reference: <https://www.whitestonemarketing.com/insights>
+  (use for layout patterns, filtering UI, post detail structure)
+- Design system: `HANDOFF_v2.md` — all tokens, fonts, spacing apply
+- Compose from existing modules where possible (see
+  [`sustainedoutcomes/MODULES.md`](sustainedoutcomes/MODULES.md))
+- Design net-new only where existing modules don't fit
+- Log any net-new modules in `sustainedoutcomes/MODULES.md` with status
+  `planned` (or `project` if it warrants library promotion later)
+
+### Blog Landing — `/blog`
+
+Requirements:
+
+- Hero: `hero_page-title_v1` — "From the Blog"
+- Featured post: large card at top — image, category, title, excerpt,
+  text-link. Most recent post by default.
+- Post grid: `cards_3col-blog_v1` pattern for remaining posts
+- Pagination: load-more button OR page 1/2/3 — Cursor decides based on
+  Astro content collection best practice
+- Tag/category filter: pill buttons across the top, one per category —
+  "All", "Access to Nature", "Connecting with Nature",
+  "Business Sustainability"
+  - Active state: amber fill `#FFC560`, black text
+  - Inactive state: `border-[#083928]` outline, black text
+- Search: simple text input, filters posts by title and excerpt.
+  Client-side filtering only (no server needed for Ken's volume).
+  Style: white input, `border-[#E2E2E2]`, placeholder muted `#9A9A9A`.
+- Filter + search sit in the same row above the post grid.
+- CTA band: `cta-band_dark_v1` at the bottom.
+
+### Blog Detail — `/blog/[slug]`
+
+Requirements:
+
+- Hero: post title (Mona Sans Bold 48px), category pill, date, author —
+  dark green `#083928` bg or `hero_page-title_v1`
+- Prose body: MDX content
+  - Max width: 760px centered (narrower than page content width)
+  - Body: Libre Franklin Regular 18px, lh 30px, black
+  - H2: Mona Sans Bold 32px, -3% tracking
+  - H3: Mona Sans Bold 24px, -3% tracking
+  - Inline links: `inline-link` pattern (amber highlight on hover)
+  - Blockquote / pull quote: amber left border `#FFC560` 3px, Mona Sans
+    Bold 24px, italic, indented
+  - Inline image: full prose width, border-radius 2px
+  - Full-width image: breaks out of prose width to full content width
+    (1312px), border-radius 2px
+  - Video embed: full prose width, 16:9 aspect ratio, rounded
+- Related posts: `cards_3col-blog_v1` — 3 posts from the same category.
+  Label: "More from the Blog".
+- CTA band: `cta-band_dark_v1` at the bottom.
+
+### Search + tags — implementation notes
+
+- Filtering is client-side — all posts loaded, JS filters display.
+- Use Astro's content collection to generate static post data.
+- Pass all posts as a JSON data attribute on the filter component.
+- No external search service needed at Ken's post volume.
+- If post volume grows beyond ~200 posts, consider Pagefind (Astro-native
+  static search) — note this in code comments.
+
+### Net-new blog modules
+
+Cursor must create and log these in `sustainedoutcomes/MODULES.md`:
+
+| Module | Notes |
+|--------|-------|
+| `blog_landing-hero_v1` | Featured post large card — top of blog landing |
+| `blog_filter-bar_v1` | Category pills + search input row |
+| `blog_detail-hero_v1` | Post title, category, date, author header |
+| `blog_detail-prose_v1` | MDX prose styles — body, h2, h3, pullquote, images |
+
+---
+
+## Image Assets
+
+All project images live at:
+
+```
+agentsites/sustainedoutcomes/site/src/assets/
+```
+
+Use Astro's `<Image />` component from `astro:assets` so the build pipeline
+can optimize, convert to WebP, and lazy-load.
+
+```astro
+---
+import { Image } from 'astro:assets';
+import heroImage from '../assets/[filename]';
+---
+<Image src={heroImage} alt="Description" />
+```
+
+Do **not** put project images in `/public/images/` — that bypasses
+optimization. `/public/` stays reserved for files that must be served as-is
+(favicon, font `woff2` files, OG share images referenced by absolute URL).
+
+---
+
+## Deployment Environment
+
+| Branch | URL | Purpose |
+|--------|-----|---------|
+| `staging` | `sustained-outcomes.mackandlee.com` | All development work lands here |
+| `main` | `sustainedoutcomes.com` (when DNS is moved) | Production — merge only, never push direct |
+
+**All Cursor work goes to the `staging` branch.** Never commit to `main`
+directly. Production deploys via PR: `staging` → `main` only.
+
+Ken reviews everything at `sustained-outcomes.mackandlee.com` before
+anything goes live at `sustainedoutcomes.com`.
+
