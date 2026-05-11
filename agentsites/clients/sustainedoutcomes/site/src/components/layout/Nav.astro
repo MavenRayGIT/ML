@@ -24,8 +24,10 @@
  * Close on link tap, on the X icon, or with Escape.
  */
 import Button from '../ui/Button.astro';
-import logoLightSrc from '../../assets/logos/SO-logo-wht1.svg';
-import logoDarkSrc  from '../../assets/logos/SO-Logo-dark1.svg';
+import { Image } from 'astro:assets';
+import iconSrc        from '../../assets/logos/SO-Icon-Color-small.png';
+import wordmarkLight  from '../../assets/logos/SO-logo-copy-wht-right.svg';
+import wordmarkDark   from '../../assets/logos/SO-logo-dark-copy-right.svg';
 
 const navItems = [
   { label: 'Consulting',  href: '/consulting'  },
@@ -43,19 +45,32 @@ const navItems = [
   aria-label="Site"
 >
   <div class="mx-auto flex h-full max-w-content items-center px-margin">
-    {/* Logo — two overlaid <img>s, opacity-crossfaded by data-nav-state */}
-    <a href="/" class="relative flex h-10 items-center" aria-label="Sustained Outcomes home">
-      <img
-        src={logoLightSrc.src}
-        alt=""
-        aria-hidden="true"
-        class="logo logo-light h-10 w-auto transition-opacity duration-base ease-default"
-      />
-      <img
-        src={logoDarkSrc.src}
-        alt="Sustained Outcomes"
-        class="logo logo-dark absolute inset-0 h-10 w-auto transition-opacity duration-base ease-default"
-      />
+    {/* Logo — split into a colour tree icon (always on a cream circle so
+        it reads on every nav state) + a stacked-pair wordmark that
+        opacity-crossfades between the white & dark cuts. */}
+    <a href="/" class="flex h-10 items-center gap-3" aria-label="Sustained Outcomes home">
+      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cream">
+        <Image
+          src={iconSrc}
+          alt=""
+          width={iconSrc.width}
+          height={iconSrc.height}
+          class="h-9 w-9 object-contain"
+        />
+      </span>
+      <span class="relative inline-block h-7">
+        <img
+          src={wordmarkLight.src}
+          alt=""
+          aria-hidden="true"
+          class="logo logo-light h-7 w-auto transition-opacity duration-base ease-default"
+        />
+        <img
+          src={wordmarkDark.src}
+          alt="Sustained Outcomes"
+          class="logo logo-dark absolute inset-0 h-7 w-auto transition-opacity duration-base ease-default"
+        />
+      </span>
     </a>
 
     {/* Desktop links + CTA */}
@@ -110,8 +125,18 @@ const navItems = [
   aria-hidden="true"
 >
   <div class="flex h-[74px] items-center justify-between px-margin">
+    {/* Mobile overlay header: icon-only on white circle (wordmark dropped
+        — the overlay is already obviously "the site menu"). */}
     <a href="/" class="flex h-10 items-center" aria-label="Sustained Outcomes home">
-      <img src={logoDarkSrc.src} alt="Sustained Outcomes" class="h-10 w-auto" />
+      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white">
+        <Image
+          src={iconSrc}
+          alt=""
+          width={iconSrc.width}
+          height={iconSrc.height}
+          class="h-9 w-9 object-contain"
+        />
+      </span>
     </a>
     <button
       type="button"

@@ -14,7 +14,9 @@
  * The column copy is placeholder for now; finalize alongside the rest of
  * the site content in Step 8.
  */
-import logoFooterSrc from '../../assets/logos/SO-Logo-Wht2.svg';
+import { Image } from 'astro:assets';
+import iconSrc       from '../../assets/logos/SO-Icon-Color-small.png';
+import wordmarkLight from '../../assets/logos/SO-logo-copy-wht-right.svg';
 
 const tagline = 'Mission-focused advisory services for organizations bringing people closer to the natural world.';
 
@@ -51,11 +53,20 @@ const year = new Date().getFullYear();
     <div class="grid gap-12 md:grid-cols-[1.2fr_repeat(3,1fr)]">
       {/* Brand block: logo + tagline */}
       <div>
-        <a href="/" class="inline-flex" aria-label="Sustained Outcomes home">
+        <a href="/" class="inline-flex items-center gap-4" aria-label="Sustained Outcomes home">
+          <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-cream">
+            <Image
+              src={iconSrc}
+              alt=""
+              width={iconSrc.width}
+              height={iconSrc.height}
+              class="h-12 w-12 object-contain"
+            />
+          </span>
           <img
-            src={logoFooterSrc.src}
+            src={wordmarkLight.src}
             alt="Sustained Outcomes"
-            class="h-12 w-auto"
+            class="h-10 w-auto"
           />
         </a>
         <p class="mt-6 max-w-[34ch] font-body text-[14px] leading-[22px] text-amber">
