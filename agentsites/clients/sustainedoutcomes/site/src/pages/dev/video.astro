@@ -1,0 +1,20 @@
+---
+/**
+ * /dev/video — visual review of VideoSection with the live Bunny embed.
+ */
+import Page from '../../layouts/Page.astro';
+import VideoSection from '../../components/sections/VideoSection.astro';
+---
+
+<Page
+  title="Dev — VideoSection"
+  description="Visual review of VideoSection (Bunny Stream embed)."
+  noindex
+>
+  <VideoSection
+    embedUrl="https://player.mediadelivery.net/embed/599963/ddc1b13b-708b-4976-a36f-1198dd2f931d?autoplay=false&loop=false&muted=false&preload=true&responsive=true"
+    title="A look at the practice."
+    body="A two-minute introduction to Sustained Outcomes — what we do, who we work with, and how a typical engagement starts."
+    duration="2:48"
+  />
+</Page>

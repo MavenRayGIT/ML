@@ -1,0 +1,45 @@
+---
+/**
+ * /dev/blog-preview — visual review of BlogPreview with mock posts.
+ *
+ * Once Step 6 lands the blog content collection, this page will swap to
+ * reading real posts via `getCollection('blog')`. For now, fixture data
+ * exercises the layout.
+ */
+import Page from '../../layouts/Page.astro';
+import BlogPreview from '../../components/sections/BlogPreview.astro';
+import imgA from '../../assets/FPO-Hiker-Sunrise.jpg';
+import imgB from '../../assets/FPO-Bluebell-Forest.jpg';
+import imgC from '../../assets/FPO-Photographers-Autumn.jpg';
+
+const posts = [
+  {
+    title: 'Why ecological values belong in operating strategy',
+    excerpt: 'A short piece on the practical mechanics of putting sustainability above the line — not as a side project, but in the strategy itself.',
+    image: imgA,
+    imageAlt: '',
+    href: '/blog/ecological-values-in-strategy',
+    category: 'Business Sustainability',
+  },
+  {
+    title: 'The slow work of access',
+    excerpt: 'Notes from a season working with land-trust partners on what real "access to nature" looks like — and what it asks of us.',
+    image: imgB,
+    imageAlt: '',
+    href: '/blog/slow-work-of-access',
+    category: 'Access to Nature',
+  },
+  {
+    title: 'Three patterns we keep seeing in mission-driven CRMs',
+    excerpt: 'Tooling failures repeat across organizations. Three patterns we ran into this quarter and the cheapest fix for each.',
+    image: imgC,
+    imageAlt: '',
+    href: '/blog/three-crm-patterns',
+    category: 'Connecting with Nature',
+  },
+];
+---
+
+<Page title="Dev — BlogPreview" description="Visual review of BlogPreview." noindex>
+  <BlogPreview posts={posts} />
+</Page>

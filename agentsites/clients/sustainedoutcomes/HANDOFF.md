@@ -523,13 +523,32 @@ Auto-deploy: main → production. All other branches → preview.
 
 ---
 
-## Open Questions for Client (resolve before build)
+## Open Questions for Client (resolved 2026-05-11)
 
-- [ ] Which FocusAreas layout: centered or left-aligned?
-- [ ] Which Ken Jacobsen section: Variant A (green button) or B (amber button)?
-- [ ] Which contact form: full split layout or simple amber centered?
-- [ ] Video section: is there actual video content, or placeholder for now?
-- [ ] Nav State 3 (amber bg): when does this appear — hover, active page, or specific pages?
+All resolved at the start of Step 5 (Sections) — recorded here so future Claude
+sees the locked decision instead of an open question.
+
+- [x] **HeroFullbleed (homepage):** **`photo-blocks`** variant — full-bleed photo
+      with dark-green `rgba(8,57,40,0.51)` bg blocks behind the headline + body
+      copy, so legibility holds regardless of the photo. All three variants
+      (`photo-blocks` / `photo-gradient` / `color-only`) still ship in the same
+      component via the `variant` prop for use on other pages.
+- [x] **FocusAreas layout:** **left-aligned**. Eyebrow + H2 + intro body anchor
+      to the left of the 3-col grid; the cards themselves still span the row.
+- [x] **Founder section (FeatureSplit):** **Variant B** — amber-fill button.
+      Treat the founder block as a high-attention conversion CTA.
+- [x] **Homepage contact:** **none on the homepage**. The full split form is
+      `/contact`-only. Any homepage contact intent rides on `CTABand` + the
+      nav "Request a meeting" CTA. `ContactAmber` / `ContactModal` stay in the
+      module library for ad-hoc use but are not wired into the homepage.
+- [x] **VideoSection:** **real video**, hosted on Bunny Stream.
+      Embed: `https://player.mediadelivery.net/embed/599963/ddc1b13b-708b-4976-a36f-1198dd2f931d`
+      (16:9, `preload=true`, autoplay off, loop off, responsive). Bunny owns
+      the poster + play-button UI, so the section renders the iframe directly
+      instead of a custom thumbnail+SVG.
+- [x] **Nav State 3 (amber bg):** **parked** — section-driven only (any section
+      that opts into `data-nav-bg="amber"`). Not a per-page default and not a
+      hover state. Revisit only if a future page wants amber as its baseline.
 
 ---
 

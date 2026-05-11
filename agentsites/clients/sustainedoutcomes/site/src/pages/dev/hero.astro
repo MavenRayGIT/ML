@@ -1,0 +1,54 @@
+---
+/**
+ * /dev/hero — visual review of HeroFullbleed across all 3 variants.
+ *
+ * Renders each variant stacked so we can verify:
+ *   - photo-blocks    (homepage default — bg blocks behind text)
+ *   - photo-gradient  (alt — gradients only)
+ *   - color-only      (no photo, light gradient)
+ *
+ * Nav state should crossfade as you scroll between sections:
+ *   variant 1 → dark | variant 2 → dark | variant 3 → white
+ */
+import Page from '../../layouts/Page.astro';
+import HeroFullbleed from '../../components/sections/HeroFullbleed.astro';
+import heroPhoto from '../../assets/FPO-Hiker-Sunrise.jpg';
+---
+
+<Page
+  title="Dev — HeroFullbleed"
+  description="Visual review of HeroFullbleed variants."
+  noindex
+  hasHero
+>
+  <HeroFullbleed
+    variant="photo-blocks"
+    eyebrow="Variant — photo-blocks"
+    headline="Strategy rooted in purpose."
+    body="Mission-focused advisory services for organizations bringing people closer to the natural world."
+    image={heroPhoto}
+    imageAlt="Hiker at sunrise on a forested ridge."
+    primaryCta={{ text: 'Request a meeting', href: '/contact' }}
+    secondaryCta={{ text: 'Our consulting', href: '/consulting' }}
+  />
+
+  <HeroFullbleed
+    variant="photo-gradient"
+    eyebrow="Variant — photo-gradient"
+    headline="The same hero without text blocks."
+    body="No semi-transparent bg blocks behind copy — use this only when the photo is dark enough that white text reads on its own."
+    image={heroPhoto}
+    imageAlt=""
+    primaryCta={{ text: 'Request a meeting', href: '/contact' }}
+    secondaryCta={{ text: 'Our consulting', href: '/consulting' }}
+  />
+
+  <HeroFullbleed
+    variant="color-only"
+    eyebrow="Variant — color-only"
+    headline="No photo. Black text on a light wash."
+    body="For interior pages or anywhere a suitable hero photo doesn't exist. Nav switches to its white state automatically."
+    primaryCta={{ text: 'Request a meeting', href: '/contact' }}
+    secondaryCta={{ text: 'Our consulting', href: '/consulting' }}
+  />
+</Page>

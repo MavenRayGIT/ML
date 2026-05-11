@@ -1,0 +1,69 @@
+---
+/**
+ * CTABand.astro — page-closing call-to-action band.
+ *
+ * Per HANDOFF.md → Component Map → CTABand:
+ *   - Dark green bg `#083928`, ~320px tall (vertical padding does the
+ *     heavy lifting — content height dictates total).
+ *   - Centered: eyebrow + H2 + one or two CTAs side-by-side.
+ *   - Eyebrow amber, H2 white, buttons amber-fill / outline × dark.
+ *
+ * Static — no entry reveal (closes the page; CTAs do their own hover
+ * work).
+ */
+
+import Button from '../ui/Button.astro';
+import SectionEyebrow from '../ui/SectionEyebrow.astro';
+
+export interface CTABandCta {
+  text: string;
+  href: string;
+  /** "primary" (amber-fill) or "secondary" (outline). Defaults to amber-fill for the first CTA, outline for the second. */
+  variant?: 'amber-fill' | 'outline';
+}
+
+export interface Props {
+  eyebrow?: string;
+  headline: string;
+  primaryCta?: CTABandCta;
+  secondaryCta?: CTABandCta;
+}
+
+const { eyebrow, headline, primaryCta, secondaryCta } = Astro.props;
+---
+
+<section
+  class="cta-band relative w-full bg-green-dark py-section-sm"
+  data-nav-bg="dark"
+>
+  <div class="mx-auto flex w-full max-w-content flex-col items-center gap-6 px-margin text-center">
+    {eyebrow && (
+      <SectionEyebrow color="amber" withLeadRule>{eyebrow}</SectionEyebrow>
+    )}
+    <h2 class="max-w-[820px] font-display text-h2 tracking-display text-white">
+      {headline}
+    </h2>
+    {(primaryCta || secondaryCta) && (
+      <div class="mt-4 flex flex-wrap items-center justify-center gap-4">
+        {primaryCta && (
+          <Button
+            variant={primaryCta.variant ?? 'amber-fill'}
+            surface="dark"
+            href={primaryCta.href}
+          >
+            {primaryCta.text}
+          </Button>
+        )}
+        {secondaryCta && (
+          <Button
+            variant={secondaryCta.variant ?? 'outline'}
+            surface="dark"
+            href={secondaryCta.href}
+          >
+            {secondaryCta.text}
+          </Button>
+        )}
+      </div>
+    )}
+  </div>
+</section>

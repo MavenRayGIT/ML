@@ -1,0 +1,16 @@
+---
+/**
+ * /dev/cta-band — visual review of CTABand.
+ */
+import Page from '../../layouts/Page.astro';
+import CTABand from '../../components/sections/CTABand.astro';
+---
+
+<Page title="Dev — CTABand" description="Visual review of CTABand." noindex>
+  <CTABand
+    eyebrow="Get involved"
+    headline="Ready to start a conversation?"
+    primaryCta={{ text: 'Request a meeting', href: '/contact' }}
+    secondaryCta={{ text: 'Read the blog', href: '/blog' }}
+  />
+</Page>

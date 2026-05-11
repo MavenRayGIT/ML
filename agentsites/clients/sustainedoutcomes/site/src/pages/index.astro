@@ -1,36 +1,218 @@
 ---
 /**
- * Homepage placeholder.
+ * Homepage — Sustained Outcomes.
  *
- * Step 7 replaces this with the real homepage composed from the modules
- * in MODULES.md. Until then, this placeholder doubles as a smoke test
- * for Page.astro (Base + Nav + Footer + StagingBanner all wired).
+ * Composed from the section modules in `src/components/sections/`. Each
+ * module is "dumb" — content lives in this page as props. Per the
+ * Module Architecture in HANDOFF.md, page-specific logic belongs here,
+ * not inside the modules.
  *
- * The hero band opts into `data-nav-bg="dark"` so the nav lands in its
- * over-hero state on page load — that way we exercise the full chrome
- * even before there's a real hero.
+ * Section order locked in the build brief Step 5:
+ *
+ *   1. HeroFullbleed   (photo-blocks variant — decided 2026-05-11)
+ *   2. FocusAreas      (left-aligned — decided 2026-05-11)
+ *   3. FeatureSplit    Initiative ERB     — dark, angled, image-left
+ *   4. FeatureSplit    Initiative Oakland — light, angled, image-right
+ *   5. VideoSection    Bunny Stream embed (preload, 16:9 responsive)
+ *   6. ServicesGrid    Three lanes of consulting
+ *   7. FeatureSplit    Founder — Variant B, amber-fill CTA
+ *   8. BlogPreview     Latest 3 insights (mock fixtures until Step 6)
+ *   9. CTABand         Closes the page; no inline contact form on /
+ *
+ * All copy here is placeholder for the visual review pass. Final
+ * copy will be written into MDX or directly into this file at the
+ * client review milestone.
  */
+
 import Page from '../layouts/Page.astro';
-import SectionEyebrow from '../components/ui/SectionEyebrow.astro';
+
+import HeroFullbleed from '../components/sections/HeroFullbleed.astro';
+import FocusAreas    from '../components/sections/FocusAreas.astro';
+import FeatureSplit  from '../components/sections/FeatureSplit.astro';
+import VideoSection  from '../components/sections/VideoSection.astro';
+import ServicesGrid  from '../components/sections/ServicesGrid.astro';
+import BlogPreview   from '../components/sections/BlogPreview.astro';
+import CTABand       from '../components/sections/CTABand.astro';
+
+import heroPhoto from '../assets/FPO-Hiker-Sunrise.jpg';
+
+import focusBluebell from '../assets/FPO-Bluebell-Forest.jpg';
+import focusAspen    from '../assets/FPO-Aspen-Path.jpg';
+import focusLake     from '../assets/FPO-Lake-Reflection.jpg';
+
+import erbImage      from '../assets/FPO-Bluebell-Forest.jpg';
+import oaklandImage  from '../assets/FPO-Aspen-Path.jpg';
+import founderImage  from '../assets/FPO-Hiker-Portrait.jpg';
+
+import serviceImage1 from '../assets/FPO-Lake-Reflection.jpg';
+import serviceImage2 from '../assets/FPO-Photographers-Autumn.jpg';
+import serviceImage3 from '../assets/FPO-Aspen-Path.jpg';
+
+import blogImage1    from '../assets/FPO-Hiker-Sunrise.jpg';
+import blogImage2    from '../assets/FPO-Bluebell-Forest.jpg';
+import blogImage3    from '../assets/FPO-Photographers-Autumn.jpg';
+
+const focusItems = [
+  {
+    title: 'Access to Nature',
+    body: 'Programs and policies that bring more people into the natural world.',
+    image: focusBluebell,
+    imageAlt: '',
+    linkText: 'Read more',
+    href: '/initiatives#access',
+  },
+  {
+    title: 'Connecting with Nature',
+    body: 'Helping organizations build meaningful, lasting relationships with the outdoors.',
+    image: focusAspen,
+    imageAlt: '',
+    linkText: 'Read more',
+    href: '/initiatives#connecting',
+  },
+  {
+    title: 'Business Sustainability',
+    body: 'Embedding ecological values into long-range operating strategy.',
+    image: focusLake,
+    imageAlt: '',
+    linkText: 'Read more',
+    href: '/initiatives#sustainability',
+  },
+];
+
+const serviceItems = [
+  {
+    title: 'Strategy & Planning',
+    body: 'Long-range planning anchored in mission and ecology. Multi-year roadmaps for boards and executives.',
+    image: serviceImage1,
+    imageAlt: '',
+    linkText: 'Read more',
+    href: '/consulting#strategy',
+  },
+  {
+    title: 'Constituent Engagement',
+    body: 'Programs that bring more people closer to the natural world and keep them engaged through every season.',
+    image: serviceImage2,
+    imageAlt: '',
+    linkText: 'Read more',
+    href: '/consulting#engagement',
+  },
+  {
+    title: 'CRM & Marketing Systems',
+    body: 'Operational infrastructure for mission-driven orgs: CRM, donor data, content systems, integrated reporting.',
+    image: serviceImage3,
+    imageAlt: '',
+    linkText: 'Read more',
+    href: '/consulting#systems',
+  },
+];
+
+// TODO Step 6 — replace with `getCollection('blog', sortByDate).slice(0, 3)`
+// once the content collection is wired.
+const latestPosts = [
+  {
+    title: 'Why ecological values belong in operating strategy',
+    excerpt: 'A short piece on putting sustainability above the line — not as a side project, but in the strategy itself.',
+    image: blogImage1,
+    imageAlt: '',
+    href: '/blog/ecological-values-in-strategy',
+    category: 'Business Sustainability',
+  },
+  {
+    title: 'The slow work of access',
+    excerpt: 'Notes from a season working with land-trust partners on what real "access to nature" looks like — and what it asks of us.',
+    image: blogImage2,
+    imageAlt: '',
+    href: '/blog/slow-work-of-access',
+    category: 'Access to Nature',
+  },
+  {
+    title: 'Three patterns we keep seeing in mission-driven CRMs',
+    excerpt: 'Tooling failures repeat across organizations. Three patterns we ran into this quarter and the cheapest fix for each.',
+    image: blogImage3,
+    imageAlt: '',
+    href: '/blog/three-crm-patterns',
+    category: 'Connecting with Nature',
+  },
+];
 ---
 
 <Page
-  title="Sustained Outcomes"
-  description="Sustained Outcomes — mission-focused advisory consultancy. Full site in development."
+  title="Sustained Outcomes — strategy rooted in purpose"
+  description="Mission-focused advisory services for organizations bringing people closer to the natural world."
   hasHero
 >
-  {/* Hero placeholder — full viewport, dark surface so nav reads dark */}
-  <section
-    data-nav-bg="dark"
-    class="flex min-h-screen items-center bg-green-dark px-margin"
-  >
-    <div class="mx-auto max-w-content" data-reveal="header">
-      <SectionEyebrow color="amber" withLeadRule>In development</SectionEyebrow>
-      <h1 class="mt-6 font-display text-hero text-white">Sustained Outcomes</h1>
-      <p class="mt-6 max-w-[48ch] font-body text-body-lg text-cream">
-        Full site build in progress. Nav, footer, and primitives are wired —
-        homepage sections land in Step 5.
-      </p>
-    </div>
-  </section>
+  <HeroFullbleed
+    variant="photo-blocks"
+    eyebrow="Sustained Outcomes"
+    headline="Strategy rooted in purpose. Outcomes that endure."
+    body="Mission-focused advisory services for organizations bringing people closer to the natural world."
+    image={heroPhoto}
+    imageAlt="Sunrise over a forested ridge."
+    primaryCta={{ text: 'Request a meeting', href: '/contact' }}
+    secondaryCta={{ text: 'Our consulting', href: '/consulting' }}
+  />
+
+  <FocusAreas
+    eyebrow="Three areas of focus"
+    headline="A practice anchored in mission and ecology."
+    body="We work with mission-driven organizations bringing people closer to the natural world. Our practice spans three areas — each interlocking with the next."
+    items={focusItems}
+    align="left"
+  />
+
+  <FeatureSplit
+    eyebrow="Initiative — ERB"
+    headline="Sustainable Business Innovation Cohort."
+    body="A working community for organizations putting ecological stewardship at the center of their operating strategy."
+    image={erbImage}
+    imageAlt=""
+    imagePosition="left"
+    dark
+    angled
+    cta={{ text: 'Learn more', href: '/initiatives#erb' }}
+  />
+
+  <FeatureSplit
+    eyebrow="Initiative — Oakland"
+    headline="Ready to get started in the Oakland Hills."
+    body="Bringing the Sustained Outcomes working community to the East Bay — meeting people where they already are."
+    image={oaklandImage}
+    imageAlt=""
+    imagePosition="right"
+    angled
+    cta={{ text: 'Read the initiative', href: '/initiatives#oakland' }}
+  />
+
+  <VideoSection
+    embedUrl="https://player.mediadelivery.net/embed/599963/ddc1b13b-708b-4976-a36f-1198dd2f931d?autoplay=false&loop=false&muted=false&preload=true&responsive=true"
+    title="A look at the practice."
+    body="A two-minute introduction to Sustained Outcomes — what we do, who we work with, and how an engagement starts."
+    duration="2:48"
+  />
+
+  <ServicesGrid
+    eyebrow="What we do"
+    headline="Three lanes of consulting work."
+    body="A boutique practice — every engagement is led by Ken and shaped to the organization."
+    items={serviceItems}
+  />
+
+  <FeatureSplit
+    eyebrow="From the founder"
+    headline="Why Ken Jacobsen built Sustained Outcomes."
+    body="Twenty-five years of working at the intersection of conservation, business, and community service — distilled into a practice that helps mission-driven leaders move faster without compromising the mission."
+    image={founderImage}
+    imageAlt="Ken Jacobsen portrait — placeholder."
+    imagePosition="left"
+    cta={{ text: 'Meet Ken', href: '/about', variant: 'amber-fill' }}
+  />
+
+  <BlogPreview posts={latestPosts} />
+
+  <CTABand
+    eyebrow="Get involved"
+    headline="Ready to start a conversation?"
+    primaryCta={{ text: 'Request a meeting', href: '/contact' }}
+    secondaryCta={{ text: 'Read the blog', href: '/blog' }}
+  />
 </Page>

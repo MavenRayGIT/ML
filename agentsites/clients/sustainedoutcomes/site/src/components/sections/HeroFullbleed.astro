@@ -1,0 +1,171 @@
+---
+/**
+ * HeroFullbleed.astro — site hero, three visual variants in one component.
+ *
+ * Per HANDOFF.md → Component Map → HeroFullbleed + the Amendments
+ * (node 141:536 annotations) → "Hero — 3 Variants":
+ *
+ *   variant="photo-blocks"    Full-bleed photo + dark-green semi-transparent
+ *                             bg blocks behind the headline & body. Use when
+ *                             photo contrast can't be guaranteed. **HOMEPAGE
+ *                             DEFAULT** (decided 2026-05-11).
+ *
+ *   variant="photo-gradient"  Full-bleed photo + top/bottom gradient overlays
+ *                             only. No bg blocks. Use when the photo is dark
+ *                             enough to read white text directly.
+ *
+ *   variant="color-only"      No photo — light gradient background. Text
+ *                             switches to black. Use for interior pages /
+ *                             where no suitable photo exists.
+ *
+ * Shared geometry:
+ *   - Full viewport height, min-height clamped at 788px (spec).
+ *   - Content sits in the lower third, left-aligned, inside max-w-content.
+ *   - Photo variants land the nav in its `dark` state via `data-nav-bg`.
+ *   - color-only lands the nav in `white`.
+ *
+ * Reveal animation (Corporate_Elegant — ANIMATION.md):
+ *   `data-reveal="hero"` on the content stack — eyebrow → H1 → body →
+ *   CTAs each fade up 16px in a 100ms stagger. Fires immediately on page
+ *   load because the hero is above the fold.
+ *
+ * Copy & content come from props only — never hardcoded here.
+ */
+
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import Button from '../ui/Button.astro';
+import SectionEyebrow from '../ui/SectionEyebrow.astro';
+
+export type HeroVariant = 'photo-blocks' | 'photo-gradient' | 'color-only';
+
+export interface HeroCta {
+  text: string;
+  href: string;
+}
+
+export interface Props {
+  variant?: HeroVariant;
+  /** Optional ALL-CAPS label rendered above the headline. */
+  eyebrow?: string;
+  headline: string;
+  body?: string;
+  /** Required for photo variants — imported via `astro:assets`. */
+  image?: ImageMetadata;
+  /** Alt text for the photo. Empty string for purely-decorative imagery. */
+  imageAlt?: string;
+  primaryCta?: HeroCta;
+  secondaryCta?: HeroCta;
+}
+
+const {
+  variant = 'photo-blocks',
+  eyebrow,
+  headline,
+  body,
+  image,
+  imageAlt = '',
+  primaryCta,
+  secondaryCta,
+} = Astro.props;
+
+const hasPhoto = variant !== 'color-only';
+const hasBlocks = variant === 'photo-blocks';
+const navBg: 'dark' | 'white' = hasPhoto ? 'dark' : 'white';
+// Buttons inherit the surface their hero sits on so hover colours
+// stay legible: dark surface on photos, light surface on color-only.
+const btnSurface: 'dark' | 'light' = hasPhoto ? 'dark' : 'light';
+---
+
+<section
+  class:list={[
+    'hero-fullbleed relative isolate flex w-full flex-col justify-end overflow-hidden',
+    !hasPhoto && 'hero-color-bg',
+  ]}
+  style="min-height: max(100vh, 788px);"
+  data-nav-bg={navBg}
+>
+  {hasPhoto && image && (
+    <Image
+      src={image}
+      alt={imageAlt}
+      class="absolute inset-0 -z-10 h-full w-full object-cover"
+      widths={[768, 1280, 1920, 2560]}
+      sizes="100vw"
+      loading="eager"
+      fetchpriority="high"
+    />
+  )}
+
+  {hasPhoto && (
+    <>
+      {/* Top gradient — 342px, dark→transparent, multiply-blended into the
+          photo so the nav reads cleanly without dimming the whole image. */}
+      <div class="hero-gradient-top pointer-events-none absolute inset-x-0 top-0 -z-10 h-[342px]"></div>
+      {/* Bottom gradient — soft dark wash on the lower 40% to pull the
+          content stack out of the photo regardless of subject brightness. */}
+      <div class="hero-gradient-bottom pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-2/5"></div>
+    </>
+  )}
+
+  <div
+    class:list={[
+      'hero-content relative mx-auto w-full max-w-content px-margin pb-section',
+      hasPhoto ? 'text-white' : 'text-black',
+    ]}
+    data-reveal="hero"
+  >
+    {eyebrow && (
+      <SectionEyebrow color={hasPhoto ? 'cream' : 'black'} withLeadRule class="hero-eyebrow mb-8">
+        {eyebrow}
+      </SectionEyebrow>
+    )}
+
+    <h1 class="hero-headline font-display max-w-[820px] text-[48px] leading-[0.9] tracking-display md:text-hero">
+      {hasBlocks ? <span class="hero-block">{headline}</span> : headline}
+    </h1>
+
+    {body && (
+      <p class="hero-body mt-6 max-w-[560px] font-body text-body leading-[1.6]">
+        {hasBlocks ? <span class="hero-block">{body}</span> : body}
+      </p>
+    )}
+
+    {(primaryCta || secondaryCta) && (
+      <div class="hero-ctas mt-10 flex flex-wrap items-center gap-4">
+        {primaryCta && (
+          <Button variant="amber-fill" surface={btnSurface} href={primaryCta.href}>
+            {primaryCta.text}
+          </Button>
+        )}
+        {secondaryCta && (
+          <Button variant="outline" surface={btnSurface} href={secondaryCta.href}>
+            {secondaryCta.text}
+          </Button>
+        )}
+      </div>
+    )}
+  </div>
+</section>
+
+<style>
+  .hero-gradient-top {
+    background: linear-gradient(180deg, rgba(5, 8, 3, 0.82) 0%, rgba(5, 8, 3, 0) 100%);
+    mix-blend-mode: multiply;
+  }
+  .hero-gradient-bottom {
+    background: linear-gradient(0deg, rgba(5, 8, 3, 0.72) 0%, rgba(5, 8, 3, 0) 100%);
+  }
+  .hero-color-bg {
+    background: linear-gradient(166deg, #ffffff 50.9%, rgba(252, 230, 149, 0.49) 159.4%);
+  }
+  /* Per-line dark-green bg behind text — clones the decoration onto every
+     line break so the block hugs the text instead of stretching the whole
+     paragraph width. */
+  .hero-block {
+    background-color: rgba(8, 57, 40, 0.51);
+    padding: 0.05em 0.3em;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+</style>

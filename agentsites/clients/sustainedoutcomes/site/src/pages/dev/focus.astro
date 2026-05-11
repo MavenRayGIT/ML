@@ -1,0 +1,61 @@
+---
+/**
+ * /dev/focus — visual review of FocusAreas in both alignment variants.
+ */
+import Page from '../../layouts/Page.astro';
+import FocusAreas from '../../components/sections/FocusAreas.astro';
+import imgErb from '../../assets/FPO-Bluebell-Forest.jpg';
+import imgOak from '../../assets/FPO-Aspen-Path.jpg';
+import imgPath from '../../assets/FPO-Lake-Reflection.jpg';
+
+const items = [
+  {
+    title: 'Access to Nature',
+    body: 'Programs and policies that connect more people to the natural world.',
+    image: imgErb,
+    imageAlt: '',
+    linkText: 'Read more',
+    href: '/initiatives#access',
+  },
+  {
+    title: 'Connecting with Nature',
+    body: 'Helping organizations build meaningful relationships with the outdoors.',
+    image: imgOak,
+    imageAlt: '',
+    linkText: 'Read more',
+    href: '/initiatives#connecting',
+  },
+  {
+    title: 'Business Sustainability',
+    body: 'Embedding ecological values into long-term operating strategy.',
+    image: imgPath,
+    imageAlt: '',
+    linkText: 'Read more',
+    href: '/initiatives#sustainability',
+  },
+];
+---
+
+<Page
+  title="Dev — FocusAreas"
+  description="Visual review of FocusAreas section."
+  noindex
+>
+  <FocusAreas
+    eyebrow="Three areas of focus"
+    headline="Strategy rooted in purpose. Outcomes that endure."
+    body="We work with mission-driven organizations bringing people closer to the natural world. Our practice spans three areas — each interlocking with the next."
+    items={items}
+    align="left"
+  />
+
+  <hr class="border-gray-light" />
+
+  <FocusAreas
+    eyebrow="Centered variant"
+    headline="Same component, centered intro."
+    body="Provided for use on alternate pages — homepage default is left-aligned."
+    items={items}
+    align="centered"
+  />
+</Page>

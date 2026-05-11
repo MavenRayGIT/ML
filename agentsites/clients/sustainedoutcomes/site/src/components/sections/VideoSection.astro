@@ -1,0 +1,80 @@
+---
+/**
+ * VideoSection.astro — full-width video, amber band.
+ *
+ * Per HANDOFF.md → Component Map → VideoSection, amended 2026-05-11
+ * to render an embedded video player directly (no thumbnail+SVG
+ * intermediate state) — the chosen host is Bunny Stream, which owns
+ * its own poster + play-button UI.
+ *
+ * Layout:
+ *   - Amber band, full-width.
+ *   - Player constrained to `max-w-content`, 16:9 responsive iframe.
+ *   - Below the player: title (Mona Sans Bold 24px) + body, optionally
+ *     a duration label aligned right.
+ *
+ * Props:
+ *   - embedUrl: required Bunny iframe `src`. Pass the bare URL — query
+ *     params (preload/responsive/etc.) are already baked into the
+ *     player config on Bunny.
+ *   - title / body: card-level copy under the player.
+ *   - duration: optional small label (e.g. "2:48").
+ *   - allow / allowfullscreen: pass-through for non-standard embeds.
+ *
+ * Static section — no entry reveal (player UI handles its own intro).
+ */
+
+export interface Props {
+  embedUrl: string;
+  title?: string;
+  body?: string;
+  duration?: string;
+  /** Override the default Bunny allow string if embedding a different host. */
+  allow?: string;
+}
+
+const {
+  embedUrl,
+  title,
+  body,
+  duration,
+  allow = 'accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;',
+} = Astro.props;
+---
+
+<section
+  class="video-section relative w-full bg-amber py-section-sm md:py-section"
+  data-nav-bg="amber"
+>
+  <div class="mx-auto w-full max-w-content px-margin">
+    {/* 16:9 responsive container — the iframe fills the absolute box. */}
+    <div class="video-frame relative w-full overflow-hidden rounded-[2px]" style="padding-top: 56.25%;">
+      <iframe
+        src={embedUrl}
+        loading="lazy"
+        title={title ?? 'Video'}
+        allow={allow}
+        allowfullscreen
+        class="absolute inset-0 h-full w-full border-0"
+      ></iframe>
+    </div>
+
+    {(title || body || duration) && (
+      <div class="video-meta mt-8 flex flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-12">
+        <div class="max-w-[640px]">
+          {title && (
+            <h2 class="font-display text-card tracking-display text-black">{title}</h2>
+          )}
+          {body && (
+            <p class="mt-3 font-body text-body-lg leading-[1.6] text-black">{body}</p>
+          )}
+        </div>
+        {duration && (
+          <span class="font-body text-caption font-semibold text-black md:pt-1">
+            {duration}
+          </span>
+        )}
+      </div>
+    )}
+  </div>
+</section>

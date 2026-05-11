@@ -1,0 +1,92 @@
+---
+/**
+ * ServicesGrid.astro — consulting-service tiles, 3-col grid.
+ *
+ * Per HANDOFF.md → Component Map → ServicesGrid:
+ *   - White bg, standard section padding.
+ *   - Optional header block (eyebrow + H2 + intro body).
+ *   - 3-col grid: image top, H3 title (Mona Sans 24px), body, TextLink.
+ *
+ * Visually similar to FocusAreas but treats services rather than focus
+ * areas — kept as a separate component so the two can diverge if the
+ * design team wants different image ratios / card heights / hover
+ * behaviour without coupling.
+ *
+ * Reveal:
+ *   - Header block: `data-reveal="header"` (fade + 12px Y).
+ *   - Cards inherit; they don't stagger (per ANIMATION.md).
+ */
+
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import SectionEyebrow from '../ui/SectionEyebrow.astro';
+import TextLink from '../ui/TextLink.astro';
+
+export interface ServiceItem {
+  title: string;
+  body: string;
+  image: ImageMetadata;
+  imageAlt?: string;
+  linkText: string;
+  href: string;
+}
+
+export interface Props {
+  eyebrow?: string;
+  headline?: string;
+  body?: string;
+  items: ServiceItem[];
+}
+
+const { eyebrow, headline, body, items } = Astro.props;
+const hasHeader = Boolean(eyebrow || headline || body);
+---
+
+<section
+  class="services-grid relative w-full bg-white py-section"
+  data-nav-bg="white"
+>
+  <div class="mx-auto w-full max-w-content px-margin">
+    {hasHeader && (
+      <div class="services-header max-w-[720px]" data-reveal="header">
+        {eyebrow && (
+          <SectionEyebrow withLeadRule class="mb-6">{eyebrow}</SectionEyebrow>
+        )}
+        {headline && (
+          <h2 class="font-display text-h2-lg tracking-display text-black">{headline}</h2>
+        )}
+        {body && (
+          <p class="mt-6 font-body text-body leading-[1.6] text-black">{body}</p>
+        )}
+      </div>
+    )}
+
+    <ul class:list={[
+      'services-grid-list grid grid-cols-1 gap-x-8 gap-y-16 md:grid-cols-3',
+      hasHeader && 'mt-16',
+    ]}>
+      {items.map((item) => (
+        <li class="services-card flex flex-col">
+          <div class="services-card-image relative aspect-[16/9] w-full overflow-hidden">
+            <Image
+              src={item.image}
+              alt={item.imageAlt ?? ''}
+              widths={[400, 600, 900]}
+              sizes="(max-width: 768px) 100vw, 33vw"
+              class="h-full w-full object-cover"
+            />
+          </div>
+          <h3 class="mt-6 font-display text-card tracking-display text-black">
+            {item.title}
+          </h3>
+          <p class="mt-3 font-body text-body-sm leading-[1.6] text-black">
+            {item.body}
+          </p>
+          <div class="mt-4">
+            <TextLink href={item.href}>{item.linkText}</TextLink>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>

@@ -1,0 +1,110 @@
+---
+/**
+ * FocusAreas.astro — "Three Areas of Focus" type section.
+ *
+ * Per HANDOFF.md → Component Map → FocusAreas.
+ * Homepage default = **left-aligned** intro block above the 3-col grid
+ * (decided 2026-05-11). The `centered` variant ships for reuse on
+ * other pages.
+ *
+ * Layout:
+ *   - White bg, 128px vertical padding (--spacing-section).
+ *   - Intro block: eyebrow + H2 + body. Left-aligned (default) or centered.
+ *   - 3-col grid below: each item = 227×227 image, H4 title, body, TextLink.
+ *   - Mobile: 1-col stack.
+ *
+ * Reveal:
+ *   - Header block uses `data-reveal="header"` (fade + 12px Y).
+ *   - Card grid uses `data-reveal="row-shift"` (stagger from left).
+ *
+ * Copy & content come from props only — never hardcoded here.
+ */
+
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import SectionEyebrow from '../ui/SectionEyebrow.astro';
+import TextLink from '../ui/TextLink.astro';
+
+export interface FocusItem {
+  title: string;
+  body: string;
+  image: ImageMetadata;
+  imageAlt?: string;
+  linkText: string;
+  href: string;
+}
+
+export interface Props {
+  eyebrow?: string;
+  headline: string;
+  body?: string;
+  items: FocusItem[];
+  /** Intro alignment. Homepage = "left". */
+  align?: 'left' | 'centered';
+}
+
+const {
+  eyebrow,
+  headline,
+  body,
+  items,
+  align = 'left',
+} = Astro.props;
+---
+
+<section
+  class="focus-areas relative w-full bg-white py-section"
+  data-nav-bg="white"
+>
+  <div class="mx-auto w-full max-w-content px-margin">
+    {/* Header block — alignment switches between the two layout variants. */}
+    <div
+      class:list={[
+        'focus-header max-w-[720px]',
+        align === 'centered' ? 'mx-auto text-center' : 'text-left',
+      ]}
+      data-reveal="header"
+    >
+      {eyebrow && (
+        <SectionEyebrow withLeadRule={align === 'left'} class="mb-6">
+          {eyebrow}
+        </SectionEyebrow>
+      )}
+      <h2 class="font-display text-h2-lg tracking-display text-black">{headline}</h2>
+      {body && (
+        <p class="mt-6 font-body text-body leading-[1.6] text-black">{body}</p>
+      )}
+    </div>
+
+    {/* 3-col card grid. Images are full-column-width landscape (~16:9)
+        — the "227×227" figure in the original HANDOFF spec was a stale
+        Figma value; the design master uses wide landscape thumbs. */}
+    <ul
+      class="focus-grid mt-16 grid grid-cols-1 gap-x-8 gap-y-16 md:grid-cols-3"
+      data-reveal="row-shift"
+    >
+      {items.map((item) => (
+        <li class="focus-card flex flex-col">
+          <div class="focus-card-image relative aspect-[16/9] w-full overflow-hidden">
+            <Image
+              src={item.image}
+              alt={item.imageAlt ?? ''}
+              widths={[400, 600, 900]}
+              sizes="(max-width: 768px) 100vw, 33vw"
+              class="h-full w-full object-cover"
+            />
+          </div>
+          <h3 class="mt-6 font-display text-card tracking-display text-black">
+            {item.title}
+          </h3>
+          <p class="mt-3 font-body text-body-sm leading-[1.6] text-black">
+            {item.body}
+          </p>
+          <div class="mt-4">
+            <TextLink href={item.href}>{item.linkText}</TextLink>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>

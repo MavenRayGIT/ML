@@ -1,0 +1,46 @@
+---
+/**
+ * /dev/services — visual review of ServicesGrid.
+ */
+import Page from '../../layouts/Page.astro';
+import ServicesGrid from '../../components/sections/ServicesGrid.astro';
+import img1 from '../../assets/FPO-Lake-Reflection.jpg';
+import img2 from '../../assets/FPO-Bluebell-Forest.jpg';
+import img3 from '../../assets/FPO-Aspen-Path.jpg';
+
+const items = [
+  {
+    title: 'Strategy & Planning',
+    body: 'Long-range planning anchored in mission and ecology. Multi-year roadmaps for boards and executives.',
+    image: img1,
+    imageAlt: '',
+    linkText: 'Read more',
+    href: '/consulting#strategy',
+  },
+  {
+    title: 'Constituent Engagement',
+    body: 'Programs that bring more people closer to the natural world and keep them engaged through every season.',
+    image: img2,
+    imageAlt: '',
+    linkText: 'Read more',
+    href: '/consulting#engagement',
+  },
+  {
+    title: 'CRM & Marketing Systems',
+    body: 'Operational infrastructure for mission-driven orgs: CRM, donor data, content systems, integrated reporting.',
+    image: img3,
+    imageAlt: '',
+    linkText: 'Read more',
+    href: '/consulting#systems',
+  },
+];
+---
+
+<Page title="Dev — ServicesGrid" description="Visual review of ServicesGrid." noindex>
+  <ServicesGrid
+    eyebrow="What we do"
+    headline="Three lanes of consulting work."
+    body="A boutique practice — every engagement is led by Ken and shaped to the organization."
+    items={items}
+  />
+</Page>

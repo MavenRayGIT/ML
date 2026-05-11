@@ -1,0 +1,54 @@
+---
+/**
+ * /dev/split — visual review of all three FeatureSplit configurations
+ * used on the homepage:
+ *
+ *   1. ERB     — image-left,  dark,  angled
+ *   2. Oakland — image-right, light, angled
+ *   3. Founder — image-left,  light, plain, amber-fill CTA (Variant B)
+ */
+import Page from '../../layouts/Page.astro';
+import FeatureSplit from '../../components/sections/FeatureSplit.astro';
+import imgErb from '../../assets/FPO-Bluebell-Forest.jpg';
+import imgOak from '../../assets/FPO-Aspen-Path.jpg';
+import imgFounder from '../../assets/FPO-Hiker-Portrait.jpg';
+---
+
+<Page
+  title="Dev — FeatureSplit"
+  description="Visual review of FeatureSplit configurations on the homepage."
+  noindex
+>
+  <FeatureSplit
+    eyebrow="Initiative — ERB"
+    headline="Sustainable Business Innovation Cohort."
+    body="A working community for organizations putting ecological stewardship at the center of their operating strategy."
+    image={imgErb}
+    imageAlt=""
+    imagePosition="left"
+    dark
+    angled
+    cta={{ text: 'Learn more', href: '/initiatives#erb' }}
+  />
+
+  <FeatureSplit
+    eyebrow="Initiative — Oakland"
+    headline="Ready to get started in the Oakland Hills."
+    body="Bringing the working community of Sustained Outcomes to the East Bay — meeting people where they already are."
+    image={imgOak}
+    imageAlt=""
+    imagePosition="right"
+    angled
+    cta={{ text: 'Read the initiative', href: '/initiatives#oakland' }}
+  />
+
+  <FeatureSplit
+    eyebrow="From the Founder"
+    headline="Why Ken Jacobsen built Sustained Outcomes."
+    body="Twenty-five years of working at the intersection of conservation, business, and community service — distilled into a practice that helps mission-driven leaders move faster without compromising the mission."
+    image={imgFounder}
+    imageAlt=""
+    imagePosition="left"
+    cta={{ text: 'Meet Ken', href: '/about', variant: 'amber-fill' }}
+  />
+</Page>

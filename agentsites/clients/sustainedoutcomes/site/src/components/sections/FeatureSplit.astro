@@ -1,0 +1,134 @@
+---
+/**
+ * FeatureSplit.astro — 50/50 image + text split.
+ *
+ * Reused on the homepage for:
+ *   - Initiative ERB     (image-left,  dark,  angled)
+ *   - Initiative Oakland (image-right, light, angled)
+ *   - Founder            (image-left,  light, plain — amber-fill CTA per
+ *                         resolved Open Question 2026-05-11)
+ *
+ * Image side is flush to the page edge (breaks out of `max-w-content`).
+ * Text side sits within standard `px-margin` content margins.
+ *
+ * Mobile: stacks to 1-col with the image above the text.
+ *
+ * Angled treatment (per ANIMATION.md → Angle-shift):
+ *   - Resting clip-path applies a diagonal top + bottom edge.
+ *   - One-shot clip-path expand on entry via `data-reveal="angle-shift"`.
+ *   - The continuous scroll-tied edge spread (±24px each direction) is
+ *     a planned refinement pass and is intentionally NOT wired here yet.
+ *     The static angled silhouette + entry reveal is the v1.
+ *
+ * Copy & content come from props only.
+ */
+
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import Button from '../ui/Button.astro';
+import SectionEyebrow from '../ui/SectionEyebrow.astro';
+
+type FeatureCtaVariant = 'amber-fill' | 'green-fill' | 'outline' | 'outline-emph';
+type FeatureCtaSurface = 'light' | 'dark' | 'amber';
+
+export interface FeatureSplitCta {
+  text: string;
+  href: string;
+  /** Defaults to the sensible variant for the surface — see frontmatter below. */
+  variant?: FeatureCtaVariant;
+}
+
+export interface Props {
+  eyebrow?: string;
+  headline: string;
+  body?: string;
+  image: ImageMetadata;
+  imageAlt?: string;
+  imagePosition?: 'left' | 'right';
+  /** Dark surface = green-dark bg + white text. Default light. */
+  dark?: boolean;
+  /** Apply the diagonal clip-path treatment. Used on the two initiatives. */
+  angled?: boolean;
+  cta?: FeatureSplitCta;
+}
+
+const {
+  eyebrow,
+  headline,
+  body,
+  image,
+  imageAlt = '',
+  imagePosition = 'left',
+  dark = false,
+  angled = false,
+  cta,
+} = Astro.props;
+
+const navBg = dark ? 'dark' : 'white';
+const ctaSurface: FeatureCtaSurface = dark ? 'dark' : 'light';
+const ctaVariant: FeatureCtaVariant = cta?.variant ?? (dark ? 'amber-fill' : 'outline');
+
+// Angled sections opt into `angle-shift` for the one-shot entry clip-path
+// reveal. Plain sections use the standard `header` block reveal.
+const reveal = angled ? 'angle-shift' : 'header';
+---
+
+<section
+  class:list={[
+    'feature-split relative w-full overflow-hidden',
+    dark ? 'bg-green-dark text-white' : 'bg-white text-black',
+    angled && 'feature-split-angled',
+  ]}
+  data-nav-bg={navBg}
+  data-reveal={reveal}
+  data-image-position={imagePosition}
+>
+  <div class="grid grid-cols-1 md:grid-cols-2">
+    {/* Image cell — full bleed to the page edge. */}
+    <div
+      class:list={[
+        'feature-split-image relative w-full min-h-[320px] md:min-h-[622px]',
+        imagePosition === 'right' && 'md:order-2',
+      ]}
+    >
+      <Image
+        src={image}
+        alt={imageAlt}
+        widths={[640, 960, 1280]}
+        sizes="(max-width: 768px) 100vw, 50vw"
+        class="absolute inset-0 h-full w-full object-cover"
+      />
+    </div>
+
+    {/* Text cell — content sits within standard page margins. */}
+    <div class="feature-split-text flex items-center px-margin py-section-sm md:py-section">
+      <div class="feature-split-content max-w-[520px]">
+        {eyebrow && (
+          <SectionEyebrow color={dark ? 'amber' : 'black'} withLeadRule class="mb-6">
+            {eyebrow}
+          </SectionEyebrow>
+        )}
+        <h2 class="font-display text-h2 tracking-display">{headline}</h2>
+        {body && (
+          <p class="mt-6 font-body text-body-lg leading-[1.6]">{body}</p>
+        )}
+        {cta && (
+          <div class="mt-8">
+            <Button variant={ctaVariant} surface={ctaSurface} href={cta.href}>
+              {cta.text}
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Resting angled silhouette — diagonal top edge slopes up-right, diagonal
+     bottom edge slopes down-right. Held statically here; the entry reveal
+     transition is owned by global.css `[data-reveal="angle-shift"]`. */
+  .feature-split-angled {
+    clip-path: polygon(0% 10%, 100% 0%, 100% 90%, 0% 100%);
+  }
+</style>
