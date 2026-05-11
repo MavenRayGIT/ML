@@ -1,0 +1,97 @@
+---
+/**
+ * BlogPostingJsonLd.astro — JSON-LD schema.org `BlogPosting` payload.
+ *
+ * Drop into the `head` slot of the blog detail page. Produces a single
+ * `<script type="application/ld+json">` tag that gives crawlers (and AIO
+ * surfaces like Perplexity, Google AI Overviews, ClaudeBot) a structured
+ * "this is an article with these properties" signal.
+ *
+ * All fields are derived from the post + site context — there's no
+ * frontmatter override surface in v1. Tier 2 (per-post `seoTitle`,
+ * `keywords`, `updated`, etc.) is the next bump if/when the client wants
+ * finer-grained control.
+ *
+ * What we emit:
+ *   - headline / description / url / mainEntityOfPage
+ *   - image (1 entry; the OG image we derived in the page)
+ *   - author (Person)
+ *   - publisher (Organization with logo)
+ *   - datePublished / dateModified
+ *   - articleSection (category)
+ *
+ * What we intentionally skip (v1):
+ *   - wordCount — requires walking the MDX AST; defer until we have
+ *     a real reason to add it.
+ *   - keywords — needs the Tier 2 frontmatter field. No-op until then.
+ *   - publisher.sameAs — we don't have an authoritative LinkedIn/X URL
+ *     to point at yet; partial values hurt more than they help.
+ */
+
+export interface Props {
+  title:          string;
+  description:    string;
+  /** Absolute URL to the post's OG image (already resolved by page). */
+  imageUrl?:      string;
+  authorName:     string;
+  /** Absolute publisher logo URL (256px-ish PNG, schema.org-friendly). */
+  publisherLogo:  string;
+  /** ISO 8601 timestamp. */
+  publishedISO:   string;
+  /** ISO 8601 timestamp. Defaults to publishedISO when no update yet. */
+  modifiedISO?:   string;
+  /** Article category, e.g. "Access to Nature". */
+  section:        string;
+  /** Absolute canonical URL of the post. */
+  canonicalUrl:   string;
+  /** Absolute site URL — publisher.url. */
+  siteUrl:        string;
+}
+
+const {
+  title,
+  description,
+  imageUrl,
+  authorName,
+  publisherLogo,
+  publishedISO,
+  modifiedISO,
+  section,
+  canonicalUrl,
+  siteUrl,
+} = Astro.props;
+
+const payload = {
+  '@context': 'https://schema.org',
+  '@type':    'BlogPosting',
+  headline:    title,
+  description,
+  ...(imageUrl ? { image: [imageUrl] } : {}),
+  url:         canonicalUrl,
+  mainEntityOfPage: {
+    '@type': 'WebPage',
+    '@id':   canonicalUrl,
+  },
+  author: {
+    '@type': 'Person',
+    name:    authorName,
+  },
+  publisher: {
+    '@type': 'Organization',
+    name:    'Sustained Outcomes',
+    url:     siteUrl,
+    logo: {
+      '@type': 'ImageObject',
+      url:     publisherLogo,
+    },
+  },
+  datePublished: publishedISO,
+  dateModified:  modifiedISO ?? publishedISO,
+  articleSection: section,
+};
+---
+
+{/* `set:html` + JSON.stringify produces compact, valid JSON in the
+    script body — Astro's templating doesn't try to interpret it as
+    HTML. */}
+<script type="application/ld+json" set:html={JSON.stringify(payload)} />

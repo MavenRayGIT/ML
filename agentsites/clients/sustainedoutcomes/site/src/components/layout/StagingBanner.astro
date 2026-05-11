@@ -1,30 +1,64 @@
 ---
 /**
- * StagingBanner.astro — collapsible, fade-on-scroll environment marker.
+ * StagingBanner.astro — collapsible, expandable, fade-on-scroll
+ * environment marker.
  *
- * Visual states (orthogonal, both can be active):
+ * Three visual states, controlled by two orthogonal flags on
+ * `<html>`:
  *
- *   Expanded  (default)             Collapsed
- *   ┌────────────────────────────┐  ┌──┐ (top-right corner 0/0)
- *   │ STAGING · hostname     × │  │≡ │
- *   └────────────────────────────┘  └──┘
+ *   data-staging-banner-collapsed   data-staging-banner-expanded
+ *   ──────────────────────────────  ─────────────────────────────
  *
- *   - Click `×` on the bar          → switch to collapsed
- *   - Click the corner handle (`≡`) → switch back to expanded
+ *   (neither)   →  bar only (default)
+ *   expanded    →  bar + drop-down panel
+ *   collapsed   →  corner handle only (overrides expanded)
+ *
+ *   ┌────────────────────────────────────────────┐
+ *   │ STAGING · hostname        [chevron]   ×   │  ← bar
+ *   ├────────────────────────────────────────────┤
+ *   │  SEO / AIO        ●  System default        │  ← panel rows
+ *   │  Analytics        ○  Not configured        │
+ *   │  Ticketing        ○  Not configured        │
+ *   └────────────────────────────────────────────┘
+ *
+ *   Collapsed:  ┌──┐ (top-right, dismiss to preview the page clean)
+ *               │≡ │
+ *               └──┘
+ *
+ * Interactions:
+ *   - `×` on the bar           → collapse to corner handle
+ *   - `≡` corner handle        → restore bar
+ *   - chevron on the bar       → toggle panel open / closed
  *
  *   While the user is actively scrolling, whichever shape is currently
  *   visible fades to opacity 0; once scrolling has been idle for
- *   ~400ms it fades back in. Stays out of the way while reading, comes
- *   back the moment you stop.
+ *   ~400ms it fades back in. Keeps the chrome out of the way while
+ *   reading, brings it back the moment you stop.
  *
  * Layout note:
- *   The banner is a pure overlay — it does NOT push the nav or any other
- *   chrome down. When expanded, the bar briefly covers the top 32px of
- *   the nav; collapse it to preview the page exactly as it'll ship.
+ *   The banner is a pure overlay — it does NOT push the nav or any
+ *   other chrome down. Expand the panel only when you want to see the
+ *   per-system status; collapse the whole thing to preview the page
+ *   exactly as it'll ship.
  *
- * Persistence: collapsed state is remembered in `localStorage` so the
- * user only has to dismiss once per browser. Restored synchronously
- * at the top of the component to avoid a flash on subsequent loads.
+ * Status panel (v1 — labels only):
+ *   - SEO / AIO ......... "System default"   (Tier 1 auto-derives all
+ *                          meta from MDX frontmatter — og:image from
+ *                          cover, JSON-LD BlogPosting, article:* OG.)
+ *   - Analytics ......... "Not configured"   (placeholder — Step 8 is
+ *                          the GTM events wiring pass.)
+ *   - Ticketing ......... "Not configured"   (placeholder — pending
+ *                          system selection.)
+ *
+ *   In Tier 2+ each row becomes a click-into-edit affordance: open a
+ *   Cursor/Claude session to update per-page or global SEO content,
+ *   patch an analytics tag, etc. The current row markup is shaped to
+ *   accept that — keeping the dot + label + status pattern stable.
+ *
+ * Persistence:
+ *   Collapsed + expanded states each save to localStorage so the dev
+ *   only configures the bar once per browser. Restored synchronously
+ *   at the top of the component to avoid a flash on subsequent loads.
  *
  * Env hook:
  *   Default: rendered (we're pre-launch).
@@ -41,44 +75,109 @@ const {
   label = 'STAGING',
   hostname = 'sustainedoutcomes.mackandlee.com',
 } = Astro.props;
+
+/* Status rows — keep this list ordered by readiness. The first row
+   (SEO / AIO) is the only one with "active" status today; the others
+   are placeholders for future systems. */
+const rows: Array<{
+  id: string;
+  label: string;
+  status: string;
+  /** When `true`, renders the filled green dot — system is live. */
+  active: boolean;
+}> = [
+  { id: 'seo',      label: 'SEO / AIO',  status: 'System default', active: true  },
+  { id: 'analytics',label: 'Analytics',  status: 'Not configured', active: false },
+  { id: 'tickets',  label: 'Ticketing',  status: 'Not configured', active: false },
+];
 ---
 
-{/* Restore previously-collapsed state synchronously to avoid a flash. */}
+{/* Restore previously-saved state synchronously to avoid a flash. */}
 <script is:inline>
   (() => {
     try {
       if (localStorage.getItem('so:staging-banner-collapsed') === 'true') {
         document.documentElement.setAttribute('data-staging-banner-collapsed', '');
       }
+      if (localStorage.getItem('so:staging-banner-expanded') === 'true') {
+        document.documentElement.setAttribute('data-staging-banner-expanded', '');
+      }
     } catch (_) {}
   })();
 </script>
 
-{/* Expanded bar — full-width strip at top. */}
+{/* Bar shell — owns the label + the two right-aligned controls. */}
 <div
   data-staging-banner-bar
-  class="fixed inset-x-0 top-0 z-[55] h-8 bg-[#020302] text-white transition-opacity duration-base ease-default"
+  class="fixed inset-x-0 top-0 z-[55] bg-[#020302] text-white transition-opacity duration-base ease-default"
 >
-  <div class="relative mx-auto flex h-full w-full max-w-content items-center justify-center px-margin">
+  <div class="relative mx-auto flex h-8 w-full max-w-content items-center justify-center px-margin">
     <span class="font-body text-caption uppercase tracking-eyebrow">
       {label} · {hostname}
     </span>
-    <button
-      type="button"
-      data-staging-banner-collapse
-      aria-label="Hide staging banner"
-      class="absolute right-margin top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-white/80 transition-colors duration-quick ease-default hover:text-white"
-    >
-      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-        <line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1.5" />
-        <line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1.5" />
-      </svg>
-    </button>
+
+    {/* Right-aligned control cluster — chevron then close. Tight gap so
+        the X stays anchored to the page edge while the chevron tucks
+        in next to it. */}
+    <div class="absolute right-margin top-1/2 flex -translate-y-1/2 items-center gap-1">
+      <button
+        type="button"
+        data-staging-banner-expand
+        aria-label="Show staging tools"
+        aria-expanded="false"
+        class="staging-chevron flex h-6 w-6 items-center justify-center text-white/80 transition-colors duration-quick ease-default hover:text-white"
+      >
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+          <path d="M2 3.5 5 6.5 8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        data-staging-banner-collapse
+        aria-label="Hide staging banner"
+        class="flex h-6 w-6 items-center justify-center text-white/80 transition-colors duration-quick ease-default hover:text-white"
+      >
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+          <line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1.5" />
+          <line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1.5" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  {/* ── Expanded panel ─────────────────────────────────────────────
+      Renders directly below the bar at the same x-extent. Visibility
+      is driven by `data-staging-banner-expanded` on <html> (see the
+      <style> block). Hidden by default so the bar layout stays
+      compact for users who never open it.
+
+      Row markup is intentionally inert in v1 — no click handlers, no
+      hover affordance. Tier 2+ will promote rows to interactive tiles
+      (open Cursor/Claude on this page's SEO, edit globally, etc.). */}
+  <div data-staging-banner-panel class="staging-panel border-t border-white/10">
+    <ul role="list" class="mx-auto w-full max-w-content divide-y divide-white/5 px-margin">
+      {rows.map((row) => (
+        <li class="flex items-center justify-between gap-4 py-2">
+          <span class="font-body text-caption uppercase tracking-eyebrow text-white/90">
+            {row.label}
+          </span>
+          <span class="flex items-center gap-2 font-body text-caption text-white/70">
+            <span
+              class:list={[
+                'staging-status-dot inline-block h-1.5 w-1.5 rounded-full',
+                row.active ? 'bg-[var(--color-amber)]' : 'bg-white/30',
+              ]}
+              aria-hidden="true"
+            />
+            {row.status}
+          </span>
+        </li>
+      ))}
+    </ul>
   </div>
 </div>
 
-{/* Collapsed handle — small black square in top-right corner.
-    `aria-haspopup="true"` because clicking it brings up the bar. */}
+{/* Collapsed handle — small black square in top-right corner. */}
 <button
   type="button"
   data-staging-banner-handle
@@ -96,24 +195,48 @@ const {
 <script is:inline>
   (() => {
     const root = document.documentElement;
-    const STORAGE_KEY = 'so:staging-banner-collapsed';
+    const STORAGE_COLLAPSED = 'so:staging-banner-collapsed';
+    const STORAGE_EXPANDED  = 'so:staging-banner-expanded';
     const SCROLL_IDLE_MS = 400;
 
     const collapseBtn = document.querySelector('[data-staging-banner-collapse]');
     const handleBtn   = document.querySelector('[data-staging-banner-handle]');
+    const expandBtn   = document.querySelector('[data-staging-banner-expand]');
+
+    function persist(key, value) {
+      try { localStorage.setItem(key, value ? 'true' : 'false'); } catch (_) {}
+    }
 
     function setCollapsed(value) {
       if (value) root.setAttribute('data-staging-banner-collapsed', '');
       else       root.removeAttribute('data-staging-banner-collapsed');
-      try { localStorage.setItem(STORAGE_KEY, value ? 'true' : 'false'); } catch (_) {}
+      persist(STORAGE_COLLAPSED, value);
+    }
+
+    function setExpanded(value) {
+      if (value) root.setAttribute('data-staging-banner-expanded', '');
+      else       root.removeAttribute('data-staging-banner-expanded');
+      if (expandBtn) expandBtn.setAttribute('aria-expanded', value ? 'true' : 'false');
+      persist(STORAGE_EXPANDED, value);
+    }
+
+    // Initialise aria-expanded from the persisted state.
+    if (expandBtn) {
+      expandBtn.setAttribute(
+        'aria-expanded',
+        root.hasAttribute('data-staging-banner-expanded') ? 'true' : 'false'
+      );
     }
 
     if (collapseBtn) collapseBtn.addEventListener('click', () => setCollapsed(true));
     if (handleBtn)   handleBtn.addEventListener('click',   () => setCollapsed(false));
+    if (expandBtn)   expandBtn.addEventListener('click', () => {
+      setExpanded(!root.hasAttribute('data-staging-banner-expanded'));
+    });
 
     // Fade-on-scroll. Single rAF-throttled scroll listener; debounced
-    // by SCROLL_IDLE_MS to detect "scroll stop". Use the data attribute
-    // so CSS owns the actual fade transition.
+    // by SCROLL_IDLE_MS to detect "scroll stop". CSS owns the fade
+    // transition; this only flips the data attribute.
     let scrollTimer = null;
     let ticking = false;
 
@@ -138,9 +261,25 @@ const {
 </script>
 
 <style is:global>
-  /* Collapsed state: hide bar, show handle. */
-  :root[data-staging-banner-collapsed]    [data-staging-banner-bar]    { display: none; }
+  /* ── Visibility rules ─────────────────────────────────────────
+     - Collapsed: hide bar, show corner handle.
+     - Not collapsed: hide corner handle.
+     - Panel visible iff expanded AND not collapsed.
+     - Chevron icon rotates 180° when expanded so the chevron points
+       up. */
+  :root[data-staging-banner-collapsed]      [data-staging-banner-bar]    { display: none; }
   :root:not([data-staging-banner-collapsed]) [data-staging-banner-handle] { display: none; }
+
+  /* Panel — hidden by default, visible when expanded (and not
+     collapsed; collapsed already hides the whole bar). */
+  [data-staging-banner-panel] { display: none; }
+  :root[data-staging-banner-expanded]:not([data-staging-banner-collapsed]) [data-staging-banner-panel] {
+    display: block;
+  }
+
+  /* Chevron rotation in expanded state. */
+  :root[data-staging-banner-expanded] .staging-chevron svg { transform: rotate(180deg); }
+  .staging-chevron svg { transition: transform var(--duration-quick) var(--ease-default); }
 
   /* Active-scroll fade — applies to whichever shape is currently
      visible (the other is display: none and unaffected). */

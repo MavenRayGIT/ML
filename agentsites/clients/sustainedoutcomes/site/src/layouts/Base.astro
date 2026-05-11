@@ -11,6 +11,19 @@
  */
 import '../styles/global.css';
 
+/**
+ * Article-specific OG meta. Only emitted when `ogType === 'article'`.
+ * The blog detail page populates this from MDX frontmatter; non-blog
+ * pages leave it undefined.
+ */
+export interface ArticleMeta {
+  publishedTime?: string;  // ISO 8601
+  modifiedTime?:  string;  // ISO 8601
+  author?:        string;
+  section?:       string;  // article:section — category
+  tags?:          string[];
+}
+
 export interface Props {
   /** Document <title>. Falls back to "Sustained Outcomes". */
   title?: string;
@@ -29,6 +42,11 @@ export interface Props {
    * a localised page.
    */
   lang?: string;
+  /**
+   * Article-only OG meta. Wired by `/blog/[...slug].astro` from MDX
+   * frontmatter. Ignored unless `ogType === 'article'`.
+   */
+  articleMeta?: ArticleMeta;
 }
 
 const {
@@ -39,6 +57,7 @@ const {
   canonical,
   noindex = false,
   lang = 'en',
+  articleMeta,
 } = Astro.props;
 
 const PUBLIC_GTM_ID = import.meta.env.PUBLIC_GTM_ID;
@@ -79,6 +98,22 @@ const ogImageURL = ogImage.startsWith('http') ? ogImage : new URL(ogImage, siteO
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageURL} />
+
+    {/* Article-specific OG meta — Facebook/LinkedIn/Slack rich preview
+        + general crawler signals. Only emitted on article pages; all
+        fields are individually optional so v1 posts that don't set
+        e.g. `updated` still produce valid OG meta. */}
+    {ogType === 'article' && articleMeta && (
+      <>
+        {articleMeta.publishedTime && <meta property="article:published_time" content={articleMeta.publishedTime} />}
+        {articleMeta.modifiedTime  && <meta property="article:modified_time"  content={articleMeta.modifiedTime} />}
+        {articleMeta.author        && <meta property="article:author"         content={articleMeta.author} />}
+        {articleMeta.section       && <meta property="article:section"        content={articleMeta.section} />}
+        {articleMeta.tags?.map((tag) => (
+          <meta property="article:tag" content={tag} />
+        ))}
+      </>
+    )}
 
     <slot name="head" />
 

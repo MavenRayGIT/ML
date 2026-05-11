@@ -20,6 +20,7 @@
  * Composing pages forward arbitrary <head> content via the `head` slot.
  */
 import Base from './Base.astro';
+import type { ArticleMeta } from './Base.astro';
 import Nav from '../components/layout/Nav.astro';
 import Footer from '../components/layout/Footer.astro';
 import StagingBanner from '../components/layout/StagingBanner.astro';
@@ -32,6 +33,7 @@ type BaseProps = {
   canonical?: string;
   noindex?: boolean;
   lang?: string;
+  articleMeta?: ArticleMeta;
 };
 
 export interface Props extends BaseProps {

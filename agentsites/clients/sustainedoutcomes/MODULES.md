@@ -28,7 +28,8 @@ Visual review page: [`/dev/primitives`](site/src/pages/dev/primitives.astro) (no
 | `Nav.astro` | done | 3 scroll states — section-driven via `data-nav-bg`. **Dark state is transparent at rest**; once scrolled (`data-nav-compact="true"`, threshold 32px) it picks up `rgba(8,57,40,0.88)` + `backdrop-filter blur(8px)` so hero copy passing under no longer collides. In compact, the desktop nav itself **shrinks 74→56px**, logo 40→32px circle / 28→22px wordmark, and CTA padding 24×12 → 18×8 — all transitioning together (250ms). 74/56px desktop · 56px mobile · 20px page gutter on mobile. **Hamburger up to 1100px** (`--breakpoint-nav` / `nav:` Tailwind variant) — keeps the full row from wrapping on narrow laptops. Mobile = hamburger → full amber overlay. |
 | `Footer.astro` | done | 3-col, icon + wordmark logo, amber tagline, cream copyright. No divider rule (amended). |
 | `Page.astro` | done | Base + StagingBanner + Nav + Footer (`src/layouts/`). `hasHero` skips top padding so heroes sit flush; banner is a pure overlay (no chrome reflow). |
-| `StagingBanner.astro` | done | Collapsible (× → corner handle → click to re-open), fade-on-scroll, localStorage-persisted. Suppress with `PUBLIC_HIDE_STAGING_BANNER=true`. |
+| `StagingBanner.astro` | done | Collapsible (× → corner handle → click to re-open), expandable panel via chevron (SEO/AIO ● System default, Analytics ○ Not configured, Ticketing ○ Not configured — Tier 2 promotes these to interactive tiles), fade-on-scroll, localStorage-persisted. Suppress with `PUBLIC_HIDE_STAGING_BANNER=true`. |
+| `BlogPostingJsonLd.astro` | done | `src/components/seo/` — JSON-LD `BlogPosting` payload for blog detail pages. All fields auto-derived from MDX frontmatter; no override surface in v1 (Tier 2 adds optional `seoTitle`, `keywords`, `updated`, `noindex`, `canonical`). |
 
 Visual review page: [`/dev/layout`](site/src/pages/dev/layout.astro) (4-band scroll-state demo for the nav, full footer).
 
@@ -125,10 +126,56 @@ Step 7 conversation. Captured here so they aren't lost.
 | Item | Status | Notes |
 | --- | --- | --- |
 | Keyword search on `/blog` | deferred | User: "We may want a keyword search? we don't have to have it now." Likely implementation: small client-side fuzzy index over title + excerpt + tags, no server round-trip. |
-| URL-state filter sync on `/blog` | deferred | Current dropdown is purely client-side (refresh resets to All). Sync to `?category=` so filter state is shareable / back-button friendly. |
+| URL-state filter sync on `/blog` | done | `?category=` is now read on load and pre-selects the dropdown; changes write back via `replaceState`. Wired 2026-05-11 alongside the clickable category chip on blog detail pages. |
 | Banner content collection | deferred | `BlogPromoBanner` v1 takes inline props; a `banners` content collection (similar shape to `blog`) would let banners be CMS-managed and reused across posts without touching MDX. |
 | Web Share API fallback | deferred | `BlogShareButton` currently always copies URL. A native share sheet on mobile (where it works) would be a nice progressive enhancement. |
 | H3-depth TOC | deferred | TOC currently lists H2 only. Optional flag on `BlogToc` to drop down a level when posts get long and structured. |
+
+## SEO / AIO
+
+Tier 1 — wired 2026-05-11. All meta auto-derived from MDX frontmatter
+(no per-post override surface yet).
+
+| Output | Source | Where |
+|---|---|---|
+| `<title>` | `frontmatter.title` + " — Sustained Outcomes" | `Base.astro` |
+| `<meta name="description">` | `frontmatter.excerpt` (fallback to "{title} — a field note...") | `Base.astro` |
+| `<link rel="canonical">` | computed `<Astro.site>/blog/<slug>/` | `Base.astro` |
+| `og:type` | hardcoded `article` for blog detail | `blog/[...slug].astro` |
+| `og:image` | `frontmatter.image` resolved via `getImage({ width: 1200 })`, absolute URL | `blog/[...slug].astro` |
+| `article:published_time` / `article:modified_time` | `frontmatter.date` (modified == published in v1) | `Base.astro` ← `articleMeta` |
+| `article:author` | `frontmatter.author` | `Base.astro` ← `articleMeta` |
+| `article:section` | `frontmatter.category` | `Base.astro` ← `articleMeta` |
+| JSON-LD `BlogPosting` | derived from all of the above + publisher (Sustained Outcomes + SO icon as logo) | `BlogPostingJsonLd.astro` in `head` slot |
+
+The staging banner's expandable panel surfaces the SEO/AIO row as
+"System default" so the client can tell at a glance the page is
+publishing valid Tier 1 meta with no manual configuration.
+
+### Tier 2 (deferred — promotes when the client wants control)
+
+| Field | Purpose | Wiring impact |
+|---|---|---|
+| `seoTitle?: string` | SERP-tuned title, shorter / keyword-led | Override `<title>` when present, fall back to existing title |
+| `seoDescription?: string` | SERP-tuned description | Override meta description |
+| `keywords?: string[]` | Per-post keywords for AIO tagging | Render into JSON-LD `keywords` + multiple `article:tag` meta |
+| `updated?: Date` | Last-revised date — Google rewards freshness | Override `dateModified` + `article:modified_time` |
+| `noindex?: boolean` | Publish live but block indexing | Emit `<meta name="robots" content="noindex, nofollow">` |
+| `canonical?: string` | Syndicated-content support | Override canonical link |
+| `ogImage?: string` | Override the auto-derived cover for social previews | Replace OG image URL |
+
+When Tier 2 ships, the staging panel's SEO/AIO row promotes to an
+interactive tile: open a Cursor/Claude session on this page's
+frontmatter to edit any of the above, or jump to a global SEO
+defaults config.
+
+### Tier 3 (site-wide pass, future)
+
+- `twitter:site` handle (Base.astro)
+- `@astrojs/sitemap` integration → `/sitemap.xml`
+- Explicit `robots.txt` allowing GPTBot / ClaudeBot / PerplexityBot / Googlebot + pointing to sitemap
+- Optional RSS feed at `/blog/feed.xml`
+- Site-wide `Organization` JSON-LD in `Base.astro` (sameAs LinkedIn etc. once known)
 
 ## Archived module list (Design v1 / Breakdance naming)
 

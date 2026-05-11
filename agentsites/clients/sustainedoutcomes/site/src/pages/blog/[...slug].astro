@@ -29,6 +29,7 @@
 
 import type { CollectionEntry } from 'astro:content';
 import { getCollection, render } from 'astro:content';
+import { getImage } from 'astro:assets';
 
 import Page             from '../../layouts/Page.astro';
 import BlogDetailHero   from '../../components/blog/BlogDetailHero.astro';
@@ -37,6 +38,8 @@ import BlogShareButton  from '../../components/blog/BlogShareButton.astro';
 import BlogPromoBanner  from '../../components/blog/BlogPromoBanner.astro';
 import BlogRelated      from '../../components/blog/BlogRelated.astro';
 import CTABand          from '../../components/sections/CTABand.astro';
+import BlogPostingJsonLd from '../../components/seo/BlogPostingJsonLd.astro';
+import siteIconRaster   from '../../assets/logos/SO-Icon-Color-small.png';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog', ({ data }) => !data.draft);
@@ -73,14 +76,77 @@ const related = [...sameCategory, ...otherCategory].slice(0, 3).map((p) => ({
 
 const description = post.data.excerpt
   ?? `${post.data.title} — a field note from Sustained Outcomes.`;
+
+/* ───── SEO / AIO Tier 1 ──────────────────────────────────────────────
+   Everything below is auto-derived from the post frontmatter — no
+   manual override surface in v1. A "Tier 2" pass (per-post seoTitle,
+   keywords, updated date, noindex) is on the deferred list in
+   HANDOFF.md → SEO/AIO.
+
+   We resolve absolute URLs here (not in the components) so the
+   transform pipeline is colocated with the page that owns the data. */
+
+const siteOrigin = Astro.site ?? new URL('https://sustainedoutcomes.com');
+const canonicalURL = new URL(Astro.url.pathname, siteOrigin).toString();
+
+// OG image — derive a 1200×630-ish JPG from the post's cover image
+// when present, otherwise fall back to the site default. `getImage()`
+// kicks off the same transform pipeline as the <Image /> component and
+// returns the public `/_astro/` URL we can absolutise.
+let ogImagePath: string | undefined;
+if (post.data.image) {
+  const og = await getImage({
+    src: post.data.image,
+    width: 1200,
+    format: 'jpg',
+  });
+  ogImagePath = og.src;
+}
+const ogImageURL = ogImagePath
+  ? new URL(ogImagePath, siteOrigin).toString()
+  : new URL('/og-default.jpg', siteOrigin).toString();
+
+// Publisher logo for JSON-LD — schema.org recommends a ≥112×112 raster.
+// Our tree icon (SO-Icon-Color-small.png) is square and on brand;
+// `getImage` outputs a hashed `/_astro/` URL we can serve absolute.
+const publisherLogo = await getImage({
+  src: siteIconRaster,
+  width: 256,
+  format: 'png',
+});
+const publisherLogoURL = new URL(publisherLogo.src, siteOrigin).toString();
+
+const publishedISO = post.data.date.toISOString();
+const articleMeta = {
+  publishedTime: publishedISO,
+  modifiedTime:  publishedISO,  // Tier 2: real `updated` field
+  author:        post.data.author,
+  section:       post.data.category,
+  tags:          undefined,     // Tier 2: real `keywords` field
+};
 ---
 
 <Page
   title={`${post.data.title} — Sustained Outcomes`}
   description={description}
   ogType="article"
+  ogImage={ogImageURL}
+  articleMeta={articleMeta}
   hasHero
 >
+  <Fragment slot="head">
+    <BlogPostingJsonLd
+      title={post.data.title}
+      description={description}
+      imageUrl={ogImageURL}
+      authorName={post.data.author}
+      publisherLogo={publisherLogoURL}
+      publishedISO={publishedISO}
+      section={post.data.category}
+      canonicalUrl={canonicalURL}
+      siteUrl={siteOrigin.toString()}
+    />
+  </Fragment>
   <BlogDetailHero
     title={post.data.title}
     category={post.data.category}
