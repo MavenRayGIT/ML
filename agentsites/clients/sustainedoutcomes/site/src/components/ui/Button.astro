@@ -28,10 +28,11 @@
  *                │ → hover: amber bg                 │                                │ → hover: white bg
  *                │          green-dark text          │                                │          green-dark text
  * ───────────────┼───────────────────────────────────┼────────────────────────────────┼─────────────────────────────────
- *  outline       │ transparent · green-dark border   │ transparent · amber border     │ transparent · green-dark border
+ *  outline       │ transparent · green-dark border   │ 50% green-dark · amber border  │ transparent · green-dark border
  *                │ green-dark text                   │ amber text                     │ green-dark text
- *                │ → hover: amber border             │ → hover: white border          │ → hover: white border
- *                │          green-dark text (held)   │          amber text (held)     │          green-dark text (held)
+ *                │ → hover: amber border             │ → hover: 100% green-dark bg    │ → hover: white border
+ *                │          green-dark text (held)   │          white border          │          green-dark text (held)
+ *                │                                   │          amber text (held)     │
  * ───────────────┼───────────────────────────────────┼────────────────────────────────┼─────────────────────────────────
  *  outline-emph  │ transparent · amber border        │ (aliases to outline × dark —   │ (amber border on amber is
  *                │ green-dark text                   │  amber border is the default   │  invisible — aliases to
@@ -113,13 +114,18 @@ const styles: Record<ButtonVariant, Record<ButtonSurface, string>> = {
   },
   'outline': {
     light: 'bg-transparent border border-green-dark text-green-dark hover:border-amber',
-    dark:  'bg-transparent border border-amber text-amber hover:border-white',
+    // On photo heroes the amber-on-photo outline used to be transparent
+    // and the text could collide with bright foliage. The 50% green-dark
+    // plate gives the type a readable base; hover ramps to 100% opacity
+    // (and flips the border to white) for the held state. Tailwind v4
+    // emits `bg-green-dark/50` as `color-mix(in srgb, var(--color-green-dark) 50%, transparent)`.
+    dark:  'bg-green-dark/50 border border-amber text-amber hover:bg-green-dark hover:border-white',
     amber: 'bg-transparent border border-green-dark text-green-dark hover:border-white',
   },
   'outline-emph': {
     light: 'bg-transparent border border-amber text-green-dark hover:bg-amber hover:text-black',
-    dark:  'bg-transparent border border-amber text-amber hover:border-white',         // alias dark outline
-    amber: 'bg-transparent border border-green-dark text-green-dark hover:border-white', // alias amber outline
+    dark:  'bg-green-dark/50 border border-amber text-amber hover:bg-green-dark hover:border-white', // alias dark outline
+    amber: 'bg-transparent border border-green-dark text-green-dark hover:border-white',             // alias amber outline
   },
 };
 ---

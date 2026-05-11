@@ -9,6 +9,7 @@
  *
  * Layout:
  *   - Amber band, full-width.
+ *   - Optional eyebrow above the player (black on amber band).
  *   - Player constrained to `max-w-content`, 16:9 responsive iframe.
  *   - Below the player: title (Mona Sans Bold 24px) + body, optionally
  *     a duration label aligned right.
@@ -17,6 +18,7 @@
  *   - embedUrl: required Bunny iframe `src`. Pass the bare URL — query
  *     params (preload/responsive/etc.) are already baked into the
  *     player config on Bunny.
+ *   - eyebrow: optional ALL-CAPS label above the player.
  *   - title / body: card-level copy under the player.
  *   - duration: optional small label (e.g. "2:48").
  *   - allow / allowfullscreen: pass-through for non-standard embeds.
@@ -24,8 +26,11 @@
  * Static section — no entry reveal (player UI handles its own intro).
  */
 
+import SectionEyebrow from '../ui/SectionEyebrow.astro';
+
 export interface Props {
   embedUrl: string;
+  eyebrow?: string;
   title?: string;
   body?: string;
   duration?: string;
@@ -35,6 +40,7 @@ export interface Props {
 
 const {
   embedUrl,
+  eyebrow,
   title,
   body,
   duration,
@@ -47,6 +53,12 @@ const {
   data-nav-bg="amber"
 >
   <div class="mx-auto w-full max-w-content px-margin">
+    {eyebrow && (
+      <SectionEyebrow color="black" withLeadRule class="mb-8">
+        {eyebrow}
+      </SectionEyebrow>
+    )}
+
     {/* 16:9 responsive container — the iframe fills the absolute box. */}
     <div class="video-frame relative w-full overflow-hidden rounded-[2px]" style="padding-top: 56.25%;">
       <iframe

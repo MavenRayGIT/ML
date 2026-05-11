@@ -40,7 +40,7 @@ export interface Props {
   body?: string;
   items: FocusItem[];
   /** Intro alignment. Homepage = "left". */
-  align?: 'left' | 'centered';
+  align?: 'left' | 'center';
 }
 
 const {
@@ -57,16 +57,18 @@ const {
   data-nav-bg="white"
 >
   <div class="mx-auto w-full max-w-content px-margin">
-    {/* Header block — alignment switches between the two layout variants. */}
+    {/* Header block — alignment switches between the two layout variants.
+        The eyebrow always renders with its lead rule; when the header is
+        centered, the rule + label inline-flex group centers as one unit. */}
     <div
       class:list={[
         'focus-header max-w-[720px]',
-        align === 'centered' ? 'mx-auto text-center' : 'text-left',
+        align === 'center' ? 'mx-auto text-center' : 'text-left',
       ]}
       data-reveal="header"
     >
       {eyebrow && (
-        <SectionEyebrow withLeadRule={align === 'left'} class="mb-6">
+        <SectionEyebrow withLeadRule class="mb-6">
           {eyebrow}
         </SectionEyebrow>
       )}

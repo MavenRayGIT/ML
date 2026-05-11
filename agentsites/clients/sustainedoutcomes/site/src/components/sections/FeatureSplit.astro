@@ -35,6 +35,21 @@ import SectionEyebrow from '../ui/SectionEyebrow.astro';
 type FeatureCtaVariant = 'amber-fill' | 'green-fill' | 'outline' | 'outline-emph';
 type FeatureCtaSurface = 'light' | 'dark' | 'amber';
 
+/**
+ * Adjacent-section colour token. Maps 1:1 to the bg classes Tailwind
+ * already sees, so static class-name discovery keeps working — no
+ * dynamic `bg-${var}` strings.
+ */
+type SectionBg = 'white' | 'amber' | 'cream' | 'green-dark' | 'gray-light';
+
+const sectionBgClass: Record<SectionBg, string> = {
+  white:        'bg-white',
+  amber:        'bg-amber',
+  cream:        'bg-cream',
+  'green-dark': 'bg-green-dark',
+  'gray-light': 'bg-gray-light',
+};
+
 export interface FeatureSplitCta {
   text: string;
   href: string;
@@ -59,6 +74,23 @@ export interface Props {
    */
   contained?: boolean;
   cta?: FeatureSplitCta;
+  /**
+   * Adjacent-section blend (angled sections only). The clip-path cuts
+   * triangular wedges out of the section's bottom-right and top-left
+   * corners — by default those wedges expose the page background
+   * (white), which can read as a visible "wedge" between two coloured
+   * sections.
+   *
+   * Set `nextBg` to the bg colour of the section immediately below so
+   * the bottom wedge fills with that colour and the angle blends
+   * seamlessly into the next section. `prevBg` does the same for the
+   * top wedge. Both no-op on non-angled sections.
+   *
+   * Example: angled dark FeatureSplit followed by VideoSection (amber):
+   *   <FeatureSplit dark angled nextBg="amber" ... />
+   */
+  nextBg?: SectionBg;
+  prevBg?: SectionBg;
 }
 
 const {
@@ -72,6 +104,8 @@ const {
   angled = false,
   contained = false,
   cta,
+  nextBg,
+  prevBg,
 } = Astro.props;
 
 const navBg = dark ? 'dark' : 'white';
@@ -83,17 +117,40 @@ const ctaVariant: FeatureCtaVariant = cta?.variant ?? (dark ? 'amber-fill' : 'ou
 const reveal = angled ? 'angle-shift' : 'header';
 ---
 
-<section
-  class:list={[
-    'feature-split relative w-full overflow-hidden',
-    dark ? 'bg-green-dark text-white' : 'bg-white text-black',
-    angled && 'feature-split-angled',
-    contained && 'feature-split-contained',
-  ]}
-  data-nav-bg={navBg}
-  data-reveal={reveal}
-  data-image-position={imagePosition}
->
+{/* Frame wrapper — only used as a host for the angled-wedge blend
+    plates (prevBg / nextBg). Without those props the wrapper is inert
+    and just passes the section through; we always render it for layout
+    consistency and to keep CSS targeting predictable. */}
+<div class="feature-split-frame relative">
+  {angled && prevBg && (
+    <div
+      aria-hidden="true"
+      class:list={[
+        'feature-split-blend pointer-events-none absolute inset-x-0 top-0 h-1/2',
+        sectionBgClass[prevBg],
+      ]}
+    ></div>
+  )}
+  {angled && nextBg && (
+    <div
+      aria-hidden="true"
+      class:list={[
+        'feature-split-blend pointer-events-none absolute inset-x-0 bottom-0 h-1/2',
+        sectionBgClass[nextBg],
+      ]}
+    ></div>
+  )}
+  <section
+    class:list={[
+      'feature-split relative z-10 w-full overflow-hidden',
+      dark ? 'bg-green-dark text-white' : 'bg-white text-black',
+      angled && 'feature-split-angled',
+      contained && 'feature-split-contained',
+    ]}
+    data-nav-bg={navBg}
+    data-reveal={reveal}
+    data-image-position={imagePosition}
+  >
   <div
     class:list={[
       'grid grid-cols-1 md:grid-cols-2',
@@ -151,7 +208,8 @@ const reveal = angled ? 'angle-shift' : 'header';
       </div>
     </div>
   </div>
-</section>
+  </section>
+</div>
 
 <style>
   /* Resting angled silhouette — diagonal top edge slopes up-right, diagonal

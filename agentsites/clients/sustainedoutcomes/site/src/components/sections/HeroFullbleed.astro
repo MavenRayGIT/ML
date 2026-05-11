@@ -62,6 +62,16 @@ import SectionEyebrow from '../ui/SectionEyebrow.astro';
 
 export type HeroVariant = 'photo-blocks' | 'photo-gradient' | 'color-only';
 
+/**
+ * `full` — homepage-scale statement hero (≥100vh / 788px).
+ * `sub`  — interior pages — ~70vh (≥540px). Still a real hero (room
+ *          for eyebrow + headline + body + CTAs) but doesn't dominate
+ *          the page; the content below reads as the primary surface
+ *          instead. Set on /about, /consulting, /initiatives,
+ *          /support, /partners. The homepage stays `full`.
+ */
+export type HeroSize = 'full' | 'sub';
+
 export interface HeroCta {
   text: string;
   href: string;
@@ -69,6 +79,7 @@ export interface HeroCta {
 
 export interface Props {
   variant?: HeroVariant;
+  size?: HeroSize;
   /** Optional ALL-CAPS label rendered above the headline. */
   eyebrow?: string;
   headline: string;
@@ -83,6 +94,7 @@ export interface Props {
 
 const {
   variant = 'photo-blocks',
+  size = 'full',
   eyebrow,
   headline,
   body,
@@ -98,6 +110,11 @@ const navBg: 'dark' | 'white' = hasPhoto ? 'dark' : 'white';
 // Buttons inherit the surface their hero sits on so hover colours
 // stay legible: dark surface on photos, light surface on color-only.
 const btnSurface: 'dark' | 'light' = hasPhoto ? 'dark' : 'light';
+
+// Min-height profile per size. Both clamp to a sensible viewport-relative
+// height with a px floor so very short viewports still get a real hero.
+const heroMinHeight =
+  size === 'sub' ? 'max(70vh, 540px)' : 'max(100vh, 788px)';
 ---
 
 <section
@@ -105,7 +122,7 @@ const btnSurface: 'dark' | 'light' = hasPhoto ? 'dark' : 'light';
     'hero-fullbleed relative isolate flex w-full flex-col justify-end overflow-hidden',
     !hasPhoto && 'hero-color-bg',
   ]}
-  style="min-height: max(100vh, 788px);"
+  style={`min-height: ${heroMinHeight};`}
   data-nav-bg={navBg}
 >
   {hasPhoto && image && (
@@ -261,20 +278,39 @@ const btnSurface: 'dark' | 'light' = hasPhoto ? 'dark' : 'light';
     const SVG_NS = 'http://www.w3.org/2000/svg';
     const FILL = '#083928';     /* --color-green-dark */
     const OPACITY = '0.51';     /* matches the original .hero-block alpha */
-    const PAD_X_EM = 0.3;       /* horizontal block padding around text */
-    const PAD_Y_EM = 0.15;      /* vertical block padding — must cover the
-                                   font's content-area beyond the line box.
-                                   At lh 0.85, Mona Sans glyphs extend
+    const PAD_X_EM = 0.3;       /* line-mode horizontal padding (em-scaled
+                                   matches the headline's bold glyph
+                                   sidebearings naturally). */
+    const PAD_Y_EM = 0.15;      /* line-mode vertical padding — must cover
+                                   the font's content-area beyond the line
+                                   box. At lh 0.85, Mona Sans glyphs extend
                                    ~0.175em past the box on each side, so
                                    ≥0.15em gives a clean visual cover with
                                    no glyphs poking through the rect edge. */
 
+    /* Block-mode pads are intentionally PIXEL-based, not em-based. The
+       body copy renders at ~16px so an em-scaled 0.3em pad would only
+       extend the block ~4.8px — visibly notching inside the headline
+       block above (whose em-scaled pad is ~22px at hero font size).
+       Fixed pixel pads let the body block breathe at a magnitude the
+       eye reads as deliberate, independent of font size. The LEFT edge
+       still gets overridden by a snap to the previous block's left
+       edge (see findPrevBlockEdges) so the two blocks share a
+       continuous left rail. */
+    const BLOCK_PAD_X_PX        = 20;
+    const BLOCK_PAD_Y_BOTTOM_PX = 18;
+
     /**
      * For "block" mode: find the previous-in-document hero block's
-     * bottom edge in viewport coords. Returns null if there's no
-     * earlier block to snap to.
+     * left and bottom edges in viewport coords. Returns null if
+     * there's no earlier block to snap to.
+     *
+     * LEFT is used so the body block lines up with the headline
+     * block's left rail regardless of font-size differences.
+     * BOTTOM is used so the body block's top meets the headline
+     * block's bottom at a single seam (no overlap, no gap).
      */
-    function findPrevBlockBottom(currentSvg) {
+    function findPrevBlockEdges(currentSvg) {
       const all = document.querySelectorAll('[data-hero-block-bg]');
       let prev = null;
       for (const svg of all) {
@@ -287,14 +323,20 @@ const btnSurface: 'dark' | 'light' = hasPhoto ? 'dark' : 'light';
       const prevHostBox = prevHost.getBoundingClientRect();
       const rects = prev.querySelectorAll('rect');
       if (!rects.length) return null;
-      let bottom = -Infinity;
+      let left = Infinity, bottom = -Infinity;
       for (const r of rects) {
-        const ry = parseFloat(r.getAttribute('y')) || 0;
+        const rx = parseFloat(r.getAttribute('x'))      || 0;
+        const ry = parseFloat(r.getAttribute('y'))      || 0;
         const rh = parseFloat(r.getAttribute('height')) || 0;
-        const b = prevHostBox.top + ry + rh;
+        const l = prevHostBox.left + rx;
+        const b = prevHostBox.top  + ry + rh;
+        if (l < left)   left   = l;
         if (b > bottom) bottom = b;
       }
-      return Number.isFinite(bottom) ? bottom : null;
+      return {
+        left:   Number.isFinite(left)   ? left   : null,
+        bottom: Number.isFinite(bottom) ? bottom : null,
+      };
     }
 
     function paintBlock(svg) {
@@ -339,19 +381,27 @@ const btnSurface: 'dark' | 'light' = hasPhoto ? 'dark' : 'light';
           if (line.bottom > maxBottom) maxBottom = line.bottom;
         }
 
-        /* Snap to the previous block's bottom edge if there is one
-           (e.g. body snapping under the headline block). Otherwise the
-           rect just uses its own padY for the top edge. */
-        let rectTopViewport = minTop - padY;
-        const prevBottom = findPrevBlockBottom(svg);
-        if (prevBottom !== null) {
-          rectTopViewport = prevBottom;
+        /* Base rect in viewport coords using generous pixel pads. */
+        let rectLeftViewport     = minLeft  - BLOCK_PAD_X_PX;
+        const rectRightViewport  = maxRight + BLOCK_PAD_X_PX;
+        let rectTopViewport      = minTop   - padY;
+        const rectBottomViewport = maxBottom + BLOCK_PAD_Y_BOTTOM_PX;
+
+        /* Snap to the previous block (headline) on two axes:
+             LEFT  → continuous left rail with the headline block.
+             TOP   → seam with the headline block's bottom (no gap,
+                     no overlap).
+           If no previous block exists, the base pads above apply. */
+        const prevEdges = findPrevBlockEdges(svg);
+        if (prevEdges) {
+          if (prevEdges.left   !== null) rectLeftViewport = prevEdges.left;
+          if (prevEdges.bottom !== null) rectTopViewport  = prevEdges.bottom;
         }
 
-        const x  = minLeft - hostBox.left - padX;
-        const y  = rectTopViewport - hostBox.top;
-        const rw = (maxRight - minLeft) + 2 * padX;
-        const rh = (maxBottom + padY) - rectTopViewport;
+        const x  = rectLeftViewport   - hostBox.left;
+        const y  = rectTopViewport    - hostBox.top;
+        const rw = rectRightViewport  - rectLeftViewport;
+        const rh = rectBottomViewport - rectTopViewport;
 
         const rect = document.createElementNS(SVG_NS, 'rect');
         rect.setAttribute('x', String(x));
