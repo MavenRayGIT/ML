@@ -64,11 +64,11 @@ export type HeroVariant = 'photo-blocks' | 'photo-gradient' | 'color-only';
 
 /**
  * `full` — homepage-scale statement hero (≥100vh / 788px).
- * `sub`  — interior pages — ~70vh (≥540px). Still a real hero (room
- *          for eyebrow + headline + body + CTAs) but doesn't dominate
- *          the page; the content below reads as the primary surface
- *          instead. Set on /about, /consulting, /initiatives,
- *          /support, /partners. The homepage stays `full`.
+ * `sub`  — interior pages — ~78vh (≥600px). Still smaller than the
+ *          homepage hero, but tall enough to read as a substantial
+ *          page opener rather than a banner. Set on /about,
+ *          /consulting, /initiatives, /support, /partners. The
+ *          homepage stays `full`.
  */
 export type HeroSize = 'full' | 'sub';
 
@@ -114,7 +114,7 @@ const btnSurface: 'dark' | 'light' = hasPhoto ? 'dark' : 'light';
 // Min-height profile per size. Both clamp to a sensible viewport-relative
 // height with a px floor so very short viewports still get a real hero.
 const heroMinHeight =
-  size === 'sub' ? 'max(70vh, 540px)' : 'max(100vh, 788px)';
+  size === 'sub' ? 'max(78vh, 600px)' : 'max(100vh, 788px)';
 ---
 
 <section
