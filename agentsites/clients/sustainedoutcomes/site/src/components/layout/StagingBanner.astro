@@ -5,7 +5,7 @@
  * Visual states (orthogonal, both can be active):
  *
  *   Expanded  (default)             Collapsed
- *   ┌────────────────────────────┐  ┌──┐ (top-right corner)
+ *   ┌────────────────────────────┐  ┌──┐ (top-right corner 0/0)
  *   │ STAGING · hostname     × │  │≡ │
  *   └────────────────────────────┘  └──┘
  *
@@ -17,11 +17,10 @@
  *   ~400ms it fades back in. Stays out of the way while reading, comes
  *   back the moment you stop.
  *
- * Coordination contract:
- *   - When mounted + expanded, the banner sets `--chrome-banner-h: 32px`
- *     on `:root`. Nav reads this for its `top` offset.
- *   - When collapsed, `--chrome-banner-h: 0px` — Nav animates up to
- *     top: 0 via its existing top-transition.
+ * Layout note:
+ *   The banner is a pure overlay — it does NOT push the nav or any other
+ *   chrome down. When expanded, the bar briefly covers the top 32px of
+ *   the nav; collapse it to preview the page exactly as it'll ship.
  *
  * Persistence: collapsed state is remembered in `localStorage` so the
  * user only has to dismiss once per browser. Restored synchronously
@@ -30,8 +29,7 @@
  * Env hook:
  *   Default: rendered (we're pre-launch).
  *   Suppress on production by setting `PUBLIC_HIDE_STAGING_BANNER=true`
- *   on the Cloudflare Pages project. When the component isn't rendered
- *   at all, no styles ship, no JS ships, no CSS var is set.
+ *   on the Cloudflare Pages project.
  */
 
 export interface Props {
@@ -140,14 +138,9 @@ const {
 </script>
 
 <style is:global>
-  /* Default chrome height contribution when this component is mounted. */
-  :root { --chrome-banner-h: 32px; }
-
-  /* Collapsed state: hide bar, show handle, zero the chrome offset
-     so the nav slides up to top: 0 via its top-transition. */
-  :root[data-staging-banner-collapsed]                                 { --chrome-banner-h: 0px;     }
-  :root[data-staging-banner-collapsed] [data-staging-banner-bar]       { display: none;              }
-  :root:not([data-staging-banner-collapsed]) [data-staging-banner-handle] { display: none;           }
+  /* Collapsed state: hide bar, show handle. */
+  :root[data-staging-banner-collapsed]    [data-staging-banner-bar]    { display: none; }
+  :root:not([data-staging-banner-collapsed]) [data-staging-banner-handle] { display: none; }
 
   /* Active-scroll fade — applies to whichever shape is currently
      visible (the other is display: none and unaffected). */

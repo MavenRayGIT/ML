@@ -21,6 +21,7 @@
 import Base from './Base.astro';
 import Nav from '../components/layout/Nav.astro';
 import Footer from '../components/layout/Footer.astro';
+import StagingBanner from '../components/layout/StagingBanner.astro';
 
 type BaseProps = {
   title?: string;
@@ -45,14 +46,21 @@ const {
   hideFooter = false,
   ...baseProps
 } = Astro.props;
+
+// Default: render. Production deploys can suppress with the env var.
+const showStagingBanner = import.meta.env.PUBLIC_HIDE_STAGING_BANNER !== 'true';
 ---
 
 <Base {...baseProps}>
   <slot name="head" slot="head" />
 
+  {showStagingBanner && <StagingBanner />}
   {!hideNav && <Nav />}
 
-  <main class:list={[!hasHero && 'pt-[74px]']}>
+  {/* When no hero, pad main down 74px so content clears the fixed nav.
+      The staging banner is an overlay only — it briefly covers the top
+      of the nav while visible and does not displace any chrome. */}
+  <main class={!hasHero ? 'pt-[74px]' : undefined}>
     <slot />
   </main>
 

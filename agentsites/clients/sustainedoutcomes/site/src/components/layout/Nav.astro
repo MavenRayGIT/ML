@@ -41,7 +41,7 @@ const navItems = [
 <nav
   id="site-nav"
   data-nav-state="dark"
-  class="site-nav fixed inset-x-0 top-0 z-50 h-[74px] transition-colors duration-base ease-default"
+  class="site-nav fixed inset-x-0 top-0 z-50 h-[74px] transition-[background-color,color] duration-base ease-default"
   aria-label="Site"
 >
   <div class="mx-auto flex h-full max-w-content items-center px-margin">
@@ -226,15 +226,14 @@ const navItems = [
   function initSiteNav() {
     /* ===== Scroll-driven nav state ===================================
        For each [data-nav-bg] section we hit-test the section's bounding
-       rect against the nav's bottom edge (74px). Topmost hit wins. */
+       rect against the nav's bottom edge in viewport coords. Topmost
+       hit wins. */
     (() => {
       const nav = document.getElementById('site-nav');
       if (!nav) return;
 
-      const NAV_HEIGHT = 74;
-
       function update() {
-        const probe = NAV_HEIGHT + 1;
+        const probe = nav.getBoundingClientRect().bottom + 1;
         const sections = document.querySelectorAll('[data-nav-bg]');
 
         let next = 'white';

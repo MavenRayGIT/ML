@@ -4,7 +4,7 @@
  *
  * Step 7 replaces this with the real homepage composed from the modules
  * in MODULES.md. Until then, this placeholder doubles as a smoke test
- * for Page.astro (Base + Nav + Footer wired together).
+ * for Page.astro (Base + Nav + Footer + StagingBanner all wired).
  *
  * The hero band opts into `data-nav-bg="dark"` so the nav lands in its
  * over-hero state on page load — that way we exercise the full chrome
@@ -19,14 +19,6 @@ import SectionEyebrow from '../components/ui/SectionEyebrow.astro';
   description="Sustained Outcomes — mission-focused advisory consultancy. Full site in development."
   hasHero
 >
-  {/* Top staging marker — environment banner. Will move into Base.astro
-      once the env-banner abstraction lands. */}
-  <div
-    class="fixed left-0 right-0 top-0 z-[60] bg-[#020302] py-1.5 text-center font-body text-caption uppercase tracking-eyebrow text-white"
-  >
-    STAGING · sustainedoutcomes.mackandlee.com
-  </div>
-
   {/* Hero placeholder — full viewport, dark surface so nav reads dark */}
   <section
     data-nav-bg="dark"
