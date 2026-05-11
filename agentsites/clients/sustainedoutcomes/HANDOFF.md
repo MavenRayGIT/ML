@@ -373,17 +373,21 @@ hover white, green-fill CTA at bottom.
   - Top: `rgba(5,8,3,0.82)` → transparent, 342px, mix-blend-multiply
   - Bottom: dark overlay on lower 40%
 - Content: left-aligned, lower third
-  - H1: Mona Sans Bold 72px desktop · 44px mobile, white, -3% tracking
-  - **H1 line-height: 1.2 when `photo-blocks` is active** (was 0.85
-    in the design spec; first patched to 1.0 then to 1.2 after on-page
-    review). The per-line semi-transparent bg rects compound their
-    alpha when they overlap, producing "lens"-stripe artifacts.
-    Mona Sans' inline content-area is 1.2em (HHEA ascender 950 +
-    |descender 250| against a 1000 em-square), so any leading below
-    1.2 still leaves the rects overlapping regardless of vertical
-    padding. Locked at `1.2` for this variant. The `photo-gradient`
-    and `color-only` variants keep the design's tight `0.85`.
-    Decided 2026-05-11.
+  - H1: Mona Sans Bold 72px desktop · 48px mobile, white, -3% tracking,
+    line-height **0.85** (the design spec — same in all three variants).
+  - **Photo-blocks bg is painted as SVG, not CSS** (final approach
+    2026-05-11 after a CSS-only pass produced compounding alpha bands).
+    Each `[data-hero-block-text]` span is paired with a sibling
+    `[data-hero-block-bg]` SVG. A small inline painter (`HeroFullbleed.astro`)
+    measures the span via `Range.getClientRects()` and writes one
+    `<rect>` per visual line into a single `<g opacity="0.51" fill="#083928">`.
+    SVG group opacity flattens the rects into an opaque union before
+    applying the alpha — overlap inside the group is invisible, so
+    adjacent rects merge into one seamless shape. Repaints on
+    `DOMContentLoaded`, `document.fonts.ready`, and rAF-debounced resize.
+    Lets us keep the design's tight 0.85 leading without any alpha
+    artifacts. Pure progressive enhancement: with JS off, the photo's
+    top + bottom gradients still carry contrast for the white text.
   - Body: Libre Franklin Regular 15px, white, lh 24px
   - Primary CTA: `amber-fill` button (surface auto-tunes per variant)
   - Secondary CTA: `outline` button

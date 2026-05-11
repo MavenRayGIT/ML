@@ -24,6 +24,29 @@
  *   - Photo variants land the nav in its `dark` state via `data-nav-bg`.
  *   - color-only lands the nav in `white`.
  *
+ * Photo-blocks bg rendering (refined 2026-05-11):
+ *   The per-line dark-green rects used to be CSS `box-decoration-break:
+ *   clone` on a span around the text. That technique paints each line
+ *   as its own stacked DOM element with `rgba(8,57,40,0.51)`, so any
+ *   vertical overlap between adjacent rects compounds the alpha into
+ *   visible darker "lens" bands. At the design's tight `0.85` leading,
+ *   Mona Sans' 1.2em font content-area guarantees that overlap.
+ *
+ *   We now paint the blocks as a single SVG behind each text element,
+ *   with all rects in a `<g opacity="0.51">`. SVG group opacity is
+ *   applied to the FLATTENED union of the group's children — the rects
+ *   composite at full alpha into an offscreen buffer first, then the
+ *   0.51 is applied once to the union. Overlap inside the group is
+ *   invisible because both rects are the same solid colour, so we can
+ *   keep the design's tight 0.85 leading and the rects merge into a
+ *   single seamless shape that fits each line.
+ *
+ *   Lines are measured via `Range.getClientRects()` on the text span,
+ *   repainted on resize and after `document.fonts.ready` so the rects
+ *   track the actual rendered metrics (Mona Sans WOFF2 loads async).
+ *   Pure progressive enhancement: if JS is disabled the gradients still
+ *   carry enough contrast for white text on the photo.
+ *
  * Reveal animation (Corporate_Elegant — ANIMATION.md):
  *   `data-reveal="hero"` on the content stack — eyebrow → H1 → body →
  *   CTAs each fade up 16px in a 100ms stagger. Fires immediately on page
@@ -121,28 +144,33 @@ const btnSurface: 'dark' | 'light' = hasPhoto ? 'dark' : 'light';
       </SectionEyebrow>
     )}
 
-    <h1
-      class:list={[
-        'hero-headline font-display max-w-[820px] tracking-display',
-        hasBlocks
-          /* photo-blocks variant: bg-rect overlap is governed by the
-             font's content-area, not just line-height. Mona Sans has
-             HHEA ascender 950 / descender -250 against a 1000 em-square,
-             i.e. each inline rect is 1.2em tall regardless of line-height.
-             Anything below `leading-[1.2]` makes the rects overlap and
-             compounds the 0.51 alpha into visible darker bands.
-             `font-bold` is explicit because dropping the `text-hero`
-             token in this branch also drops its 700 weight binding. */
-          ? 'font-bold text-[44px] leading-[1.2] md:text-[72px] md:leading-[1.2]'
-          : 'text-[48px] leading-[0.9] md:text-hero',
-      ]}
-    >
-      {hasBlocks ? <span class="hero-block">{headline}</span> : headline}
+    <h1 class="hero-headline relative isolate font-display max-w-[820px] text-[48px] leading-[0.9] tracking-display md:text-hero">
+      {hasBlocks ? (
+        <>
+          <svg
+            class="hero-block-bg pointer-events-none absolute inset-0 h-full w-full"
+            aria-hidden="true"
+            data-hero-block-bg
+            preserveAspectRatio="none"
+          ></svg>
+          <span class="relative" data-hero-block-text>{headline}</span>
+        </>
+      ) : headline}
     </h1>
 
     {body && (
-      <p class="hero-body mt-6 max-w-[560px] font-body text-body leading-[1.6]">
-        {hasBlocks ? <span class="hero-block">{body}</span> : body}
+      <p class="hero-body relative isolate mt-6 max-w-[560px] font-body text-body leading-[1.6]">
+        {hasBlocks ? (
+          <>
+            <svg
+              class="hero-block-bg pointer-events-none absolute inset-0 h-full w-full"
+              aria-hidden="true"
+              data-hero-block-bg
+              preserveAspectRatio="none"
+            ></svg>
+            <span class="relative" data-hero-block-text>{body}</span>
+          </>
+        ) : body}
       </p>
     )}
 
@@ -174,20 +202,115 @@ const btnSurface: 'dark' | 'light' = hasPhoto ? 'dark' : 'light';
   .hero-color-bg {
     background: linear-gradient(166deg, #ffffff 50.9%, rgba(252, 230, 149, 0.49) 159.4%);
   }
-  /* Per-line dark-green bg behind text — clones the decoration onto every
-     line break so the block hugs the text instead of stretching the whole
-     paragraph width.
-
-     Vertical padding is intentionally 0: the inline content-area for Mona
-     Sans is 1.2em (HHEA ascender 950 + |descender 250| against a 1000
-     em-square), and the H1 carries `line-height: 1.2` when this variant
-     is active. The two match exactly so adjacent rects touch without
-     overlapping. ANY positive vertical padding would push the rects
-     past the line-spacing and re-introduce the "lens" alpha bands. */
-  .hero-block {
-    background-color: rgba(8, 57, 40, 0.51);
-    padding: 0 0.3em;
-    box-decoration-break: clone;
-    -webkit-box-decoration-break: clone;
+  /* The SVG painter draws its rects in user-space units that match the
+     host element's CSS pixel box, padded outward on the X axis. Letting
+     the SVG overflow visually keeps the horizontal "block pad" outside
+     the host box visible when a line lands at the box edge. */
+  .hero-block-bg {
+    overflow: visible;
   }
 </style>
+
+<script is:inline>
+  /* Hero block painter.
+   *
+   * Replaces CSS `box-decoration-break: clone` rects with an SVG painted
+   * behind each `[data-hero-block-text]` span. All per-line rects are
+   * children of a single `<g opacity="0.51">`, so SVG flattens them
+   * into an opaque union before applying the group alpha — overlap
+   * between adjacent rects disappears, and we get a seamless merged
+   * shape instead of stacked semi-transparent stripes.
+   *
+   * Lines come from `Range.getClientRects()`, which gives one DOMRect
+   * per visual line of the text run, in viewport coords. Subtract the
+   * host element's bbox to get host-relative coords for the SVG.
+   *
+   * Repaint triggers:
+   *   - DOMContentLoaded         first paint (system fonts)
+   *   - document.fonts.ready     final paint with Mona Sans loaded
+   *   - window resize / orient.  rAF-debounced repaint
+   *
+   * Pure enhancement: with JS off, the gradients on the photo still
+   * carry the white text. The SVG stays empty.
+   */
+  (() => {
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const FILL = '#083928';     /* --color-green-dark */
+    const OPACITY = '0.51';     /* matches the original .hero-block alpha */
+    const PAD_X_EM = 0.3;       /* horizontal block padding around text */
+    const PAD_Y_EM = 0.15;      /* vertical block padding — must cover the
+                                   font's content-area beyond the line box.
+                                   At lh 0.85, Mona Sans glyphs extend
+                                   ~0.175em past the box on each side, so
+                                   ≥0.15em gives a clean visual cover with
+                                   no glyphs poking through the rect edge. */
+
+    function paintBlock(svg) {
+      const host = svg.parentElement;
+      if (!host) return;
+      const textEl = host.querySelector('[data-hero-block-text]');
+      if (!textEl) return;
+
+      const cs = getComputedStyle(host);
+      const fontSize = parseFloat(cs.fontSize) || 16;
+      const padX = PAD_X_EM * fontSize;
+      const padY = PAD_Y_EM * fontSize;
+
+      const range = document.createRange();
+      range.selectNodeContents(textEl);
+      const lines = Array.from(range.getClientRects());
+
+      const hostBox = host.getBoundingClientRect();
+      const w = hostBox.width;
+      const h = hostBox.height;
+
+      svg.setAttribute('width', String(w));
+      svg.setAttribute('height', String(h));
+      svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+
+      /* Clear and rebuild — cheap; we're talking 1–4 rects per host. */
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+      const group = document.createElementNS(SVG_NS, 'g');
+      group.setAttribute('fill', FILL);
+      group.setAttribute('opacity', OPACITY);
+
+      for (const line of lines) {
+        if (line.width < 1) continue;
+        const x = line.left - hostBox.left - padX;
+        const y = line.top  - hostBox.top  - padY;
+        const rw = line.width  + 2 * padX;
+        const rh = line.height + 2 * padY;
+        const rect = document.createElementNS(SVG_NS, 'rect');
+        rect.setAttribute('x', String(x));
+        rect.setAttribute('y', String(y));
+        rect.setAttribute('width', String(rw));
+        rect.setAttribute('height', String(rh));
+        group.appendChild(rect);
+      }
+      svg.appendChild(group);
+    }
+
+    function paintAll() {
+      document.querySelectorAll('[data-hero-block-bg]').forEach(paintBlock);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', paintAll);
+    } else {
+      paintAll();
+    }
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(paintAll);
+    }
+
+    let pending = 0;
+    window.addEventListener('resize', () => {
+      if (pending) return;
+      pending = requestAnimationFrame(() => {
+        pending = 0;
+        paintAll();
+      });
+    });
+  })();
+</script>
