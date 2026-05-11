@@ -39,10 +39,10 @@ import Rule from '../../components/ui/Rule.astro';
         <SectionEyebrow withLeadRule>Buttons</SectionEyebrow>
         <h2 class="font-display text-h2-lg mt-3 mb-2">Variant × Surface</h2>
         <p class="font-body text-body text-black/70 max-w-[60ch]">
-          Three variants (<code>amber-fill</code>, <code>green-fill</code>, <code>outline</code>)
-          × two surfaces (<code>light</code>, <code>dark</code>). Libre Franklin SemiBold 11px,
-          +1.5% tracking, ALL CAPS, 12×24px padding, 2px corners. Hover: 150ms colour crossfade
-          only — no scale, no lift.
+          Four variants (<code>amber-fill</code>, <code>green-fill</code>, <code>outline</code>,
+          <code>outline-emph</code>) × two surfaces (<code>light</code>, <code>dark</code>).
+          Libre Franklin SemiBold 11px, +1.5% tracking, ALL CAPS, 12×24px padding, 2px corners.
+          Hover: 150ms colour crossfade only — no scale, no lift.
         </p>
         <Rule class="my-8" />
 
@@ -55,9 +55,13 @@ import Rule from '../../components/ui/Rule.astro';
               <Button variant="amber-fill" href="#">Request a meeting</Button>
               <Button variant="green-fill" href="#">Meet Ken</Button>
               <Button variant="outline" href="#">Learn more</Button>
+              <Button variant="outline-emph" href="#">Request a meeting</Button>
             </div>
             <p class="font-body text-caption text-gray-mid mt-2">
-              Hovers: amber-fill → green-dark bg / amber text · green-fill → amber bg / green-dark text · outline → amber border (text held)
+              Hovers: amber-fill → green-dark bg / amber text · green-fill → amber bg / green-dark text · outline → amber border (text held) · outline-emph → fills amber / black text
+            </p>
+            <p class="font-body text-caption text-gray-mid mt-1">
+              <code>outline-emph</code> is the high-attention version of <code>outline</code> — amber border catches the eye against white. Used for the scrolled-white nav CTA.
             </p>
           </div>
 

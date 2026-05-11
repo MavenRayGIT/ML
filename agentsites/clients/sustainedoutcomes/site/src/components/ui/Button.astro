@@ -16,20 +16,31 @@
  *
  * Variant × Surface matrix:
  *
- *               │ surface="light" (default)         │ surface="dark"
- * ──────────────┼───────────────────────────────────┼──────────────────────────────
- *  amber-fill   │ amber bg · black text             │ amber bg · black text
- *               │ → hover: green-dark bg            │ → hover: white bg
- *               │          amber text               │          green-dark text
- * ──────────────┼───────────────────────────────────┼──────────────────────────────
- *  green-fill   │ green-dark bg · amber text        │ (not designed — falls back
- *               │ → hover: amber bg                 │  to light-surface behaviour)
- *               │          green-dark text          │
- * ──────────────┼───────────────────────────────────┼──────────────────────────────
- *  outline      │ transparent · green-dark border   │ transparent · amber border
- *               │ green-dark text                   │ amber text
- *               │ → hover: amber border             │ → hover: white border
- *               │          green-dark text (held)   │          amber text (held)
+ *                │ surface="light" (default)         │ surface="dark"
+ * ───────────────┼───────────────────────────────────┼──────────────────────────────
+ *  amber-fill    │ amber bg · black text             │ amber bg · black text
+ *                │ → hover: green-dark bg            │ → hover: white bg
+ *                │          amber text               │          green-dark text
+ * ───────────────┼───────────────────────────────────┼──────────────────────────────
+ *  green-fill    │ green-dark bg · amber text        │ (not designed — falls back
+ *                │ → hover: amber bg                 │  to light-surface behaviour)
+ *                │          green-dark text          │
+ * ───────────────┼───────────────────────────────────┼──────────────────────────────
+ *  outline       │ transparent · green-dark border   │ transparent · amber border
+ *                │ green-dark text                   │ amber text
+ *                │ → hover: amber border             │ → hover: white border
+ *                │          green-dark text (held)   │          amber text (held)
+ * ───────────────┼───────────────────────────────────┼──────────────────────────────
+ *  outline-emph  │ transparent · amber border        │ (light-surface variant —
+ *                │ green-dark text                   │  on dark surfaces use the
+ *                │ → hover: amber bg                 │  standard `outline` variant,
+ *                │          black text               │  which already has amber border)
+ *
+ * `outline-emph` ("emphasized outline") is the high-attention version
+ * of `outline` for use on light surfaces — amber border draws the eye
+ * the way the standard green-bordered outline doesn't. Used for the
+ * scrolled-white nav state CTA. On dark surfaces it aliases to the
+ * standard `outline` behaviour (amber border there is the default).
  *
  * Migration from previous schema:
  *   amber-fill              → amber-fill, surface="light"  (or "dark" on hero)
@@ -41,9 +52,10 @@
  * Copy via slot (never hardcoded):
  *   <Button variant="amber-fill" href="/contact">Request a meeting</Button>
  *   <Button variant="outline" surface="dark">Learn more</Button>
+ *   <Button variant="outline-emph">Request a meeting</Button>   // nav CTA
  */
 
-type ButtonVariant = 'amber-fill' | 'green-fill' | 'outline';
+type ButtonVariant = 'amber-fill' | 'green-fill' | 'outline' | 'outline-emph';
 type ButtonSurface = 'light' | 'dark';
 
 export interface Props {
@@ -95,6 +107,10 @@ const styles: Record<ButtonVariant, Record<ButtonSurface, string>> = {
   },
   'outline': {
     light: 'bg-transparent border border-green-dark text-green-dark hover:border-amber',
+    dark:  'bg-transparent border border-amber text-amber hover:border-white',
+  },
+  'outline-emph': {
+    light: 'bg-transparent border border-amber text-green-dark hover:bg-amber hover:text-black',
     dark:  'bg-transparent border border-amber text-amber hover:border-white',
   },
 };

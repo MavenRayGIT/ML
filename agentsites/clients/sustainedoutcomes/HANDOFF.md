@@ -233,9 +233,11 @@ on hero use the dark-surface variants over the hero's dark green wash),
 
 ### Variant × Surface
 
-Three variants, two surface contexts. The same `amber-fill` looks
+Four variants, two surface contexts. The same `amber-fill` looks
 identical at rest on light vs dark but hovers differently to maintain
-contrast against its background.
+contrast against its background. `outline-emph` is the high-attention
+twin of `outline` for cases where the standard green-bordered outline
+is too quiet (e.g. the scrolled-white nav CTA).
 
 | Variant | Surface | Bg | Border | Text | Hover |
 |---|---|---|---|---|---|
@@ -244,6 +246,7 @@ contrast against its background.
 | `green-fill` | `light` (default) | `#083928` | none | `#FFC560` amber | bg → `#FFC560` amber · text → `#083928` green-dark |
 | `outline` | `light` (default) | transparent | `#083928` | `#083928` green-dark | border → `#FFC560` amber · text held |
 | `outline` | `dark` | transparent | `#FFC560` | `#FFC560` amber | border → `#FFFFFF` white · text held |
+| `outline-emph` | `light` (default) | transparent | `#FFC560` | `#083928` green-dark | bg → `#FFC560` amber · text → `#020302` black |
 
 ### Used on
 
@@ -252,6 +255,7 @@ contrast against its background.
 - `green-fill` / `light` — light-bg primary alternate (Meet Ken, footer Submit, embedded forms)
 - `outline` / `light` — light-bg secondary (Learn more, Read more)
 - `outline` / `dark` — dark-bg / hero secondary (Watch the video, Get involved)
+- `outline-emph` / `light` — high-attention CTA on white (scrolled nav state)
 
 ### Removed
 
@@ -266,8 +270,8 @@ Nav height: 74px. Logo left at 64px. Links right. CTA far right.
 | State | Bg | Links | CTA |
 |-------|-----|-------|-----|
 | Over hero | `#083928` | `#F2F7E5` | `outline` × `dark` (amber border + amber text → hover white border) |
-| Scrolled (white) | white | `#050803` | `outline` × `light` (green-dark border + green-dark text → hover amber border) — _to confirm in Step 4 if amber-bordered preferred on white_ |
-| Amber bg | `#FFC560` | `#050803` | `outline` × `light` (green-dark border) — _to confirm in Step 4_ |
+| Scrolled (white) | white | `#050803` | `outline-emph` × `light` (amber border + green-dark text → hover fills amber with black text) |
+| Amber bg | `#FFC560` | `#050803` | `outline` × `light` (green-dark border) |
 
 Transition: IntersectionObserver on hero bottom edge.
 State 1 → State 2 on scroll past hero.
