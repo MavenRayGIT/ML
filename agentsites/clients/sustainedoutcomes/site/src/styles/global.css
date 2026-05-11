@@ -1,1 +1,223 @@
+/* ============================================================
+   Sustained Outcomes — global stylesheet
+   Tailwind v4. Design tokens authoritative per:
+     agentsites/clients/sustainedoutcomes/HANDOFF.md
+   Motion tokens per:
+     agentsites/clients/sustainedoutcomes/ANIMATION.md  (Corporate_Elegant)
+   ============================================================ */
+
 @import "tailwindcss";
+
+/* ------------------------------------------------------------
+   Self-hosted fonts (served from /public/fonts/)
+   Google Webfonts Helper export — latin subset.
+   ------------------------------------------------------------ */
+@font-face {
+  font-family: "Mona Sans";
+  src: url("/fonts/mona-sans-light.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Mona Sans";
+  src: url("/fonts/mona-sans-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Mona Sans";
+  src: url("/fonts/mona-sans-semibold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Mona Sans";
+  src: url("/fonts/mona-sans-bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Libre Franklin";
+  src: url("/fonts/libre-franklin-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Libre Franklin";
+  src: url("/fonts/libre-franklin-semibold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Libre Franklin";
+  src: url("/fonts/libre-franklin-bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ------------------------------------------------------------
+   Design tokens — exposed as Tailwind utilities.
+   Values come from HANDOFF.md → Design Tokens (node 141:898).
+   ------------------------------------------------------------ */
+@theme {
+  /* Colors --------------------------------------------------- */
+  --color-green-dark:  #083928;            /* nav, dark sections, footer, buttons */
+  --color-green-mid:   rgb(8 57 40 / 0.5); /* overlay variant */
+  --color-black:       #020302;            /* ALL copy — no exceptions */
+  --color-amber:       #FFC560;            /* primary CTA, links, highlights */
+  --color-amber-pale:  #FCE695;
+  --color-amber-light: rgb(255 197 96 / 0.5);
+  --color-teal:        rgb(13 179 121 / 0.5);
+  --color-gray-mid:    #939B98;
+  --color-gray-light:  #E2E2E2;
+  --color-gray-bg:     #F7F7F5;            /* light section background */
+  --color-gray-ph:     #D9D9D6;            /* image placeholders */
+  --color-muted:       #9A9A9A;            /* form placeholder text only */
+  --color-cream:       #F2F7E5;            /* nav-over-hero links, footer rules */
+
+  /* Font families ------------------------------------------- */
+  --font-display: "Mona Sans", system-ui, sans-serif;
+  --font-body:    "Libre Franklin", system-ui, sans-serif;
+  --font-ui:      "Inter", system-ui, sans-serif;
+
+  /* Letter spacing ----------------------------------------- */
+  --tracking-display: -0.03em;   /* -3% — all Mona Sans headlines */
+  --tracking-tight:   -0.02em;
+  --tracking-eyebrow:  0.03em;   /* +3% — ALL CAPS section labels */
+  --tracking-btn:      0.015em;  /* +1.5% — button labels */
+
+  /* Type scale (HANDOFF.md Type Scale table) ---------------
+     Each --text-* binds size + line-height + letter-spacing + weight.
+     Apply with the matching utility, e.g. `class="font-display text-hero"`. */
+  --text-hero:                72px;
+  --text-hero--line-height:   0.85;
+  --text-hero--letter-spacing: -0.03em;
+  --text-hero--font-weight:   700;
+
+  --text-h2-lg:                48px;
+  --text-h2-lg--line-height:   44px;
+  --text-h2-lg--letter-spacing: -0.03em;
+  --text-h2-lg--font-weight:   700;
+
+  --text-h2:                   40px;
+  --text-h2--line-height:      1.05;
+  --text-h2--letter-spacing:  -0.03em;
+  --text-h2--font-weight:      700;
+
+  --text-card:                 24px;
+  --text-card--line-height:    1.15;
+  --text-card--letter-spacing: -0.03em;
+  --text-card--font-weight:    700;
+
+  --text-card-sm:                  20px;
+  --text-card-sm--line-height:     0.85;
+  --text-card-sm--letter-spacing: -0.03em;
+  --text-card-sm--font-weight:     700;
+
+  --text-eyebrow:                  11px;
+  --text-eyebrow--line-height:     1;
+  --text-eyebrow--letter-spacing:  0.03em;
+  --text-eyebrow--font-weight:     600;
+
+  --text-body-lg:               16px;
+  --text-body-lg--line-height:  26px;
+
+  --text-body:                  15px;
+  --text-body--line-height:     24px;
+
+  --text-body-sm:               14px;
+  --text-body-sm--line-height:  22px;
+
+  --text-nav:                   13px;
+  --text-nav--line-height:      1;
+  --text-nav--font-weight:      600;
+
+  --text-footer:                13px;
+  --text-footer--line-height:   1.4;
+  --text-footer--font-weight:   400;
+
+  --text-btn:                   11px;
+  --text-btn--line-height:      1;
+  --text-btn--letter-spacing:   0.015em;
+  --text-btn--font-weight:      600;
+
+  --text-caption:               12px;
+  --text-caption--line-height:  1.4;
+
+  /* Spacing --------------------------------------------------
+     Surfaces as `p-section`, `py-section`, etc. */
+  --spacing-section:    128px;  /* standard section vertical padding */
+  --spacing-section-sm:  96px;  /* compact section padding */
+  --spacing-section-xs:  64px;  /* mobile section padding */
+  --spacing-margin:      64px;  /* standard left/right page margin */
+
+  /* Container max-widths ------------------------------------
+     Surface as `max-w-page`, `max-w-content`. */
+  --container-page:    1440px;
+  --container-content: 1312px;
+
+  /* Motion tokens (Corporate_Elegant — ANIMATION.md) -------- */
+  --ease-default:  cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --duration-quick:  150ms;
+  --duration-base:   250ms;
+  --duration-reveal: 400ms;
+  --duration-slow:   600ms;
+}
+
+/* ------------------------------------------------------------
+   Base styles
+   ------------------------------------------------------------ */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    font-family: var(--font-body);
+    color: var(--color-black);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ------------------------------------------------------------
+   Inline link pattern (per HANDOFF.md → Link & Interactive Patterns).
+   Applied automatically to <a> inside any `.prose` block — used for
+   MDX-rendered body copy. Standalone CTAs use the TextLink component.
+   ------------------------------------------------------------ */
+.prose a {
+  color: var(--color-black);
+  text-decoration: underline;
+  text-decoration-color: var(--color-amber);
+  text-underline-offset: 2px;
+  background-color: transparent;
+  padding: 0 2px;
+  transition: background-color var(--duration-base) var(--ease-default);
+}
+.prose a:hover {
+  background-color: var(--color-amber);
+  text-decoration: none;
+}
+
+/* ------------------------------------------------------------
+   Reduced motion (Corporate_Elegant principle 6)
+   Decorative motion off; functional transitions preserved instantly.
+   ------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
