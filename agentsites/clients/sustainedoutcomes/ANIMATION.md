@@ -120,7 +120,11 @@ Three cards stagger in once on viewport entry. 80ms stagger between cards, 400ms
 
 Only apply when the element exists in the design.
 
-- **Eyebrow lead-rule** (1px horizontal rule before an ALL CAPS eyebrow): `scaleX(0 → 1)` from left, 400ms `--ease-out-soft`, on entry.
+- **`SectionEyebrow` reveal** — two-beat entrance:
+  1. Lead rule wipes left-to-right via `scaleX(0 → 1)`, **400ms** `--ease-out-soft`, `transform-origin: left`.
+  2. Label fades opacity 0 → 1, **250ms** `--ease-out-soft`, **delay 250ms** so the label appears just before the rule finishes wiping (~150ms overlap — the "Webflow feel").
+  - If the eyebrow has no lead rule, the label still fades in on entry but the 250ms delay drops (handled via `:has(.eyebrow-rule)`).
+  - The reveal lives on the eyebrow itself (`data-reveal="eyebrow"`). It composes cleanly with a parent `data-reveal="hero"` or `data-reveal="header"` — the parent's fade-up rides on top of the eyebrow's internal wipe + fade.
 - **Section divider rules**: same `scaleX` reveal on entry.
 - Headlines that wrap onto multiple lines animate **as one block**, never per-line.
 
@@ -158,11 +162,12 @@ Functional state changes (Nav state, modal open/close) still occur — just inst
 
 ## Implementation contract
 
-- One `data-reveal="header|stagger-cards|row-shift|angle-shift|none"` attribute on a section's root element.
-- Single ~30-line vanilla-JS `IntersectionObserver` in `Base.astro` reads the attribute and applies a CSS class. **No motion library.**
+- One `data-reveal="header|hero|row-shift|angle-shift|eyebrow|none"` attribute on a target element (sections AND smaller accents like `SectionEyebrow` both opt in).
+- Single ~30-line vanilla-JS `IntersectionObserver` in `Base.astro` reads the attribute and applies a `data-revealed` flag. **No motion library.**
 - IntersectionObserver: `threshold: 0.15`, `rootMargin: '0px 0px -10% 0px'`.
 - Scroll-tied angled-edge motion: CSS `animation-timeline: view()` where supported; rAF + IntersectionObserver fallback for Safari ≤ 17.
-- All entry reveals are **once-only** — observer disconnects after each section fires.
+- All entry reveals are **once-only** — observer disconnects after each target fires.
+- Nesting is supported: a parent (`hero`/`header`) reveal composes with a child (`eyebrow`) reveal because they operate on disjoint properties (parent: container opacity + translateY; child: rule scaleX + label opacity).
 - Every transition obeys `--ease-default` or `--ease-out-soft` and one of the four duration tokens. No bespoke easings or durations elsewhere.
 
 ---
@@ -171,16 +176,17 @@ Functional state changes (Nav state, modal open/close) still occur — just inst
 
 | Section | `data-reveal` |
 |---|---|
-| `HeroFullbleed` | `header` (load-time, not scroll-tied) |
-| `FocusAreas` | `header` |
-| `FeatureSplit` (angled) | `angle-shift` |
-| `FeatureSplit` (plain) | `header` |
-| `VideoSection` | `none` |
-| `ServicesGrid` | `header` |
-| `BlogPreview` | `row-shift` |
-| `ContactSection` / `ContactAmber` | `none` |
-| `CTABand` | `none` |
-| `Footer` | `none` |
+| `HeroFullbleed` | `hero` on the content stack (load-time staggered fade-up of direct children) |
+| `FocusAreas` | `header` on the header block; `row-shift` on the card row |
+| `FeatureSplit` (angled) | `angle-shift` on the section |
+| `FeatureSplit` (plain) | `header` on the section |
+| `VideoSection` | none |
+| `ServicesGrid` | `header` on the header block |
+| `BlogPreview` | none on the row (cards static); `header` on the headline |
+| `ContactSection` / `ContactAmber` | none |
+| `CTABand` | none |
+| `Footer` | none |
+| `SectionEyebrow` (any use) | `eyebrow` on the eyebrow itself — composes with its parent's reveal |
 
 ---
 

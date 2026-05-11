@@ -6,9 +6,24 @@
  *   Mona Sans SemiBold 11px, +3% tracking, ALL CAPS, black (default).
  *
  * Optional lead rule (the 32px horizontal amber/black/etc. rule placed
- * immediately to the left of the label) — see ANIMATION.md → Barely
- * noticeable accents. The rule itself is static here; the reveal-on-entry
- * scaleX animation lives on the parent section's `data-reveal="header"`.
+ * immediately to the left of the label).
+ *
+ * On-entry animation (Corporate_Elegant — ANIMATION.md → Barely
+ * noticeable accents):
+ *
+ *   1. Lead rule wipes left-to-right via `scaleX(0 → 1)`, 400ms,
+ *      `--ease-out-soft`.
+ *   2. Label fades in 250ms, `--ease-out-soft`, with a 250ms delay so
+ *      it appears just before the rule finishes wiping. (Tighter than
+ *      "strictly after" — the small overlap is the Webflow-feel touch.)
+ *
+ * When the eyebrow has no lead rule, the label still fades in on
+ * entry — same 250ms duration — but without the rule-wipe delay.
+ *
+ * Implementation contract is the same as every other section reveal:
+ * a `data-reveal="eyebrow"` attribute on the root, `data-revealed` set
+ * by the global IntersectionObserver in `Base.astro`, all transitions
+ * specified in `global.css`. No JS in this file.
  *
  * Copy via slot:
  *   <SectionEyebrow>What we do</SectionEyebrow>
@@ -46,14 +61,23 @@ const ruleBg: Record<EyebrowColor, string> = {
 ---
 
 {withLeadRule ? (
-  <span class:list={['inline-flex items-center gap-3', className]}>
-    <span class:list={['inline-block h-px w-8', ruleBg[color]]} aria-hidden="true"></span>
-    <span class:list={['font-display text-eyebrow uppercase', textColor[color]]}>
+  <span
+    class:list={['inline-flex items-center gap-3', className]}
+    data-reveal="eyebrow"
+  >
+    <span
+      class:list={['eyebrow-rule inline-block h-px w-8 origin-left', ruleBg[color]]}
+      aria-hidden="true"
+    ></span>
+    <span class:list={['eyebrow-label font-display text-eyebrow uppercase', textColor[color]]}>
       <slot />
     </span>
   </span>
 ) : (
-  <p class:list={['font-display text-eyebrow uppercase', textColor[color], className]}>
+  <p
+    class:list={['eyebrow-label font-display text-eyebrow uppercase', textColor[color], className]}
+    data-reveal="eyebrow"
+  >
     <slot />
   </p>
 )}

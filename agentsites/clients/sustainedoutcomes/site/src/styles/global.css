@@ -296,6 +296,41 @@
   clip-path: polygon(0% 6%, 100% 0%, 100% 94%, 0% 100%);
 }
 
+/* eyebrow — Corporate_Elegant "barely noticeable accent" reveal used
+   by SectionEyebrow.astro.
+
+   Sequence on entry:
+     1. Lead rule wipes left-to-right via scaleX(0 → 1),
+        400ms `--ease-out-soft`. Origin-left set on the element so the
+        wipe direction is locked regardless of writing-direction.
+     2. Label fades opacity 0 → 1, 250ms `--ease-out-soft`, with a
+        250ms delay so it appears just before the rule finishes
+        wiping (~150ms overlap — that's the "Webflow feel").
+
+   When there's no rule (the `<p>` form of the eyebrow), the label
+   still fades in but without the delay — :has() lifts the delay only
+   when an .eyebrow-rule sibling is present. */
+[data-reveal="eyebrow"] .eyebrow-rule {
+  transform: scaleX(0);
+  transition: transform var(--duration-reveal) var(--ease-out-soft);
+}
+[data-reveal="eyebrow"][data-revealed] .eyebrow-rule {
+  transform: scaleX(1);
+}
+
+[data-reveal="eyebrow"] .eyebrow-label,
+[data-reveal="eyebrow"].eyebrow-label {
+  opacity: 0;
+  transition: opacity var(--duration-base) var(--ease-out-soft);
+}
+[data-reveal="eyebrow"][data-revealed] .eyebrow-label,
+[data-reveal="eyebrow"][data-revealed].eyebrow-label {
+  opacity: 1;
+}
+[data-reveal="eyebrow"]:has(.eyebrow-rule) .eyebrow-label {
+  transition-delay: 250ms;
+}
+
 /* ------------------------------------------------------------
    Reduced motion (Corporate_Elegant principle 6)
    Decorative motion off; functional transitions preserved instantly.
