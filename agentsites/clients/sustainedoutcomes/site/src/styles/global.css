@@ -209,6 +209,54 @@
 }
 
 /* ------------------------------------------------------------
+   Reveal animations (Corporate_Elegant — see ANIMATION.md)
+   Sections opt in via `data-reveal="header|row-shift|angle-shift|none"`.
+   Base.astro's IntersectionObserver flips `data-revealed=""` on entry.
+   ------------------------------------------------------------ */
+
+/* header — header block (eyebrow + H2 + intro) fades + 12px Y on entry.
+   Used by FocusAreas, ServicesGrid, plain FeatureSplit. */
+[data-reveal="header"] {
+  transition:
+    opacity   var(--duration-reveal) var(--ease-out-soft),
+    transform var(--duration-reveal) var(--ease-out-soft);
+}
+[data-reveal="header"]:not([data-revealed]) {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+/* row-shift — 3-card grid stagger from left (BlogPreview).
+   Direct children stagger 80ms apart. Supports up to 6 children. */
+[data-reveal="row-shift"] > * {
+  opacity: 0;
+  transform: translateX(-16px);
+  transition:
+    opacity   var(--duration-reveal) var(--ease-out-soft),
+    transform var(--duration-reveal) var(--ease-out-soft);
+}
+[data-reveal="row-shift"][data-revealed] > * {
+  opacity: 1;
+  transform: translateX(0);
+}
+[data-reveal="row-shift"][data-revealed] > *:nth-child(1) { transition-delay:   0ms; }
+[data-reveal="row-shift"][data-revealed] > *:nth-child(2) { transition-delay:  80ms; }
+[data-reveal="row-shift"][data-revealed] > *:nth-child(3) { transition-delay: 160ms; }
+[data-reveal="row-shift"][data-revealed] > *:nth-child(4) { transition-delay: 240ms; }
+[data-reveal="row-shift"][data-revealed] > *:nth-child(5) { transition-delay: 320ms; }
+[data-reveal="row-shift"][data-revealed] > *:nth-child(6) { transition-delay: 400ms; }
+
+/* angle-shift — one-shot clip-path expand on the FeatureSplit angled
+   variants (ERB + Ready). The continuous scroll-tied edge motion is wired
+   per-component in Step 5; this rule covers the entry reveal only. */
+[data-reveal="angle-shift"] {
+  transition: clip-path var(--duration-slow) var(--ease-out-soft);
+}
+[data-reveal="angle-shift"]:not([data-revealed]) {
+  clip-path: polygon(0% 6%, 100% 0%, 100% 94%, 0% 100%);
+}
+
+/* ------------------------------------------------------------
    Reduced motion (Corporate_Elegant principle 6)
    Decorative motion off; functional transitions preserved instantly.
    ------------------------------------------------------------ */

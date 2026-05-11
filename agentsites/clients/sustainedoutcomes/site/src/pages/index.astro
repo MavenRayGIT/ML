@@ -1,35 +1,35 @@
 ---
-import '../styles/global.css';
+/**
+ * Homepage placeholder.
+ *
+ * Step 7 replaces this with the real homepage composed from
+ * the modules in MODULES.md. Until then, this placeholder
+ * doubles as the smoke test for Base.astro, fonts, and tokens.
+ */
+import Base from '../layouts/Base.astro';
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta
-			name="description"
-			content="Sustained Outcomes — mission-focused advisory consultancy."
-		/>
-		<title>Sustained Outcomes</title>
-	</head>
-	<body
-		class="flex min-h-screen flex-col items-center justify-center bg-[#F7F7F5] p-8 font-sans text-[#020302] antialiased"
-	>
-		<div
-			class="fixed top-0 left-0 right-0 bg-[#020302] py-2 text-center text-sm font-bold uppercase tracking-[0.1em] text-white"
-		>
-			STAGING · sustainedoutcomes.mackandlee.com
-		</div>
-		<main class="max-w-md text-center">
-			<p class="mb-4 text-[11px] font-semibold uppercase tracking-[0.03em] text-[#939B98]">
-				In development
-			</p>
-			<h1 class="mb-3 text-4xl font-bold tracking-[-0.03em]">Sustained Outcomes</h1>
-			<p class="text-base leading-relaxed text-[#020302]/80">
-				Full site build in progress. Check back soon.
-			</p>
-		</main>
-	</body>
-</html>
+<Base
+  title="Sustained Outcomes"
+  description="Sustained Outcomes — mission-focused advisory consultancy. Full site in development."
+>
+  <div
+    class="fixed top-0 left-0 right-0 bg-[#020302] py-2 text-center text-sm font-semibold uppercase tracking-[0.1em] text-white"
+  >
+    STAGING · sustainedoutcomes.mackandlee.com
+  </div>
+
+  <div class="flex min-h-screen flex-col items-center justify-center bg-gray-bg p-8">
+    <main class="max-w-md text-center" data-reveal="header">
+      <p class="mb-4 font-display text-eyebrow text-gray-mid">
+        In development
+      </p>
+      <h1 class="mb-3 font-display text-4xl font-bold tracking-display">
+        Sustained Outcomes
+      </h1>
+      <p class="font-body text-body-lg text-black/80">
+        Full site build in progress. Check back soon.
+      </p>
+    </main>
+  </div>
+</Base>

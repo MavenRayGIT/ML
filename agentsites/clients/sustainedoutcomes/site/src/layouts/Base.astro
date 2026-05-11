@@ -1,0 +1,140 @@
+---
+/**
+ * Base.astro — root document layout.
+ *
+ * Owns: <!doctype>, <html>, <head>, <body>. Loads global tokens + fonts,
+ * declares SEO meta (with prop overrides), wires GTM via Partytown when
+ * PUBLIC_GTM_ID is set, and runs the IntersectionObserver reveal script
+ * that powers ANIMATION.md's `data-reveal` contract.
+ *
+ * Every page should compose from this (directly or via Page.astro).
+ */
+import '../styles/global.css';
+
+export interface Props {
+  /** Document <title>. Falls back to "Sustained Outcomes". */
+  title?: string;
+  /** <meta name="description"> + OG/Twitter description. */
+  description?: string;
+  /** Open Graph image absolute or root-relative URL. */
+  ogImage?: string;
+  /** Open Graph type — `website` (default) or `article` for blog posts. */
+  ogType?: 'website' | 'article';
+  /** Canonical URL. Falls back to current path under Astro.site. */
+  canonical?: string;
+  /** Set true on intentionally-unindexed pages (e.g. /dev/*). */
+  noindex?: boolean;
+  /**
+   * Lang attribute on <html>. Default `en`. Override only if shipping
+   * a localised page.
+   */
+  lang?: string;
+}
+
+const {
+  title = 'Sustained Outcomes',
+  description = 'Sustained Outcomes — mission-focused advisory consultancy.',
+  ogImage = '/og-default.jpg',
+  ogType = 'website',
+  canonical,
+  noindex = false,
+  lang = 'en',
+} = Astro.props;
+
+const PUBLIC_GTM_ID = import.meta.env.PUBLIC_GTM_ID;
+
+const siteOrigin = Astro.site ?? new URL('https://sustainedoutcomes.com');
+const canonicalURL = canonical ?? new URL(Astro.url.pathname, siteOrigin).toString();
+const ogImageURL = ogImage.startsWith('http') ? ogImage : new URL(ogImage, siteOrigin).toString();
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+
+    {/* Preload the two faces most likely to paint above the fold —
+        Mona Sans Bold for hero/section headlines, Libre Franklin Regular
+        for body. The other weights load lazily via @font-face. */}
+    <link rel="preload" href="/fonts/mona-sans-bold.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/libre-franklin-regular.woff2" as="font" type="font/woff2" crossorigin />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content="Sustained Outcomes" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:image" content={ogImageURL} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageURL} />
+
+    <slot name="head" />
+
+    {PUBLIC_GTM_ID && (
+      <script
+        type="text/partytown"
+        set:html={`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${PUBLIC_GTM_ID}');`}
+      />
+    )}
+  </head>
+  <body>
+    {PUBLIC_GTM_ID && (
+      <noscript>
+        <iframe
+          src={`https://www.googletagmanager.com/ns.html?id=${PUBLIC_GTM_ID}`}
+          height="0"
+          width="0"
+          style="display:none;visibility:hidden"
+          title="Google Tag Manager"
+        />
+      </noscript>
+    )}
+
+    <slot />
+
+    {/* Corporate_Elegant reveal observer.
+        Sections opt in via `data-reveal="header|row-shift|angle-shift|none"`.
+        When the section crosses the viewport entry threshold, the observer
+        flips `data-revealed=""` on the element — CSS handles the rest.
+        prefers-reduced-motion: skip observation, mark everything revealed
+        immediately so layout reflects the final state without animating. */}
+    <script is:inline>
+      (() => {
+        const targets = document.querySelectorAll('[data-reveal]:not([data-reveal="none"])');
+        if (!targets.length) return;
+
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+          targets.forEach((el) => el.setAttribute('data-revealed', ''));
+          return;
+        }
+
+        const observer = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                entry.target.setAttribute('data-revealed', '');
+                observer.unobserve(entry.target);
+              }
+            }
+          },
+          { threshold: 0.15, rootMargin: '0px 0px -10% 0px' }
+        );
+
+        targets.forEach((el) => observer.observe(el));
+      })();
+    </script>
+  </body>
+</html>
