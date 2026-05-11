@@ -162,10 +162,18 @@ const btnSurface: 'dark' | 'light' = hasPhoto ? 'dark' : 'light';
       <p class="hero-body relative isolate mt-6 max-w-[560px] font-body text-body leading-[1.6]">
         {hasBlocks ? (
           <>
+            {/* `data-hero-block-mode="block"` tells the SVG painter to
+                draw ONE rect spanning the full text bounding box rather
+                than per-line. The painter also snaps this rect's TOP
+                edge to the headline block's BOTTOM edge so the two
+                blocks meet at a single seam (per 2026-05-11 feedback:
+                "should be one solid block… should meet, not overlap,
+                the block behind the header"). */}
             <svg
               class="hero-block-bg pointer-events-none absolute inset-0 h-full w-full"
               aria-hidden="true"
               data-hero-block-bg
+              data-hero-block-mode="block"
               preserveAspectRatio="none"
             ></svg>
             <span class="relative" data-hero-block-text>{body}</span>
@@ -215,11 +223,27 @@ const btnSurface: 'dark' | 'light' = hasPhoto ? 'dark' : 'light';
   /* Hero block painter.
    *
    * Replaces CSS `box-decoration-break: clone` rects with an SVG painted
-   * behind each `[data-hero-block-text]` span. All per-line rects are
-   * children of a single `<g opacity="0.51">`, so SVG flattens them
+   * behind each `[data-hero-block-text]` span. All rects within one SVG
+   * are children of a single `<g opacity="0.51">`, so SVG flattens them
    * into an opaque union before applying the group alpha — overlap
    * between adjacent rects disappears, and we get a seamless merged
    * shape instead of stacked semi-transparent stripes.
+   *
+   * Modes:
+   *   data-hero-block-mode="line"  (default) — one rect per visual line
+   *                                 of text, tight to the line box. Used
+   *                                 by the headline (tight 0.85 leading
+   *                                 lets rects merge into one shape).
+   *
+   *   data-hero-block-mode="block" — one rect spanning the bounding box
+   *                                 of ALL text lines. Used by the body
+   *                                 copy whose 1.6 leading would leave
+   *                                 visible white gutters between
+   *                                 per-line rects. Top edge SNAPS to
+   *                                 the previous block's bottom edge so
+   *                                 the two read as one continuous
+   *                                 piece-of-paper behind eyebrow +
+   *                                 headline + body.
    *
    * Lines come from `Range.getClientRects()`, which gives one DOMRect
    * per visual line of the text run, in viewport coords. Subtract the
@@ -245,6 +269,34 @@ const btnSurface: 'dark' | 'light' = hasPhoto ? 'dark' : 'light';
                                    ≥0.15em gives a clean visual cover with
                                    no glyphs poking through the rect edge. */
 
+    /**
+     * For "block" mode: find the previous-in-document hero block's
+     * bottom edge in viewport coords. Returns null if there's no
+     * earlier block to snap to.
+     */
+    function findPrevBlockBottom(currentSvg) {
+      const all = document.querySelectorAll('[data-hero-block-bg]');
+      let prev = null;
+      for (const svg of all) {
+        if (svg === currentSvg) break;
+        prev = svg;
+      }
+      if (!prev) return null;
+      const prevHost = prev.parentElement;
+      if (!prevHost) return null;
+      const prevHostBox = prevHost.getBoundingClientRect();
+      const rects = prev.querySelectorAll('rect');
+      if (!rects.length) return null;
+      let bottom = -Infinity;
+      for (const r of rects) {
+        const ry = parseFloat(r.getAttribute('y')) || 0;
+        const rh = parseFloat(r.getAttribute('height')) || 0;
+        const b = prevHostBox.top + ry + rh;
+        if (b > bottom) bottom = b;
+      }
+      return Number.isFinite(bottom) ? bottom : null;
+    }
+
     function paintBlock(svg) {
       const host = svg.parentElement;
       if (!host) return;
@@ -258,7 +310,7 @@ const btnSurface: 'dark' | 'light' = hasPhoto ? 'dark' : 'light';
 
       const range = document.createRange();
       range.selectNodeContents(textEl);
-      const lines = Array.from(range.getClientRects());
+      const lines = Array.from(range.getClientRects()).filter((r) => r.width >= 1);
 
       const hostBox = host.getBoundingClientRect();
       const w = hostBox.width;
@@ -275,23 +327,61 @@ const btnSurface: 'dark' | 'light' = hasPhoto ? 'dark' : 'light';
       group.setAttribute('fill', FILL);
       group.setAttribute('opacity', OPACITY);
 
-      for (const line of lines) {
-        if (line.width < 1) continue;
-        const x = line.left - hostBox.left - padX;
-        const y = line.top  - hostBox.top  - padY;
-        const rw = line.width  + 2 * padX;
-        const rh = line.height + 2 * padY;
+      const mode = svg.dataset.heroBlockMode || 'line';
+
+      if (mode === 'block' && lines.length > 0) {
+        /* Bounding box of all lines, in viewport coords. */
+        let minLeft = Infinity, maxRight = -Infinity, minTop = Infinity, maxBottom = -Infinity;
+        for (const line of lines) {
+          if (line.left   < minLeft)   minLeft   = line.left;
+          if (line.right  > maxRight)  maxRight  = line.right;
+          if (line.top    < minTop)    minTop    = line.top;
+          if (line.bottom > maxBottom) maxBottom = line.bottom;
+        }
+
+        /* Snap to the previous block's bottom edge if there is one
+           (e.g. body snapping under the headline block). Otherwise the
+           rect just uses its own padY for the top edge. */
+        let rectTopViewport = minTop - padY;
+        const prevBottom = findPrevBlockBottom(svg);
+        if (prevBottom !== null) {
+          rectTopViewport = prevBottom;
+        }
+
+        const x  = minLeft - hostBox.left - padX;
+        const y  = rectTopViewport - hostBox.top;
+        const rw = (maxRight - minLeft) + 2 * padX;
+        const rh = (maxBottom + padY) - rectTopViewport;
+
         const rect = document.createElementNS(SVG_NS, 'rect');
         rect.setAttribute('x', String(x));
         rect.setAttribute('y', String(y));
         rect.setAttribute('width', String(rw));
         rect.setAttribute('height', String(rh));
         group.appendChild(rect);
+      } else {
+        /* line mode — one rect per visual line of text. */
+        for (const line of lines) {
+          const x  = line.left - hostBox.left - padX;
+          const y  = line.top  - hostBox.top  - padY;
+          const rw = line.width  + 2 * padX;
+          const rh = line.height + 2 * padY;
+          const rect = document.createElementNS(SVG_NS, 'rect');
+          rect.setAttribute('x', String(x));
+          rect.setAttribute('y', String(y));
+          rect.setAttribute('width', String(rw));
+          rect.setAttribute('height', String(rh));
+          group.appendChild(rect);
+        }
       }
       svg.appendChild(group);
     }
 
     function paintAll() {
+      /* DOM order matters — block-mode painters look "up" the list for
+         the previous block to snap to, so the headline (rendered first
+         in the JSX) MUST paint before the body. `querySelectorAll`
+         returns elements in document order, which is what we want. */
       document.querySelectorAll('[data-hero-block-bg]').forEach(paintBlock);
     }
 
