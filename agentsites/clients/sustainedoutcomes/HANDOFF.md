@@ -322,10 +322,17 @@ scroll):
 | `dark`-state bg | transparent | `rgba(8,57,40,0.88)` + `backdrop-filter: blur(8px) saturate(140%)` |
 | `white`-state bg | white | white + 1px ambient shadow under |
 | `amber`-state bg | amber | amber + 1px inset hairline |
+| **Desktop nav height** | **74px** | **56px** (matches mobile — converges on single small-chrome) |
 | Desktop logo circle | 40px | 32px |
 | Desktop tree icon | 36px | 28px |
 | Desktop wordmark | 28px tall | 22px tall |
+| **Desktop CTA padding** | `px-6 py-3` (24 × 12) | `18px × 8px` |
+| Mobile nav height | 56px (fixed) | 56px (fixed) |
 | Mobile logo | 32 / 28 / 18 (fixed) | 32 / 28 / 18 (fixed) |
+
+All compact properties transition together over `--duration-base`
+(250ms) with `--ease-default`. Hover colour transitions on the CTA
+stay on the snappy 150ms `--duration-quick`.
 
 The dark-state semi-opaque wash is what fixes the hero/header collision
 documented 2026-05-11: once the user scrolls, hero copy passing under

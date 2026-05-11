@@ -45,9 +45,11 @@
  *   Mobile / hamburger (< 1100px) — 56px tall, 20px gutters
  *                       (`px-margin` resolves to 20px on mobile via
  *                       global.css), 32px icon, 18px wordmark.
- *   Desktop (≥ 1100px) — 74px tall, 64px gutters.
+ *   Desktop (≥ 1100px) — 74px tall at rest, 64px gutters.
  *                       Logo at rest: 40px icon + 28px wordmark.
- *                       Logo compact:  32px icon + 22px wordmark.
+ *                       Compact (scrolled): nav shrinks to 56px,
+ *                       logo to 32px icon + 22px wordmark, CTA
+ *                       padding shrinks 24×12 → 18×8.
  *
  * Mobile (< 1100px): logo + hamburger only at rest. Tap → full amber
  * overlay with stacked nav + CTA. Body scroll locked while open.
@@ -72,7 +74,7 @@ const navItems = [
   id="site-nav"
   data-nav-state="dark"
   data-nav-compact="false"
-  class="site-nav fixed inset-x-0 top-0 z-50 h-14 nav:h-[74px] transition-[background-color,backdrop-filter,color] duration-base ease-default"
+  class="site-nav fixed inset-x-0 top-0 z-50 h-14 nav:h-[74px] transition-[background-color,backdrop-filter,color,height] duration-base ease-default"
   aria-label="Site"
 >
   <div class="mx-auto flex h-full max-w-content items-center px-margin">
@@ -263,11 +265,37 @@ const navItems = [
     .site-nav[data-nav-compact='false'] .nav-logo-icon       { height: 36px; width: 36px; }
     .site-nav[data-nav-compact='false'] .nav-logo-wordmark   { height: 28px; }
 
-    /* Desktop compact — 32px circle, 28px tree, 22px wordmark */
+    /* Desktop compact — chrome + logo + CTA all shrink together as one
+       motion (250ms / ease-default — same as bg + logo). Compact height
+       intentionally matches the mobile 56px so we converge on a single
+       "small chrome" presentation. */
+    .site-nav[data-nav-compact='true']                       { height: 56px; }
     .site-nav[data-nav-compact='true']  .nav-logo            { height: 32px; }
     .site-nav[data-nav-compact='true']  .nav-logo-circle     { height: 32px; width: 32px; }
     .site-nav[data-nav-compact='true']  .nav-logo-icon       { height: 28px; width: 28px; }
     .site-nav[data-nav-compact='true']  .nav-logo-wordmark   { height: 22px; }
+  }
+
+  /* CTA padding — transitions in lockstep with the height/logo change.
+     Override longhand (rather than the Tailwind `transition-colors`
+     shorthand) so hover-colour transitions stay snappy at 150ms while
+     padding eases at the base 250ms duration alongside the nav. */
+  .site-nav .nav-cta > a,
+  .site-nav .nav-cta > button {
+    transition:
+      background-color  var(--duration-quick) var(--ease-default),
+      color             var(--duration-quick) var(--ease-default),
+      border-color      var(--duration-quick) var(--ease-default),
+      padding           var(--duration-base)  var(--ease-default);
+  }
+  @media (min-width: 1100px) {
+    .site-nav[data-nav-compact='true'] .nav-cta > a,
+    .site-nav[data-nav-compact='true'] .nav-cta > button {
+      padding-left:  18px;
+      padding-right: 18px;
+      padding-top:    8px;
+      padding-bottom: 8px;
+    }
   }
 
   /* Nav-link text colour (rest) */
