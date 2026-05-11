@@ -3,9 +3,9 @@
  * /dev/split — visual review of all three FeatureSplit configurations
  * used on the homepage:
  *
- *   1. ERB     — image-left,  dark,  angled
- *   2. Oakland — image-right, light, angled
- *   3. Founder — image-left,  light, plain, amber-fill CTA (Variant B)
+ *   1. ERB     — image-left,  dark,  angled,  full-bleed image
+ *   2. Oakland — image-right, light, angled,  full-bleed image
+ *   3. Founder — image-left,  light, plain,   CONTAINED image, amber-fill CTA
  */
 import Page from '../../layouts/Page.astro';
 import FeatureSplit from '../../components/sections/FeatureSplit.astro';
@@ -49,6 +49,7 @@ import imgFounder from '../../assets/FPO-Hiker-Portrait.jpg';
     image={imgFounder}
     imageAlt=""
     imagePosition="left"
+    contained
     cta={{ text: 'Meet Ken', href: '/about', variant: 'amber-fill' }}
   />
 </Page>

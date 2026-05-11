@@ -153,7 +153,13 @@
   --text-caption--line-height:  1.4;
 
   /* Spacing --------------------------------------------------
-     Surfaces as `p-section`, `py-section`, etc. */
+     Surfaces as `p-section`, `py-section`, etc.
+
+     `--spacing-margin` is the standard horizontal page gutter and is
+     intentionally a runtime CSS variable so the @media override below
+     can flip it to 20px on mobile (per 2026-05-11 refinement: 64px
+     reads as "way too wide" on phones). Tailwind v4 emits the var on
+     :root, so every `px-margin` / `mx-margin` utility tracks it. */
   --spacing-section:    128px;  /* standard section vertical padding */
   --spacing-section-sm:  96px;  /* compact section padding */
   --spacing-section-xs:  64px;  /* mobile section padding */
@@ -186,6 +192,18 @@
     color: var(--color-black);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ------------------------------------------------------------
+   Responsive page gutter
+   Mobile (< 768px): 20px — same gutter used by the nav, sections,
+   and every `px-margin` consumer. Above 768px the @theme default
+   (64px) takes over.
+   ------------------------------------------------------------ */
+@media (max-width: 767.98px) {
+  :root {
+    --spacing-margin: 20px;
   }
 }
 

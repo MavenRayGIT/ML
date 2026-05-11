@@ -2,9 +2,9 @@
 /**
  * BlogPreview.astro — "Latest Insights" 3-card row from the blog.
  *
- * Per HANDOFF.md → Component Map → BlogPreview + ANIMATION.md
- * `BlogPreview row-shift` (3 cards stagger in from the left on viewport
- * entry, 80ms apart).
+ * Per HANDOFF.md → Component Map → BlogPreview. The card row used to
+ * stagger in from the left (`row-shift`), but per 2026-05-11 review
+ * the slide-in felt fussy on this section — cards now render static.
  *
  * Modules are dumb — this component takes a `posts` array via prop.
  * The caller (homepage / blog landing) reads from `astro:content` and
@@ -56,10 +56,7 @@ const {
       {headline}
     </h2>
 
-    <ul
-      class="blog-preview-grid mt-16 grid grid-cols-1 gap-x-8 gap-y-16 md:grid-cols-3"
-      data-reveal="row-shift"
-    >
+    <ul class="blog-preview-grid mt-16 grid grid-cols-1 gap-x-8 gap-y-16 md:grid-cols-3">
       {posts.map((post) => (
         <li class="blog-card group relative flex flex-col bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
           {/* Image overflows the top of the card per the HANDOFF spec —

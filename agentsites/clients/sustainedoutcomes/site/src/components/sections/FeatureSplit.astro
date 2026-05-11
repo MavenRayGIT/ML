@@ -3,13 +3,17 @@
  * FeatureSplit.astro — 50/50 image + text split.
  *
  * Reused on the homepage for:
- *   - Initiative ERB     (image-left,  dark,  angled)
- *   - Initiative Oakland (image-right, light, angled)
- *   - Founder            (image-left,  light, plain — amber-fill CTA per
- *                         resolved Open Question 2026-05-11)
+ *   - Initiative ERB     (image-left,  dark,  angled,  full-bleed image)
+ *   - Initiative Oakland (image-right, light, angled,  full-bleed image)
+ *   - Founder            (image-left,  light, plain,   CONTAINED image —
+ *                         per 2026-05-11 refinement: founder image must
+ *                         stay within max-w-content, not run to viewport edge)
  *
- * Image side is flush to the page edge (breaks out of `max-w-content`).
- * Text side sits within standard `px-margin` content margins.
+ * Layout modes:
+ *   default              Image side is flush to the page edge; text side
+ *                        sits within standard `px-margin` content margins.
+ *   contained=true       Whole section sits within max-w-content; the image
+ *                        edge ends at the same gutter as the text.
  *
  * Mobile: stacks to 1-col with the image above the text.
  *
@@ -49,6 +53,11 @@ export interface Props {
   dark?: boolean;
   /** Apply the diagonal clip-path treatment. Used on the two initiatives. */
   angled?: boolean;
+  /**
+   * Keep both halves inside `max-w-content` rather than running the image
+   * to the viewport edge. Founder block uses this. Default false.
+   */
+  contained?: boolean;
   cta?: FeatureSplitCta;
 }
 
@@ -61,6 +70,7 @@ const {
   imagePosition = 'left',
   dark = false,
   angled = false,
+  contained = false,
   cta,
 } = Astro.props;
 
@@ -83,11 +93,20 @@ const reveal = angled ? 'angle-shift' : 'header';
   data-reveal={reveal}
   data-image-position={imagePosition}
 >
-  <div class="grid grid-cols-1 md:grid-cols-2">
-    {/* Image cell — full bleed to the page edge. */}
+  <div
+    class:list={[
+      'grid grid-cols-1 md:grid-cols-2',
+      contained && 'mx-auto w-full max-w-content px-margin gap-x-12 py-section-sm md:py-section',
+    ]}
+  >
+    {/* Image cell — bleeds to viewport edge in the default layout, sits
+        inside the content gutter when `contained`. */}
     <div
       class:list={[
-        'feature-split-image relative w-full min-h-[320px] md:min-h-[622px]',
+        'feature-split-image relative w-full',
+        contained
+          ? 'aspect-[4/3] md:aspect-auto md:min-h-[480px]'
+          : 'min-h-[320px] md:min-h-[622px]',
         imagePosition === 'right' && 'md:order-2',
       ]}
     >
@@ -100,8 +119,17 @@ const reveal = angled ? 'angle-shift' : 'header';
       />
     </div>
 
-    {/* Text cell — content sits within standard page margins. */}
-    <div class="feature-split-text flex items-center px-margin py-section-sm md:py-section">
+    {/* Text cell — content always sits within content margins. The
+        `contained` wrapper above already supplies px-margin + section
+        padding, so we drop them here in that mode. */}
+    <div
+      class:list={[
+        'feature-split-text flex items-center',
+        contained
+          ? 'pt-8 md:pt-0 md:pl-4'
+          : 'px-margin py-section-sm md:py-section',
+      ]}
+    >
       <div class="feature-split-content max-w-[520px]">
         {eyebrow && (
           <SectionEyebrow color={dark ? 'amber' : 'black'} withLeadRule class="mb-6">

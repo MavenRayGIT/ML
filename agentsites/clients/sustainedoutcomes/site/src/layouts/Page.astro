@@ -13,7 +13,8 @@
  *   - All Base.astro SEO props are forwarded (title, description, etc.).
  *   - `hasHero` — when true, <main> renders without top padding so the
  *     hero sits flush against the top of the viewport (nav floats over).
- *     When false (default), main is padded down 74px to clear the nav.
+ *     When false (default), main is padded down to clear the fixed nav
+ *     (56px on mobile, 74px on desktop — matches Nav.astro).
  *   - `hideNav` / `hideFooter` — escape hatches for atypical pages.
  *
  * Composing pages forward arbitrary <head> content via the `head` slot.
@@ -57,10 +58,11 @@ const showStagingBanner = import.meta.env.PUBLIC_HIDE_STAGING_BANNER !== 'true';
   {showStagingBanner && <StagingBanner />}
   {!hideNav && <Nav />}
 
-  {/* When no hero, pad main down 74px so content clears the fixed nav.
-      The staging banner is an overlay only — it briefly covers the top
-      of the nav while visible and does not displace any chrome. */}
-  <main class={!hasHero ? 'pt-[74px]' : undefined}>
+  {/* When no hero, pad main down so content clears the fixed nav
+      (56px mobile, 74px desktop — see Nav.astro). The staging banner
+      is an overlay only — it briefly covers the top of the nav while
+      visible and does not displace any chrome. */}
+  <main class={!hasHero ? 'pt-14 md:pt-[74px]' : undefined}>
     <slot />
   </main>
 

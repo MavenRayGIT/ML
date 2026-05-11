@@ -1,11 +1,13 @@
 ---
 /**
- * TextLink.astro — standalone text CTA with amber chevron.
+ * TextLink.astro — standalone text CTA with amber-square chevron.
  *
- * Per HANDOFF.md → Link & Interactive Patterns:
- *   Amber `>` chevron LEFT of label.
+ * Per HANDOFF.md → Link & Interactive Patterns + 2026-05-11 refinement:
+ *   18×18 amber square with a white chevron glyph, sat LEFT of the label.
  *   Label: Libre Franklin SemiBold 13px, black `#020302`.
- *   Hover: chevron nudges right (Corporate_Elegant: 250ms translateX 4px).
+ *   Hover (Corporate_Elegant, 250ms):
+ *     - square bg amber → green-dark
+ *     - chevron nudges right (translateX 2px)
  *
  * Used inline as a section CTA — "Read the article", "Learn more", etc.
  * For inline links inside body copy, use <InlineLink> instead.
@@ -28,14 +30,32 @@ const { href, ariaLabel, class: className = '' } = Astro.props;
   href={href}
   aria-label={ariaLabel}
   class:list={[
-    'group inline-flex items-center gap-2',
+    'group inline-flex items-center gap-3',
     'font-body text-nav text-black',
     className,
   ]}
 >
   <span
     aria-hidden="true"
-    class="text-amber transition-transform duration-base ease-default group-hover:translate-x-1"
-  >&gt;</span>
+    class="textlink-chip inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center bg-amber transition-colors duration-base ease-default group-hover:bg-green-dark"
+  >
+    <svg
+      width="7"
+      height="10"
+      viewBox="0 0 7 10"
+      fill="none"
+      aria-hidden="true"
+      class="textlink-chev text-white transition-transform duration-base ease-default group-hover:translate-x-[2px]"
+    >
+      <path
+        d="M1 1l4 4-4 4"
+        stroke="currentColor"
+        stroke-width="1.6"
+        stroke-linecap="square"
+        stroke-linejoin="miter"
+        fill="none"
+      />
+    </svg>
+  </span>
   <span><slot /></span>
 </a>

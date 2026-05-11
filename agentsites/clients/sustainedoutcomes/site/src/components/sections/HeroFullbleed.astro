@@ -121,7 +121,17 @@ const btnSurface: 'dark' | 'light' = hasPhoto ? 'dark' : 'light';
       </SectionEyebrow>
     )}
 
-    <h1 class="hero-headline font-display max-w-[820px] text-[48px] leading-[0.9] tracking-display md:text-hero">
+    <h1
+      class:list={[
+        'hero-headline font-display max-w-[820px] tracking-display',
+        hasBlocks
+          /* photo-blocks variant: line-height MUST be ≥ 1 so the
+             per-line semi-transparent bg rects don't overlap and
+             compound their alpha into "lens"-stripe artifacts. */
+          ? 'text-[44px] leading-[1] md:text-[72px] md:leading-[1]'
+          : 'text-[48px] leading-[0.9] md:text-hero',
+      ]}
+    >
       {hasBlocks ? <span class="hero-block">{headline}</span> : headline}
     </h1>
 
@@ -161,10 +171,15 @@ const btnSurface: 'dark' | 'light' = hasPhoto ? 'dark' : 'light';
   }
   /* Per-line dark-green bg behind text — clones the decoration onto every
      line break so the block hugs the text instead of stretching the whole
-     paragraph width. */
+     paragraph width.
+
+     Vertical padding is intentionally 0: the H1 carries `line-height: 1`
+     when this variant is active, so each line's rect ends up exactly
+     `1em` tall and adjacent rects touch without overlapping. Any positive
+     vertical padding would re-introduce the alpha-compounding artifact. */
   .hero-block {
     background-color: rgba(8, 57, 40, 0.51);
-    padding: 0.05em 0.3em;
+    padding: 0 0.3em;
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
   }

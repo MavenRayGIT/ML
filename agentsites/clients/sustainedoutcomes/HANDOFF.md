@@ -138,18 +138,24 @@ All copy color: `#020302` (black). No exceptions.
 ## Link & Interactive Patterns
 
 ### Text link / text button (standalone)
-- Amber `>` chevron LEFT of label
+- 18×18 **amber square chip** LEFT of label, with a **white chevron** glyph
+  inside (refined 2026-05-11 — was a bare amber `>` glyph).
 - Label: Libre Franklin SemiBold, 13px, black `#020302`
-- Hover: chevron nudges right — subtle CSS transform translateX animation
-- Implementation: Cursor to determine exact animation values
+- Hover (`duration-base` 250ms, `ease-default`):
+  - chip background animates amber → green-dark
+  - chevron nudges right (translateX +2px)
+- Reduced-motion: transitions collapse to ~0ms (global rule); colour swap
+  still applies on hover.
 
 ```html
-<!-- Pattern -->
-<a class="text-link group flex items-center gap-2">
-  <span class="text-amber transition-transform
-    group-hover:translate-x-1">&gt;</span>
-  <span class="font-body font-semibold text-label
-    text-black">Learn more</span>
+<!-- Pattern (see TextLink.astro for the canonical implementation) -->
+<a class="group inline-flex items-center gap-3 font-body text-nav text-black">
+  <span class="inline-flex h-[18px] w-[18px] items-center justify-center
+               bg-amber transition-colors duration-base ease-default
+               group-hover:bg-green-dark">
+    <!-- white chevron glyph (svg path) -->
+  </span>
+  <span>Learn more</span>
 </a>
 ```
 
@@ -278,11 +284,12 @@ than failing.
 
 ## Nav — 3 States
 
-Nav height: 74px. Logo left at 64px. Links right. CTA far right.
+Nav height: 74px desktop · **56px mobile**. Logo left at the page gutter
+(64px desktop · 20px mobile). Links right. CTA far right.
 
 | State | Bg | Links (rest) | Link hover | CTA |
 |-------|-----|--------------|------------|-----|
-| Over hero (dark) | `#083928` | `#F2F7E5` cream | `#FFC560` amber | `outline` × `dark` (amber border + amber text → hover white border) |
+| Over hero (dark) | **transparent** (was `#083928`) — hero gradient supplies contrast | `#F2F7E5` cream | `#FFC560` amber | `outline` × `dark` (amber border + amber text → hover white border) |
 | Scrolled (white) | white | `#050803` near-black | `#FFC560` amber | `outline-emph` × `light` (amber border + green-dark text → hover fills amber with black text) |
 | Amber bg | `#FFC560` | `#050803` near-black | `#FFFFFF` white | `outline` × `amber` (green-dark border + green-dark text → hover white border) |
 
@@ -290,9 +297,19 @@ Nav height: 74px. Logo left at 64px. Links right. CTA far right.
 white, CTA changed from `outline × light` to `outline × amber`. Both
 swap the amber accent to white because amber-on-amber is invisible.
 
+**Amended 2026-05-11 (c)** — `data-nav-state="dark"` background is now
+transparent. Over the hero photo the nav lets the image read through;
+over a green-dark section the green wash behind the nav still shows
+through as before, so the visual outcome on dark sections is identical.
+The hero's own 342px top gradient (`rgba(5,8,3,0.82) → transparent`)
+provides the contrast for the cream links + light logo.
+
 Transition: sections opt in via `data-nav-bg="dark|white|amber"` on
-their root element. A scroll-throttled hit-test against the nav's 74px
-probe line picks the topmost matching section.
+their root element. A scroll-throttled hit-test against
+`nav.getBoundingClientRect().bottom + 1` picks the topmost matching
+section — so the probe adapts automatically to the responsive 56/74px
+nav height.
+
 Nav links: Consulting · Initiatives · About · Blog · Support Us
 CTA label: "Request a meeting" (sentence case in nav)
 Mobile: hamburger → full amber overlay, links Title Case (not all caps),
@@ -349,16 +366,23 @@ hover white, green-fill CTA at bottom.
 ## Component Map — Homepage
 
 ### `HeroFullbleed.astro`
+- Three variants: `photo-blocks` (homepage default), `photo-gradient`,
+  `color-only`. See `/dev/hero` for the visual review.
 - Full viewport height, min 788px
 - Full-bleed photo, two gradient overlays
   - Top: `rgba(5,8,3,0.82)` → transparent, 342px, mix-blend-multiply
   - Bottom: dark overlay on lower 40%
 - Content: left-aligned, lower third
-  - H1: Mona Sans Bold 72px, white, -3% tracking, lh 0.85
+  - H1: Mona Sans Bold 72px desktop · 44–48px mobile, white, -3% tracking
+  - **H1 line-height: 1.0 when `photo-blocks` is active** (was 0.85);
+    the per-line semi-transparent bg rects compound their alpha when
+    they overlap, producing "lens"-stripe artifacts. Locked at `1.0` so
+    adjacent rects exactly touch. The other two variants keep `0.85`.
+    Decided 2026-05-11.
   - Body: Libre Franklin Regular 15px, white, lh 24px
-  - Primary CTA: amber-fill button
-  - Secondary CTA: amber-ghost button
-- Props: `{ headline, body, image, primaryCta, secondaryCta }`
+  - Primary CTA: `amber-fill` button (surface auto-tunes per variant)
+  - Secondary CTA: `outline` button
+- Props: `{ variant, eyebrow, headline, body, image, imageAlt, primaryCta, secondaryCta }`
 
 ### `FocusAreas.astro`
 - Bg: white
@@ -370,13 +394,20 @@ hover white, green-fill CTA at bottom.
 - Props: `{ eyebrow, headline, body, items: [{ title, body, image, href }] }`
 
 ### `FeatureSplit.astro`
-- Reused for: Initiative ERB, Initiative Oakland, Founder (×2 variants)
-- Props control: imagePosition (left/right), dark (bool), ctaVariant
+- Reused for: Initiative ERB, Initiative Oakland, Founder
+- Props control: imagePosition (left/right), dark (bool), angled (bool),
+  **contained (bool)**, cta variant
 - Dark variant bg: `#083928`
 - Light variant bg: white
-- Image: 639×622px, flush to page edge (not constrained to content width)
+- **Two layout modes:**
+  - default — image flush to page edge (breaks out of `max-w-content`).
+    Used by ERB + Oakland.
+  - `contained` — image stays inside `max-w-content` + page gutter so it
+    doesn't hit the viewport edge. Used by Founder per 2026-05-11
+    refinement ("image of Ken should not go to browser edge").
+- Image: 639×622px desktop in the default layout
 - Text block: eyebrow + H2 (40px) + body (16px, lh 26px) + button
-- Props: `{ eyebrow, headline, body, image, imagePosition, dark, cta }`
+- Props: `{ eyebrow, headline, body, image, imagePosition, dark, angled, contained, cta }`
 
 ### `VideoSection.astro`
 - Bg: `#FFC560` amber — full width, strong visual break
@@ -397,10 +428,14 @@ hover white, green-fill CTA at bottom.
   - Image: 296×243px, object-cover, overflows card top
   - Title: Mona Sans Bold 20px, lh 0.85
   - Body: Libre Franklin Regular 16px, lh 23px
-  - Link: `>` in amber, "Read the Article" in black
+  - Link: TextLink ("Read the article")
 - Card left positions: 86px, 518px, 950px
-- Data: Astro content collection, latest 3 posts
-- Props: `{ headline, count: 3 }`
+- Data: Astro content collection, latest 3 posts (Step 6)
+- Props: `{ headline?, posts, linkText? }`
+- **Entry animation removed 2026-05-11** — was `row-shift` (cards slide
+  in from the left, 80ms stagger). Felt fussy on this section; cards
+  now render static. The `row-shift` utility itself remains for other
+  sections (FocusAreas still uses it).
 
 ### `ContactSection.astro`
 - Bg: white (left info) + form fields right
@@ -479,9 +514,9 @@ const blog = defineCollection({
 
 | Breakpoint | Width | Key changes |
 |------------|-------|-------------|
-| Mobile | < 768px | Nav → hamburger, hero H1 → 48px, 3-col → 1-col, padding → 64px |
+| Mobile | < 768px | Nav → hamburger; nav height 56px; **page gutter 20px** (`--spacing-margin` overridden in `@media` — was 64px); logo: 32px icon + 18px wordmark; hero H1 → 44px; 3-col → 1-col |
 | Tablet | 768–1024px | 2-col grids, reduced padding |
-| Desktop | > 1024px | Full Figma layout |
+| Desktop | > 1024px | Full Figma layout (nav 74px, gutter 64px) |
 
 Feature splits on mobile: image top, text below (stacked).
 
