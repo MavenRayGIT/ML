@@ -1,25 +1,48 @@
 ---
 /**
- * BlogDetailHero.astro — title block for /blog/[...slug].
+ * BlogDetailHero.astro — amber title band for /blog/[...slug].
  *
- * NOT a full-bleed photo hero. Inspired by the Everlywell post layout
- * referenced 2026-05-11:
- *   - White background, sits inside the standard content margin.
- *   - Eyebrow row: category pill + date + reading time (when present)
- *   - H1: Mona Sans Bold, design's full headline scale.
- *   - Excerpt: text-body-lg below the H1 — sets up the article.
- *   - Author: small row above the cover image — "By Ken Jacobsen".
- *   - Cover image: full-width, ~16:9, sits between the title block and
- *     the body. Drops out cleanly when no image is supplied.
+ * Refactored 2026-05-11 to match the Figma reference at
+ * `Wireframes` → node `173:59`. The previous (Step 7 v1) white
+ * editorial hero with full-width cover image was replaced by an
+ * amber band, no cover image, with a small circular author avatar.
  *
- * The detail page itself owns the layout grid (article + sidebar
- * with TOC/share/promo). This component is purely the title block —
- * it's full-width above the grid so the title doesn't feel cramped.
+ * Composition (top → bottom inside the amber band):
+ *
+ *   [White category chip · MARCH 14, 2026 │ 5 MIN READ]
+ *
+ *   The slow work of access                 ← H1, large display
+ *
+ *   Lorem ipsum dolor sit amet…             ← excerpt, body-lg
+ *
+ *   (●)                                     ← Ken's headshot, 90px circle
+ *
+ * The amber band is full-width and `data-nav-bg="amber"` so the
+ * sticky `Nav` swaps to its amber state (already fully wired — see
+ * `Nav.astro`). Nav background and hero background are the same
+ * amber so they read as one continuous band.
+ *
+ * Colour translation from Figma (Wireframes 173:59) — Figma raw
+ * hex on the left, project token on the right:
+ *
+ *   #ffc560 (band)      → var(--color-amber)
+ *   #ffffff (chip)      → #ffffff (cream-ish white)
+ *   #333003 (eyebrow)   → var(--color-green-dark)
+ *   #000000 (body/h1)   → var(--color-black)
+ *
+ * Cover image: the schema still has `image` (used by `BlogCard` and
+ * for OpenGraph) — the detail hero no longer renders it.
+ *
+ * Author headshot: hardcoded import of `Ken-Jacobsen-Portrait.jpg`
+ * for now since Ken is the only author. When the practice adds a
+ * second author the schema will gain `authorImage?: image()` and
+ * this component will read it via `Astro.props.authorImage`.
  */
 
-import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
+
 import SectionEyebrow from '../ui/SectionEyebrow.astro';
+import kenPortrait    from '../../assets/Ken-Jacobsen-Portrait.jpg';
 
 export interface Props {
   title: string;
@@ -28,8 +51,6 @@ export interface Props {
   author?: string;
   duration?: string;
   excerpt?: string;
-  image?: ImageMetadata;
-  imageAlt?: string;
 }
 
 const {
@@ -39,8 +60,6 @@ const {
   author = 'Ken Jacobsen',
   duration,
   excerpt,
-  image,
-  imageAlt = '',
 } = Astro.props;
 
 const dateLabel = new Intl.DateTimeFormat('en-US', {
@@ -52,49 +71,79 @@ const dateLabel = new Intl.DateTimeFormat('en-US', {
 const dateIso = date.toISOString().slice(0, 10);
 ---
 
-<header class="bg-white pt-section-xs md:pt-section-sm" data-nav-bg="white">
-  <div class="mx-auto w-full max-w-[800px] px-margin">
-    {/* Category eyebrow + meta row */}
-    <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-caption">
-      <SectionEyebrow color="amber">{category}</SectionEyebrow>
-      <time
-        datetime={dateIso}
-        class="font-body uppercase tracking-eyebrow text-gray-mid"
+<header
+  class="blog-detail-hero relative w-full bg-amber pt-section-sm pb-section-sm md:pt-section md:pb-section"
+  data-nav-bg="amber"
+>
+  <div class="mx-auto w-full max-w-content px-margin">
+
+    {/* ----- Eyebrow row ----- */}
+    {/* White chip wraps the category pill; date + duration sit inline
+        beside it on the amber background. Pipe separator uses the
+        cream divider tone so it reads on amber. All caps + tracking
+        match `SectionEyebrow` so it ties back to the rest of the site
+        (we don't render the component here because the chip wants the
+        category in a discrete pill — easier to render flat). */}
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <span
+        class="
+          blog-detail-eyebrow-chip
+          inline-flex items-center
+          rounded-[2px]
+          bg-white
+          px-2.5 py-1
+          font-body text-eyebrow font-semibold uppercase tracking-eyebrow
+          text-green-dark
+        "
       >
-        {dateLabel}
-      </time>
+        {category}
+      </span>
+
+      <span class="font-body text-eyebrow font-semibold uppercase tracking-eyebrow text-green-dark">
+        <time datetime={dateIso}>{dateLabel}</time>
+      </span>
+
       {duration && (
-        <span class="font-body uppercase tracking-eyebrow text-gray-mid">{duration}</span>
+        <>
+          <span class="font-body text-eyebrow text-cream" aria-hidden="true">|</span>
+          <span class="font-body text-eyebrow font-semibold uppercase tracking-eyebrow text-green-dark">
+            {duration}
+          </span>
+        </>
       )}
     </div>
 
-    {/* H1 — uses h2-lg scale, not text-hero. Hero scale is reserved
-        for HeroFullbleed; on the post page the title should feel
-        editorial, not promotional. */}
-    <h1 class="mt-6 font-display text-h2-lg tracking-display text-black">
+    {/* ----- Title ----- */}
+    {/* `text-hero` scale matches the design's 72px / 0.85 leading.
+        Sat in `--text-hero` since Step 5 — same scale as the homepage
+        HeroFullbleed headline, which is intentional: a post detail
+        hero gets the same display weight as a marketing hero. */}
+    <h1 class="mt-8 max-w-[1080px] font-display text-hero tracking-display font-bold text-black">
       {title}
     </h1>
 
+    {/* ----- Excerpt ----- */}
     {excerpt && (
-      <p class="mt-6 max-w-[720px] font-body text-body-lg leading-[1.6] text-black">
+      <p class="mt-8 max-w-[780px] font-body text-body-lg leading-[1.6] text-black">
         {excerpt}
       </p>
     )}
 
-    <p class="mt-8 font-body text-body text-gray-mid">
-      By <span class="text-black">{author}</span>
-    </p>
-  </div>
-
-  {image && (
-    <div class="mx-auto mt-12 w-full max-w-[1100px] px-margin">
+    {/* ----- Author avatar ----- */}
+    {/* Circular Ken portrait. `aria-label` doubles as the author byline
+        for screen readers — the visible byline is the headshot, and
+        we add a sr-only text label so the post still announces an
+        author. */}
+    <figure class="mt-10 flex items-center gap-3">
       <Image
-        src={image}
-        alt={imageAlt}
-        widths={[640, 960, 1280, 1600]}
-        sizes="(max-width: 768px) 100vw, 1100px"
-        class="h-auto w-full rounded-[4px] object-cover"
+        src={kenPortrait}
+        alt={`Portrait of ${author}`}
+        widths={[120, 180]}
+        sizes="90px"
+        class="h-[90px] w-[90px] rounded-full object-cover"
       />
-    </div>
-  )}
+      <figcaption class="sr-only">By {author}</figcaption>
+    </figure>
+
+  </div>
 </header>

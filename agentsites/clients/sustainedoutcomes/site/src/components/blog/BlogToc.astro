@@ -100,7 +100,10 @@ const hasToc = h2s.length > 0;
 )}
 
 <style>
-  .blog-toc                  { position: sticky; top: 96px; }
+  /* Stickiness moved up to the sidebar wrapper in `[...slug].astro`
+     (2026-05-11) so TOC + share + promo banner pin together as one
+     block, instead of TOC pinning while the others scroll up *into*
+     it. This rule intentionally left empty as a hand-off note. */
   .blog-toc-link[data-active] {
     color: var(--color-black);
     font-weight: 600;

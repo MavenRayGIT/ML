@@ -87,8 +87,6 @@ const description = post.data.excerpt
     author={post.data.author}
     duration={post.data.duration}
     excerpt={post.data.excerpt}
-    image={post.data.image}
-    imageAlt={post.data.imageAlt ?? ''}
   />
 
   {/* ---------- Body + sidebar ---------- */}
@@ -98,7 +96,13 @@ const description = post.data.excerpt
         <Content />
       </article>
 
-      <aside class="blog-sidebar flex flex-col gap-8 lg:order-2">
+      {/* Whole sidebar sticks together as one block — TOC + share + promo
+          all pin at `top: 96px` on desktop. Previously only the TOC was
+          sticky and the lower items scrolled into it on long articles
+          (fixed 2026-05-11). `align-self: start` keeps the sticky from
+          stretching to grid-row height; `max-height` + overflow lets very
+          long sidebars scroll internally rather than getting clipped. */}
+      <aside class="blog-sidebar flex flex-col gap-8 lg:order-2 lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-2">
         <BlogToc headings={headings} />
         <div>
           <BlogShareButton />
