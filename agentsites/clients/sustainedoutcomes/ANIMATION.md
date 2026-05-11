@@ -90,6 +90,15 @@ Net effect: card "trades vertical real estate" on hover — image compresses, mo
 
 ### Angle-shift — `FeatureSplit` angled variants
 
+> **Implementation status 2026-05-11 — Motion Polish Pass.** Only
+> motion (1) below — the one-shot entry clip-path expand — is wired in
+> v1. Motion (2), the continuous edge spread tied to scroll, is
+> deferred to the post-page-composition polish pass (see
+> [`MODULES.md` → Motion Polish Pass](MODULES.md)). Rationale: the
+> magnitude needs to be tuned against finished pages, not placeholder
+> ones, and we'd rather tune once than twice. Spec below stands as the
+> design intent for that pass.
+
 Two layered motions, both bound to scroll:
 
 1. **One-shot entry — clip-path expand.** Fires the first time the section crosses the viewport entry threshold (`threshold: 0.15`, `rootMargin: '0px 0px -10% 0px'`). Clip-path animates from an inset polygon to flush rectangle. 600ms `--ease-out-soft`. Once only — observer disconnects after fire.

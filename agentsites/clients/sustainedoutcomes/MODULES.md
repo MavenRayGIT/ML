@@ -61,6 +61,29 @@ component props.
 | `blog_detail-hero_v1` | planned | Post title, category, date, author header |
 | `blog_detail-prose_v1` | planned | MDX prose styles — body, h2, h3, pullquote, images |
 
+## Motion Polish Pass (deferred — pick up after page composition)
+
+Tracked refinements that are best tuned **after** all pages are
+composed, so motion is dialed in against the final visual context
+(rather than against placeholder pages) and we tune once instead of
+twice. Scheduled for the polish stage after Step 6 (page composition)
+and Step 7 (MDX/blog), and before Step 9 (final QA). Each item has a
+defined acceptance criterion so it can be scoped and shipped
+independently.
+
+| Item | Status | Acceptance criterion |
+| --- | --- | --- |
+| Angled-edge scroll motion | deferred | On every `FeatureSplit` with `angled=true`, the top/bottom `clip-path` edges spread outward as the section scrolls through the viewport (top edge `10% → ~4%`, bottom edge `90% → ~96%`). Tied to viewport scroll position via `IntersectionObserver` ratio or rAF + `getBoundingClientRect`, ±24px max travel. Suppress when `prefers-reduced-motion: reduce`. Mobile (<768px): static. |
+| Auto-scrolling brand/initiative gallery | deferred | On `/about`, a horizontally auto-scrolling row of partner / press / community logos, ~30s loop, pauses on hover, suppressed on `prefers-reduced-motion`. Speed slower than c2's reference (which the brief called out as "too fast"). |
+| Hero parallax (decision + maybe build) | deferred | Decide whether the photo in `HeroFullbleed`'s `photo-blocks` variant should translate Y at 0.3–0.4× scroll speed. If yes, build the same way: rAF-throttled, reduced-motion guard, mobile off. If no, document the decision in `ANIMATION.md`. |
+| Scroll-tied page-level reveal pass | deferred | One sweep through every section to confirm reveals fire at the right scroll position now that pages are composed — `IntersectionObserver` threshold and `rootMargin` may need per-section tuning. Currently all use `{ threshold: 0.15, rootMargin: '0px 0px -10% 0px' }`. |
+| Eyebrow re-entry behaviour | deferred | Currently single-shot per page load (`unobserve` after first reveal). Confirm in context of long pages that this still reads as intended, or reverse to re-trigger on each entry. Spec note 2026-05-11: user explicitly OK'd single-shot for now. |
+| Continuous animation audit | deferred | One pass to confirm no "always running" loops (rotating shapes, pulsing dots, etc.) have crept in — the brief explicitly calls out the looping animation on c2 as something to avoid. |
+
+When picking up the polish pass: drive each item from a single
+`motion-pass` working branch with a screenshot diff per change. Don't
+re-litigate the design decisions — these were locked 2026-05-11.
+
 ## Archived module list (Design v1 / Breakdance naming)
 
 [`OLD_MODULES.md`](OLD_MODULES.md)
