@@ -7,11 +7,6 @@
  * root element:
  *
  *   data-nav-state="dark"   — over a dark-green section / hero photo.
- *                             Background is TRANSPARENT so the hero
- *                             image reads straight through (decided
- *                             2026-05-11). Logo + links remain on the
- *                             "white" cuts. Gradient overlay on the
- *                             hero supplies the contrast for the text.
  *   data-nav-state="white"  — over a white/light section (default off hero)
  *   data-nav-state="amber"  — over an amber section
  *
@@ -20,6 +15,22 @@
  * currently positioned under the nav and updates the nav state to match.
  * When no opting-in section is under the nav, state falls back to "white".
  *
+ * Compact state — added 2026-05-11:
+ *   `data-nav-compact="false"` only when `scrollY <= 32px` (page at top).
+ *   `data-nav-compact="true"`  in every other scroll position.
+ *
+ *   At the very top of the page the dark state is fully TRANSPARENT so
+ *   the hero photo reads straight through. As soon as the user scrolls
+ *   ~32px, the nav picks up a semi-opaque green-dark bg + backdrop blur
+ *   so the headline copy passing under the nav doesn't collide with
+ *   the links/CTA. The logo simultaneously settles into a smaller
+ *   "compact" size (desktop only — mobile already runs the small cut).
+ *   White/amber states are unaffected by compact (their bg is already
+ *   opaque); only the logo size responds.
+ *
+ *   When the user scrolls back to the very top, the compact flag flips
+ *   off → bg crossfades back to transparent and the logo grows back.
+ *
  * Logo swaps via opacity-crossfade between the white (over-dark) and dark
  * (over-light/amber) marks. CTA button swaps by display-toggling three
  * pre-rendered `<Button>` variants (one per state) — keeps the JS simple.
@@ -27,8 +38,10 @@
  * Heights:
  *   Mobile  (< 768px) — 56px tall, 20px gutters (`px-margin` resolves
  *                       to 20px on mobile via global.css), 32px icon,
- *                       18px wordmark. Hamburger sits flush at right.
- *   Desktop (≥ 768px) — 74px tall, 64px gutters, 40px icon, 28px wordmark.
+ *                       18px wordmark.
+ *   Desktop (≥ 768px) — 74px tall, 64px gutters.
+ *                       Logo at rest: 40px icon + 28px wordmark.
+ *                       Logo compact:  32px icon + 22px wordmark.
  *
  * Mobile (< 768px): logo + hamburger only at rest. Tap → full amber
  * overlay with stacked nav + CTA. Body scroll locked while open.
@@ -52,34 +65,37 @@ const navItems = [
 <nav
   id="site-nav"
   data-nav-state="dark"
-  class="site-nav fixed inset-x-0 top-0 z-50 h-14 md:h-[74px] transition-[background-color,color] duration-base ease-default"
+  data-nav-compact="false"
+  class="site-nav fixed inset-x-0 top-0 z-50 h-14 md:h-[74px] transition-[background-color,backdrop-filter,color] duration-base ease-default"
   aria-label="Site"
 >
   <div class="mx-auto flex h-full max-w-content items-center px-margin">
     {/* Logo — split into a colour tree icon (always on a cream circle so
         it reads on every nav state) + a stacked-pair wordmark that
-        opacity-crossfades between the white & dark cuts. */}
-    <a href="/" class="flex h-8 md:h-10 items-center gap-2 md:gap-3" aria-label="Sustained Outcomes home">
-      <span class="flex h-8 w-8 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full bg-cream">
+        opacity-crossfades between the white & dark cuts. Sizes are
+        driven by .nav-logo-* CSS rules below so the compact state can
+        shrink them on scroll. */}
+    <a href="/" class="nav-logo flex items-center gap-2 md:gap-3" aria-label="Sustained Outcomes home">
+      <span class="nav-logo-circle flex shrink-0 items-center justify-center rounded-full bg-cream">
         <Image
           src={iconSrc}
           alt=""
           width={iconSrc.width}
           height={iconSrc.height}
-          class="h-[28px] w-[28px] md:h-9 md:w-9 object-contain"
+          class="nav-logo-icon object-contain"
         />
       </span>
-      <span class="relative inline-block h-[18px] md:h-7">
+      <span class="nav-logo-wordmark relative inline-block">
         <img
           src={wordmarkLight.src}
           alt=""
           aria-hidden="true"
-          class="logo logo-light h-[18px] md:h-7 w-auto transition-opacity duration-base ease-default"
+          class="logo logo-light h-full w-auto transition-opacity duration-base ease-default"
         />
         <img
           src={wordmarkDark.src}
           alt="Sustained Outcomes"
-          class="logo logo-dark absolute inset-0 h-[18px] md:h-7 w-auto transition-opacity duration-base ease-default"
+          class="logo logo-dark absolute inset-0 h-full w-auto transition-opacity duration-base ease-default"
         />
       </span>
     </a>
@@ -184,13 +200,66 @@ const navItems = [
 <style>
   /* ----- State-driven colour rules ------------------------------------ */
   /* Background.
-     `dark` is intentionally TRANSPARENT — over the hero photo the nav
-     should let the image read through. The hero's own top gradient
-     (rgba(5,8,3,0.82) → transparent, 342px tall) supplies the contrast
-     for the light logo + cream links. Decided 2026-05-11. */
-  .site-nav[data-nav-state='dark']  { background-color: transparent;             }
-  .site-nav[data-nav-state='white'] { background-color: #ffffff;                 }
-  .site-nav[data-nav-state='amber'] { background-color: var(--color-amber);      }
+     `dark` is TRANSPARENT only at the very top of the page so the hero
+     reads through cleanly. As soon as the user scrolls (compact=true),
+     the dark state picks up a semi-opaque green-dark wash + backdrop
+     blur so content passing under the nav doesn't collide with links.
+     `white` and `amber` are always opaque so compact doesn't affect
+     them. Decided 2026-05-11.
+
+     A 1px bottom hairline appears in the compact state to anchor the
+     nav against whatever's behind it without committing to a full
+     drop-shadow. */
+  .site-nav[data-nav-state='dark'][data-nav-compact='false'] {
+    background-color: transparent;
+  }
+  .site-nav[data-nav-state='dark'][data-nav-compact='true'] {
+    background-color: rgba(8, 57, 40, 0.88);
+    backdrop-filter: blur(8px) saturate(140%);
+    -webkit-backdrop-filter: blur(8px) saturate(140%);
+    box-shadow: inset 0 -1px 0 rgba(242, 247, 229, 0.08);
+  }
+  .site-nav[data-nav-state='white'] { background-color: #ffffff;            }
+  .site-nav[data-nav-state='amber'] { background-color: var(--color-amber); }
+  .site-nav[data-nav-state='white'][data-nav-compact='true'] {
+    box-shadow: 0 1px 0 rgba(2, 3, 2, 0.06);
+  }
+  .site-nav[data-nav-state='amber'][data-nav-compact='true'] {
+    box-shadow: inset 0 -1px 0 rgba(2, 3, 2, 0.08);
+  }
+
+  /* ----- Logo sizing — driven by compact state ------------------------ */
+  /* All logo elements transition the same duration as the nav bg so the
+     "settle on scroll" reads as one motion. Mobile keeps the small cut
+     at all times (it's already compact-sized); only desktop swaps. */
+  .nav-logo,
+  .nav-logo-circle,
+  .nav-logo-icon,
+  .nav-logo-wordmark {
+    transition:
+      height var(--duration-base) var(--ease-default),
+      width  var(--duration-base) var(--ease-default);
+  }
+
+  /* Mobile baseline (also compact) — 32px circle, 28px tree, 18px wordmark */
+  .nav-logo                                            { height: 32px; }
+  .nav-logo-circle                                     { height: 32px; width: 32px; }
+  .nav-logo-icon                                       { height: 28px; width: 28px; }
+  .nav-logo-wordmark                                   { height: 18px; }
+
+  /* Desktop rest — 40px circle, 36px tree, 28px wordmark */
+  @media (min-width: 768px) {
+    .site-nav[data-nav-compact='false'] .nav-logo            { height: 40px; }
+    .site-nav[data-nav-compact='false'] .nav-logo-circle     { height: 40px; width: 40px; }
+    .site-nav[data-nav-compact='false'] .nav-logo-icon       { height: 36px; width: 36px; }
+    .site-nav[data-nav-compact='false'] .nav-logo-wordmark   { height: 28px; }
+
+    /* Desktop compact — 32px circle, 28px tree, 22px wordmark */
+    .site-nav[data-nav-compact='true']  .nav-logo            { height: 32px; }
+    .site-nav[data-nav-compact='true']  .nav-logo-circle     { height: 32px; width: 32px; }
+    .site-nav[data-nav-compact='true']  .nav-logo-icon       { height: 28px; width: 28px; }
+    .site-nav[data-nav-compact='true']  .nav-logo-wordmark   { height: 22px; }
+  }
 
   /* Nav-link text colour (rest) */
   .site-nav[data-nav-state='dark']  .nav-link { color: var(--color-cream); }
@@ -242,12 +311,22 @@ const navItems = [
      observe live further down the tree. */
   function initSiteNav() {
     /* ===== Scroll-driven nav state ===================================
-       For each [data-nav-bg] section we hit-test the section's bounding
-       rect against the nav's bottom edge in viewport coords. Topmost
-       hit wins. */
+       Two attributes updated per rAF tick:
+         data-nav-state    — which [data-nav-bg] section is under the
+                             nav probe (`dark|white|amber`)
+         data-nav-compact  — true unless we're within `COMPACT_TOP_PX`
+                             of the very top of the page
+
+       The dark state is fully transparent only when not compact. As
+       soon as the user scrolls past the threshold the dark state picks
+       up a semi-opaque green-dark wash (see <style> above), which
+       prevents the hero copy from visually colliding with the links.
+       The logo simultaneously shrinks on desktop. */
     (() => {
       const nav = document.getElementById('site-nav');
       if (!nav) return;
+
+      const COMPACT_TOP_PX = 32;
 
       function update() {
         const probe = nav.getBoundingClientRect().bottom + 1;
@@ -264,6 +343,11 @@ const navItems = [
 
         if (nav.dataset.navState !== next) {
           nav.dataset.navState = next;
+        }
+
+        const compact = window.scrollY > COMPACT_TOP_PX ? 'true' : 'false';
+        if (nav.dataset.navCompact !== compact) {
+          nav.dataset.navCompact = compact;
         }
       }
 

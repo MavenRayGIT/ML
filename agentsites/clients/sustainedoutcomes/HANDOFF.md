@@ -304,6 +304,27 @@ through as before, so the visual outcome on dark sections is identical.
 The hero's own 342px top gradient (`rgba(5,8,3,0.82) → transparent`)
 provides the contrast for the cream links + light logo.
 
+**Amended 2026-05-11 (d) — Compact-on-scroll.** The nav now exposes a
+second attribute `data-nav-compact="true|false"` driven by `window.scrollY
+> 32px`. Two things change between rest (top of page) and compact (any
+scroll):
+
+| Property | Rest (compact=false) | Compact (compact=true) |
+|----------|----------------------|------------------------|
+| `dark`-state bg | transparent | `rgba(8,57,40,0.88)` + `backdrop-filter: blur(8px) saturate(140%)` |
+| `white`-state bg | white | white + 1px ambient shadow under |
+| `amber`-state bg | amber | amber + 1px inset hairline |
+| Desktop logo circle | 40px | 32px |
+| Desktop tree icon | 36px | 28px |
+| Desktop wordmark | 28px tall | 22px tall |
+| Mobile logo | 32 / 28 / 18 (fixed) | 32 / 28 / 18 (fixed) |
+
+The dark-state semi-opaque wash is what fixes the hero/header collision
+documented 2026-05-11: once the user scrolls, hero copy passing under
+the nav no longer competes with the cream links. Mobile logo stays at
+its compact size at all times since it's already sized for the smaller
+56px chrome.
+
 Transition: sections opt in via `data-nav-bg="dark|white|amber"` on
 their root element. A scroll-throttled hit-test against
 `nav.getBoundingClientRect().bottom + 1` picks the topmost matching
