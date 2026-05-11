@@ -1,0 +1,159 @@
+---
+/**
+ * StagingBanner.astro — collapsible, fade-on-scroll environment marker.
+ *
+ * Visual states (orthogonal, both can be active):
+ *
+ *   Expanded  (default)             Collapsed
+ *   ┌────────────────────────────┐  ┌──┐ (top-right corner)
+ *   │ STAGING · hostname     × │  │≡ │
+ *   └────────────────────────────┘  └──┘
+ *
+ *   - Click `×` on the bar          → switch to collapsed
+ *   - Click the corner handle (`≡`) → switch back to expanded
+ *
+ *   While the user is actively scrolling, whichever shape is currently
+ *   visible fades to opacity 0; once scrolling has been idle for
+ *   ~400ms it fades back in. Stays out of the way while reading, comes
+ *   back the moment you stop.
+ *
+ * Coordination contract:
+ *   - When mounted + expanded, the banner sets `--chrome-banner-h: 32px`
+ *     on `:root`. Nav reads this for its `top` offset.
+ *   - When collapsed, `--chrome-banner-h: 0px` — Nav animates up to
+ *     top: 0 via its existing top-transition.
+ *
+ * Persistence: collapsed state is remembered in `localStorage` so the
+ * user only has to dismiss once per browser. Restored synchronously
+ * at the top of the component to avoid a flash on subsequent loads.
+ *
+ * Env hook:
+ *   Default: rendered (we're pre-launch).
+ *   Suppress on production by setting `PUBLIC_HIDE_STAGING_BANNER=true`
+ *   on the Cloudflare Pages project. When the component isn't rendered
+ *   at all, no styles ship, no JS ships, no CSS var is set.
+ */
+
+export interface Props {
+  label?: string;
+  hostname?: string;
+}
+
+const {
+  label = 'STAGING',
+  hostname = 'sustainedoutcomes.mackandlee.com',
+} = Astro.props;
+---
+
+{/* Restore previously-collapsed state synchronously to avoid a flash. */}
+<script is:inline>
+  (() => {
+    try {
+      if (localStorage.getItem('so:staging-banner-collapsed') === 'true') {
+        document.documentElement.setAttribute('data-staging-banner-collapsed', '');
+      }
+    } catch (_) {}
+  })();
+</script>
+
+{/* Expanded bar — full-width strip at top. */}
+<div
+  data-staging-banner-bar
+  class="fixed inset-x-0 top-0 z-[55] h-8 bg-[#020302] text-white transition-opacity duration-base ease-default"
+>
+  <div class="relative mx-auto flex h-full w-full max-w-content items-center justify-center px-margin">
+    <span class="font-body text-caption uppercase tracking-eyebrow">
+      {label} · {hostname}
+    </span>
+    <button
+      type="button"
+      data-staging-banner-collapse
+      aria-label="Hide staging banner"
+      class="absolute right-margin top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-white/80 transition-colors duration-quick ease-default hover:text-white"
+    >
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+        <line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1.5" />
+        <line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1.5" />
+      </svg>
+    </button>
+  </div>
+</div>
+
+{/* Collapsed handle — small black square in top-right corner.
+    `aria-haspopup="true"` because clicking it brings up the bar. */}
+<button
+  type="button"
+  data-staging-banner-handle
+  aria-label="Show staging banner"
+  aria-haspopup="true"
+  class="fixed right-0 top-0 z-[55] flex h-8 w-8 items-center justify-center bg-[#020302] text-white transition-opacity duration-base ease-default hover:bg-black"
+>
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <line x1="2" y1="4"  x2="12" y2="4"  stroke="currentColor" stroke-width="1.5" />
+    <line x1="2" y1="7"  x2="12" y2="7"  stroke="currentColor" stroke-width="1.5" />
+    <line x1="2" y1="10" x2="12" y2="10" stroke="currentColor" stroke-width="1.5" />
+  </svg>
+</button>
+
+<script is:inline>
+  (() => {
+    const root = document.documentElement;
+    const STORAGE_KEY = 'so:staging-banner-collapsed';
+    const SCROLL_IDLE_MS = 400;
+
+    const collapseBtn = document.querySelector('[data-staging-banner-collapse]');
+    const handleBtn   = document.querySelector('[data-staging-banner-handle]');
+
+    function setCollapsed(value) {
+      if (value) root.setAttribute('data-staging-banner-collapsed', '');
+      else       root.removeAttribute('data-staging-banner-collapsed');
+      try { localStorage.setItem(STORAGE_KEY, value ? 'true' : 'false'); } catch (_) {}
+    }
+
+    if (collapseBtn) collapseBtn.addEventListener('click', () => setCollapsed(true));
+    if (handleBtn)   handleBtn.addEventListener('click',   () => setCollapsed(false));
+
+    // Fade-on-scroll. Single rAF-throttled scroll listener; debounced
+    // by SCROLL_IDLE_MS to detect "scroll stop". Use the data attribute
+    // so CSS owns the actual fade transition.
+    let scrollTimer = null;
+    let ticking = false;
+
+    function onScroll() {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(() => {
+          if (!root.hasAttribute('data-staging-scrolling')) {
+            root.setAttribute('data-staging-scrolling', '');
+          }
+          ticking = false;
+        });
+      }
+      clearTimeout(scrollTimer);
+      scrollTimer = window.setTimeout(() => {
+        root.removeAttribute('data-staging-scrolling');
+      }, SCROLL_IDLE_MS);
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+  })();
+</script>
+
+<style is:global>
+  /* Default chrome height contribution when this component is mounted. */
+  :root { --chrome-banner-h: 32px; }
+
+  /* Collapsed state: hide bar, show handle, zero the chrome offset
+     so the nav slides up to top: 0 via its top-transition. */
+  :root[data-staging-banner-collapsed]                                 { --chrome-banner-h: 0px;     }
+  :root[data-staging-banner-collapsed] [data-staging-banner-bar]       { display: none;              }
+  :root:not([data-staging-banner-collapsed]) [data-staging-banner-handle] { display: none;           }
+
+  /* Active-scroll fade — applies to whichever shape is currently
+     visible (the other is display: none and unaffected). */
+  :root[data-staging-scrolling] [data-staging-banner-bar],
+  :root[data-staging-scrolling] [data-staging-banner-handle] {
+    opacity: 0;
+    pointer-events: none;
+  }
+</style>
