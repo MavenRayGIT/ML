@@ -1,7 +1,17 @@
 # ML ADMIN — Mack & Lee
 > Internal guide for M&L team members managing client sites
 > built on the Astro + Cloudflare + Claude API stack.
-> Read alongside ML_System/ARCHITECTURE.md and ANALYTICS.md.
+> Read alongside `agentsites/ARCHITECTURE.md` and `agentsites/ANALYTICS.md`.
+
+---
+
+## Parking lot — things to fix later (not blocking)
+
+Items noted in passing. Pick up when there's spare time; none of these block client work.
+
+| Item | Noted | Notes |
+|---|---|---|
+| `www.mackandlee.com` returns Cloudflare 522 (origin timeout from WPX) | 2026-05-11 | Apex `https://mackandlee.com` works fine; only the `www` variant fails. Pre-existing — WPX vhost likely not configured for `www`. Fix options: (a) Cloudflare Page Rule / Bulk Redirect `www.mackandlee.com/*` → `https://mackandlee.com/$1` (5 min, recommended), or (b) ask WPX to add `www` to the vhost. Low priority because canonical apex works and search engines respect it. |
 
 ---
 
