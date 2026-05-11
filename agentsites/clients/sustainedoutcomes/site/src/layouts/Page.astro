@@ -1,0 +1,60 @@
+---
+/**
+ * Page.astro — primary page layout.
+ *
+ * Composes Base.astro (which owns <html>, <head>, <body>, fonts, SEO,
+ * GTM, and the reveal observer) with site chrome — Nav + Footer +
+ * <main> wrapper.
+ *
+ * Every public page should use this layout. Dev-only / utility routes
+ * that don't need site chrome can use Base.astro directly.
+ *
+ * Props:
+ *   - All Base.astro SEO props are forwarded (title, description, etc.).
+ *   - `hasHero` — when true, <main> renders without top padding so the
+ *     hero sits flush against the top of the viewport (nav floats over).
+ *     When false (default), main is padded down 74px to clear the nav.
+ *   - `hideNav` / `hideFooter` — escape hatches for atypical pages.
+ *
+ * Composing pages forward arbitrary <head> content via the `head` slot.
+ */
+import Base from './Base.astro';
+import Nav from '../components/layout/Nav.astro';
+import Footer from '../components/layout/Footer.astro';
+
+type BaseProps = {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  ogType?: 'website' | 'article';
+  canonical?: string;
+  noindex?: boolean;
+  lang?: string;
+};
+
+export interface Props extends BaseProps {
+  /** Set true when the page begins with a full-bleed hero. Defaults false. */
+  hasHero?: boolean;
+  hideNav?: boolean;
+  hideFooter?: boolean;
+}
+
+const {
+  hasHero = false,
+  hideNav = false,
+  hideFooter = false,
+  ...baseProps
+} = Astro.props;
+---
+
+<Base {...baseProps}>
+  <slot name="head" slot="head" />
+
+  {!hideNav && <Nav />}
+
+  <main class:list={[!hasHero && 'pt-[74px]']}>
+    <slot />
+  </main>
+
+  {!hideFooter && <Footer />}
+</Base>

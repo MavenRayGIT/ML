@@ -1,0 +1,108 @@
+---
+/**
+ * /dev/layout — visual review for Nav (3 scroll states) + Footer.
+ *
+ * Renders a series of full-viewport bands, each tagged with the relevant
+ * `data-nav-bg` value. Scroll through to verify:
+ *
+ *   - Nav background, logo, link colour, and CTA variant all crossfade
+ *     in lock-step as the active section under the nav changes.
+ *   - Mobile (< 768px): hamburger appears, opens full amber overlay.
+ *   - Footer renders on dark green with logo + tagline + 3 columns +
+ *     copyright (no cream divider).
+ *
+ * `hasHero` is set so <main> doesn't pad down — the first band sits
+ * under the nav, simulating a real hero placement.
+ */
+import Page from '../../layouts/Page.astro';
+import SectionEyebrow from '../../components/ui/SectionEyebrow.astro';
+import Button from '../../components/ui/Button.astro';
+---
+
+<Page title="Dev — Layout" description="Nav scroll states + Footer review." noindex hasHero>
+  {/* --- Band 1: dark (over hero) --- */}
+  <section
+    data-nav-bg="dark"
+    class="flex min-h-screen items-center bg-green-dark px-margin text-cream"
+  >
+    <div class="mx-auto max-w-content w-full">
+      <SectionEyebrow color="amber" withLeadRule>State 1 — over hero</SectionEyebrow>
+      <h1 class="mt-6 font-display text-hero text-white">Dark surface</h1>
+      <p class="mt-6 max-w-[60ch] font-body text-body-lg text-cream">
+        Nav floats over the hero with <code>data-nav-state="dark"</code>. Background green-dark,
+        cream nav links, white logo, <code>outline × dark</code> CTA (amber border + amber text).
+      </p>
+      <div class="mt-8 flex flex-wrap gap-4">
+        <Button variant="amber-fill" surface="dark" href="#">Primary CTA</Button>
+        <Button variant="outline" surface="dark" href="#">Secondary CTA</Button>
+      </div>
+      <p class="mt-12 font-body text-caption text-cream/60">
+        Scroll down ↓ to see the nav crossfade to <strong>white</strong>.
+      </p>
+    </div>
+  </section>
+
+  {/* --- Band 2: white (default content) --- */}
+  <section
+    data-nav-bg="white"
+    class="flex min-h-screen items-center bg-white px-margin text-black"
+  >
+    <div class="mx-auto max-w-content w-full">
+      <SectionEyebrow withLeadRule>State 2 — scrolled content</SectionEyebrow>
+      <h2 class="mt-6 font-display text-h2-lg">White surface</h2>
+      <p class="mt-6 max-w-[60ch] font-body text-body-lg text-black/80">
+        Nav has switched to <code>data-nav-state="white"</code>. White background, black nav
+        links, dark logo, <code>outline-emph × light</code> CTA (amber border + green text →
+        fills amber on hover).
+      </p>
+      <div class="mt-8 flex flex-wrap gap-4">
+        <Button variant="amber-fill" href="#">Primary CTA</Button>
+        <Button variant="outline" href="#">Secondary CTA</Button>
+      </div>
+      <p class="mt-12 font-body text-caption text-gray-mid">
+        Scroll down ↓ to see the nav crossfade to <strong>amber</strong>.
+      </p>
+    </div>
+  </section>
+
+  {/* --- Band 3: amber section --- */}
+  <section
+    data-nav-bg="amber"
+    class="flex min-h-screen items-center bg-amber px-margin text-black"
+  >
+    <div class="mx-auto max-w-content w-full">
+      <SectionEyebrow withLeadRule>State 3 — amber section</SectionEyebrow>
+      <h2 class="mt-6 font-display text-h2-lg">Amber surface</h2>
+      <p class="mt-6 max-w-[60ch] font-body text-body-lg">
+        Nav is now <code>data-nav-state="amber"</code>. Amber background, black nav links, dark
+        logo, <code>outline × light</code> CTA (green border + green text → hovers to amber
+        border).
+      </p>
+      <div class="mt-8 flex flex-wrap gap-4">
+        <Button variant="green-fill" href="#">Primary CTA</Button>
+        <Button variant="outline" href="#">Secondary CTA</Button>
+      </div>
+      <p class="mt-12 font-body text-caption text-black/60">
+        Scroll down ↓ to see the nav crossfade back to <strong>white</strong>.
+      </p>
+    </div>
+  </section>
+
+  {/* --- Band 4: white again (verify reversibility) --- */}
+  <section
+    data-nav-bg="white"
+    class="flex min-h-screen items-center bg-gray-bg px-margin text-black"
+  >
+    <div class="mx-auto max-w-content w-full">
+      <SectionEyebrow withLeadRule>State 2 again — verifying reversibility</SectionEyebrow>
+      <h2 class="mt-6 font-display text-h2-lg">Back to white</h2>
+      <p class="mt-6 max-w-[60ch] font-body text-body-lg text-black/80">
+        Page background is <code>gray-bg</code> but section opts into the <strong>white</strong>
+        nav state. Confirms state changes are reversible as you scroll back and forth.
+      </p>
+      <p class="mt-12 font-body text-caption text-gray-mid">
+        Continue scrolling ↓ for the footer.
+      </p>
+    </div>
+  </section>
+</Page>

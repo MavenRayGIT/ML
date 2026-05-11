@@ -1,0 +1,90 @@
+---
+/**
+ * Footer.astro — site footer.
+ *
+ * Per HANDOFF.md → Footer.astro:
+ *   Bg `#083928` (green-dark), ~300px tall.
+ *   Logo top-left, tagline (Libre Franklin Regular 14px / amber / 22 lh),
+ *   3 nav columns, copyright (Libre Franklin Regular 12px / cream).
+ *   Amended 2026-05-11: cream divider rule removed.
+ *
+ * Footer logo: `SO-Logo-Wht2.svg` (per Mack & Lee feedback — wht2 here
+ * to differentiate from the nav's wht1; can revisit later).
+ *
+ * The column copy is placeholder for now; finalize alongside the rest of
+ * the site content in Step 8.
+ */
+import logoFooterSrc from '../../assets/logos/SO-Logo-Wht2.svg';
+
+const tagline = 'Mission-focused advisory services for organizations bringing people closer to the natural world.';
+
+const columns = [
+  {
+    heading: 'Practice',
+    links: [
+      { label: 'Consulting',  href: '/consulting'  },
+      { label: 'Initiatives', href: '/initiatives' },
+      { label: 'About',       href: '/about'       },
+    ],
+  },
+  {
+    heading: 'Resources',
+    links: [
+      { label: 'Blog',          href: '/blog'    },
+      { label: 'Support Us',    href: '/support' },
+    ],
+  },
+  {
+    heading: 'Connect',
+    links: [
+      { label: 'Contact',  href: '/contact'                         },
+      { label: 'LinkedIn', href: 'https://www.linkedin.com/'        },
+    ],
+  },
+];
+
+const year = new Date().getFullYear();
+---
+
+<footer class="bg-green-dark py-section-xs text-cream" aria-label="Site footer">
+  <div class="mx-auto max-w-content px-margin">
+    <div class="grid gap-12 md:grid-cols-[1.2fr_repeat(3,1fr)]">
+      {/* Brand block: logo + tagline */}
+      <div>
+        <a href="/" class="inline-flex" aria-label="Sustained Outcomes home">
+          <img
+            src={logoFooterSrc.src}
+            alt="Sustained Outcomes"
+            class="h-12 w-auto"
+          />
+        </a>
+        <p class="mt-6 max-w-[34ch] font-body text-[14px] leading-[22px] text-amber">
+          {tagline}
+        </p>
+      </div>
+
+      {/* 3 nav columns */}
+      {columns.map((col) => (
+        <div>
+          <p class="font-body text-nav font-semibold text-white">{col.heading}</p>
+          <ul class="mt-4 space-y-2">
+            {col.links.map((link) => (
+              <li>
+                <a
+                  href={link.href}
+                  class="font-body text-nav font-normal text-amber transition-colors duration-base ease-default hover:text-white"
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+
+    <p class="mt-16 font-body text-caption text-cream">
+      © {year} Sustained Outcomes
+    </p>
+  </div>
+</footer>

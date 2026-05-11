@@ -2,34 +2,43 @@
 /**
  * Homepage placeholder.
  *
- * Step 7 replaces this with the real homepage composed from
- * the modules in MODULES.md. Until then, this placeholder
- * doubles as the smoke test for Base.astro, fonts, and tokens.
+ * Step 7 replaces this with the real homepage composed from the modules
+ * in MODULES.md. Until then, this placeholder doubles as a smoke test
+ * for Page.astro (Base + Nav + Footer wired together).
+ *
+ * The hero band opts into `data-nav-bg="dark"` so the nav lands in its
+ * over-hero state on page load — that way we exercise the full chrome
+ * even before there's a real hero.
  */
-import Base from '../layouts/Base.astro';
+import Page from '../layouts/Page.astro';
+import SectionEyebrow from '../components/ui/SectionEyebrow.astro';
 ---
 
-<Base
+<Page
   title="Sustained Outcomes"
   description="Sustained Outcomes — mission-focused advisory consultancy. Full site in development."
+  hasHero
 >
+  {/* Top staging marker — environment banner. Will move into Base.astro
+      once the env-banner abstraction lands. */}
   <div
-    class="fixed top-0 left-0 right-0 bg-[#020302] py-2 text-center text-sm font-semibold uppercase tracking-[0.1em] text-white"
+    class="fixed left-0 right-0 top-0 z-[60] bg-[#020302] py-1.5 text-center font-body text-caption uppercase tracking-eyebrow text-white"
   >
     STAGING · sustainedoutcomes.mackandlee.com
   </div>
 
-  <div class="flex min-h-screen flex-col items-center justify-center bg-gray-bg p-8">
-    <main class="max-w-md text-center" data-reveal="header">
-      <p class="mb-4 font-display text-eyebrow text-gray-mid">
-        In development
+  {/* Hero placeholder — full viewport, dark surface so nav reads dark */}
+  <section
+    data-nav-bg="dark"
+    class="flex min-h-screen items-center bg-green-dark px-margin"
+  >
+    <div class="mx-auto max-w-content" data-reveal="header">
+      <SectionEyebrow color="amber" withLeadRule>In development</SectionEyebrow>
+      <h1 class="mt-6 font-display text-hero text-white">Sustained Outcomes</h1>
+      <p class="mt-6 max-w-[48ch] font-body text-body-lg text-cream">
+        Full site build in progress. Nav, footer, and primitives are wired —
+        homepage sections land in Step 5.
       </p>
-      <h1 class="mb-3 font-display text-4xl font-bold tracking-display">
-        Sustained Outcomes
-      </h1>
-      <p class="font-body text-body-lg text-black/80">
-        Full site build in progress. Check back soon.
-      </p>
-    </main>
-  </div>
-</Base>
+    </div>
+  </section>
+</Page>

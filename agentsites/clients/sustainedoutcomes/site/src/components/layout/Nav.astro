@@ -1,0 +1,273 @@
+---
+/**
+ * Nav.astro — site header.
+ *
+ * Per HANDOFF.md → Nav — 3 States (74px tall). One DOM tree, three
+ * scroll-driven visual states crossfading via a `data-nav-state`
+ * attribute on the root element:
+ *
+ *   data-nav-state="dark"   — over a dark-green section (hero)
+ *   data-nav-state="white"  — over a white/light section (default off hero)
+ *   data-nav-state="amber"  — over an amber section
+ *
+ * Sections opt in by setting `data-nav-bg="dark|white|amber"` on their
+ * root element. A rAF-throttled scroll handler finds which section is
+ * currently positioned under the nav and updates the nav state to match.
+ * When no opting-in section is under the nav, state falls back to "white".
+ *
+ * Logo swaps via opacity-crossfade between the white (over-dark) and dark
+ * (over-light/amber) marks. CTA button swaps by display-toggling three
+ * pre-rendered `<Button>` variants (one per state) — keeps the JS simple.
+ *
+ * Mobile (< 768px): logo + hamburger only at rest. Tap → full amber
+ * overlay with stacked nav + CTA. Body scroll locked while open.
+ * Close on link tap, on the X icon, or with Escape.
+ */
+import Button from '../ui/Button.astro';
+import logoLightSrc from '../../assets/logos/SO-logo-wht1.svg';
+import logoDarkSrc  from '../../assets/logos/SO-Logo-dark1.svg';
+
+const navItems = [
+  { label: 'Consulting',  href: '/consulting'  },
+  { label: 'Initiatives', href: '/initiatives' },
+  { label: 'About',       href: '/about'       },
+  { label: 'Blog',        href: '/blog'        },
+  { label: 'Support Us',  href: '/support'     },
+];
+---
+
+<nav
+  id="site-nav"
+  data-nav-state="dark"
+  class="site-nav fixed inset-x-0 top-0 z-50 h-[74px] transition-colors duration-base ease-default"
+  aria-label="Site"
+>
+  <div class="mx-auto flex h-full max-w-content items-center px-margin">
+    {/* Logo — two overlaid <img>s, opacity-crossfaded by data-nav-state */}
+    <a href="/" class="relative flex h-10 items-center" aria-label="Sustained Outcomes home">
+      <img
+        src={logoLightSrc.src}
+        alt=""
+        aria-hidden="true"
+        class="logo logo-light h-10 w-auto transition-opacity duration-base ease-default"
+      />
+      <img
+        src={logoDarkSrc.src}
+        alt="Sustained Outcomes"
+        class="logo logo-dark absolute inset-0 h-10 w-auto transition-opacity duration-base ease-default"
+      />
+    </a>
+
+    {/* Desktop links + CTA */}
+    <ul class="ml-auto hidden items-center gap-8 md:flex">
+      {navItems.map((item) => (
+        <li>
+          <a
+            href={item.href}
+            class="nav-link font-body text-nav transition-colors duration-base ease-default hover:text-amber"
+          >
+            {item.label}
+          </a>
+        </li>
+      ))}
+      <li class="ml-4">
+        {/* CTA — three pre-rendered variants; CSS shows the one matching nav state */}
+        <span class="nav-cta nav-cta--dark">
+          <Button variant="outline" surface="dark" href="/contact">Request a meeting</Button>
+        </span>
+        <span class="nav-cta nav-cta--white">
+          <Button variant="outline-emph" href="/contact">Request a meeting</Button>
+        </span>
+        <span class="nav-cta nav-cta--amber">
+          <Button variant="outline" href="/contact">Request a meeting</Button>
+        </span>
+      </li>
+    </ul>
+
+    {/* Mobile hamburger */}
+    <button
+      type="button"
+      class="nav-hamburger ml-auto flex h-10 w-10 items-center justify-center md:hidden"
+      data-nav-toggle
+      aria-label="Open menu"
+      aria-controls="mobile-nav"
+      aria-expanded="false"
+    >
+      <svg width="22" height="14" viewBox="0 0 22 14" fill="none" aria-hidden="true">
+        <line x1="0" y1="1"  x2="22" y2="1"  stroke="currentColor" stroke-width="2" />
+        <line x1="0" y1="7"  x2="22" y2="7"  stroke="currentColor" stroke-width="2" />
+        <line x1="0" y1="13" x2="22" y2="13" stroke="currentColor" stroke-width="2" />
+      </svg>
+    </button>
+  </div>
+</nav>
+
+{/* Mobile full-screen amber overlay — z above nav so it covers it */}
+<div
+  id="mobile-nav"
+  data-nav-overlay-open="false"
+  class="mobile-nav-overlay fixed inset-0 z-[60] flex flex-col bg-amber md:hidden"
+  aria-hidden="true"
+>
+  <div class="flex h-[74px] items-center justify-between px-margin">
+    <a href="/" class="flex h-10 items-center" aria-label="Sustained Outcomes home">
+      <img src={logoDarkSrc.src} alt="Sustained Outcomes" class="h-10 w-auto" />
+    </a>
+    <button
+      type="button"
+      class="flex h-10 w-10 items-center justify-center text-black"
+      data-nav-close
+      aria-label="Close menu"
+    >
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <line x1="2"  y1="2"  x2="18" y2="18" stroke="currentColor" stroke-width="2" />
+        <line x1="18" y1="2"  x2="2"  y2="18" stroke="currentColor" stroke-width="2" />
+      </svg>
+    </button>
+  </div>
+
+  <ul class="flex flex-1 flex-col justify-center gap-6 px-margin">
+    {navItems.map((item) => (
+      <li>
+        <a
+          href={item.href}
+          class="font-display text-card uppercase tracking-tight text-black"
+        >
+          {item.label}
+        </a>
+      </li>
+    ))}
+    <li class="mt-4">
+      <Button variant="green-fill" href="/contact" class="w-full">Request a meeting</Button>
+    </li>
+  </ul>
+</div>
+
+<style>
+  /* ----- State-driven colour rules ------------------------------------ */
+  /* Background */
+  .site-nav[data-nav-state='dark']  { background-color: var(--color-green-dark); }
+  .site-nav[data-nav-state='white'] { background-color: #ffffff;                 }
+  .site-nav[data-nav-state='amber'] { background-color: var(--color-amber);      }
+
+  /* Nav-link text colour */
+  .site-nav[data-nav-state='dark']  .nav-link { color: var(--color-cream); }
+  .site-nav[data-nav-state='white'] .nav-link { color: var(--color-black); }
+  .site-nav[data-nav-state='amber'] .nav-link { color: var(--color-black); }
+
+  /* Hamburger icon colour mirrors the nav-link colour */
+  .site-nav[data-nav-state='dark']  .nav-hamburger { color: var(--color-cream); }
+  .site-nav[data-nav-state='white'] .nav-hamburger { color: var(--color-black); }
+  .site-nav[data-nav-state='amber'] .nav-hamburger { color: var(--color-black); }
+
+  /* Logo crossfade */
+  .site-nav .logo                                { will-change: opacity; }
+  .site-nav[data-nav-state='dark']  .logo-light  { opacity: 1; }
+  .site-nav[data-nav-state='dark']  .logo-dark   { opacity: 0; }
+  .site-nav[data-nav-state='white'] .logo-light  { opacity: 0; }
+  .site-nav[data-nav-state='white'] .logo-dark   { opacity: 1; }
+  .site-nav[data-nav-state='amber'] .logo-light  { opacity: 0; }
+  .site-nav[data-nav-state='amber'] .logo-dark   { opacity: 1; }
+
+  /* CTA swap — render three buttons, show only the one matching state */
+  .site-nav .nav-cta                                       { display: none;          }
+  .site-nav[data-nav-state='dark']  .nav-cta--dark         { display: inline-block;  }
+  .site-nav[data-nav-state='white'] .nav-cta--white        { display: inline-block;  }
+  .site-nav[data-nav-state='amber'] .nav-cta--amber        { display: inline-block;  }
+
+  /* ----- Mobile overlay ------------------------------------------------ */
+  .mobile-nav-overlay {
+    transform: translateY(-100%);
+    transition: transform var(--duration-base, 250ms) var(--ease-out-soft, ease);
+    pointer-events: none;
+  }
+  .mobile-nav-overlay[data-nav-overlay-open='true'] {
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+</style>
+
+<script is:inline>
+  /* Nav script — runs after DOMContentLoaded because this inline tag is
+     emitted *before* <main> in the document; the section targets we
+     observe live further down the tree. */
+  function initSiteNav() {
+    /* ===== Scroll-driven nav state ===================================
+       For each [data-nav-bg] section we hit-test the section's bounding
+       rect against the nav's bottom edge (74px). Topmost hit wins. */
+    (() => {
+      const nav = document.getElementById('site-nav');
+      if (!nav) return;
+
+      const NAV_HEIGHT = 74;
+
+      function update() {
+        const probe = NAV_HEIGHT + 1;
+        const sections = document.querySelectorAll('[data-nav-bg]');
+
+        let next = 'white';
+        for (const section of sections) {
+          const r = section.getBoundingClientRect();
+          if (r.top <= probe && r.bottom > probe) {
+            next = section.dataset.navBg;
+            break;
+          }
+        }
+
+        if (nav.dataset.navState !== next) {
+          nav.dataset.navState = next;
+        }
+      }
+
+      let ticking = false;
+      function onScroll() {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          update();
+          ticking = false;
+        });
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+      update();
+    })();
+
+    /* ===== Mobile overlay toggle ===================================== */
+    (() => {
+      const toggle = document.querySelector('[data-nav-toggle]');
+      const overlay = document.getElementById('mobile-nav');
+      if (!toggle || !overlay) return;
+
+      const close = overlay.querySelector('[data-nav-close]');
+      const links = overlay.querySelectorAll('a');
+
+      function open() {
+        overlay.dataset.navOverlayOpen = 'true';
+        overlay.setAttribute('aria-hidden', 'false');
+        toggle.setAttribute('aria-expanded', 'true');
+        document.documentElement.style.overflow = 'hidden';
+      }
+      function dismiss() {
+        overlay.dataset.navOverlayOpen = 'false';
+        overlay.setAttribute('aria-hidden', 'true');
+        toggle.setAttribute('aria-expanded', 'false');
+        document.documentElement.style.overflow = '';
+      }
+
+      toggle.addEventListener('click', open);
+      if (close) close.addEventListener('click', dismiss);
+      links.forEach((a) => a.addEventListener('click', dismiss));
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && overlay.dataset.navOverlayOpen === 'true') dismiss();
+      });
+    })();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSiteNav);
+  } else {
+    initSiteNav();
+  }
+</script>
