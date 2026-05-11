@@ -88,6 +88,7 @@ const reveal = angled ? 'angle-shift' : 'header';
     'feature-split relative w-full overflow-hidden',
     dark ? 'bg-green-dark text-white' : 'bg-white text-black',
     angled && 'feature-split-angled',
+    contained && 'feature-split-contained',
   ]}
   data-nav-bg={navBg}
   data-reveal={reveal}
@@ -160,15 +161,22 @@ const reveal = angled ? 'angle-shift' : 'header';
     clip-path: polygon(0% 10%, 100% 0%, 100% 90%, 0% 100%);
   }
 
-  /* Subpixel seam fix.
-     On the 50/50 grid, certain viewport widths land the cell boundary
-     on a half-pixel and the browser rounds it as a 1px gap — exposing
-     the page bg (white) between the image cell and the text cell. We
-     bleed the image 1px past each side of its cell so the image
-     content covers the seam regardless of rounding direction. The
-     section's `overflow: hidden` clips the outer 1px at the page edges
-     so the bleed is invisible there. */
-  .feature-split-image img {
+  /* Subpixel seam fix — full-bleed layouts only.
+     On the 50/50 grid where the two cells sit flush against each other
+     (default + angled variants), certain viewport widths land the cell
+     boundary on a half-pixel and the browser rounds it as a 1px gap,
+     exposing the page bg (white) between the image cell and the text
+     cell. We bleed the image 1px past each side of its cell so the
+     image content covers the seam regardless of rounding direction.
+     The section's `overflow: hidden` clips the outer 1px at the page
+     edges so the bleed is invisible there.
+
+     `contained` variants are explicitly excluded: they introduce a
+     48px `gap-x-12` between cells, so there's no seam to cover. Worse,
+     `width:auto + h-full` made the contained image render at its
+     intrinsic aspect ratio and overflow its column (regression spotted
+     2026-05-11). */
+  .feature-split:not(.feature-split-contained) .feature-split-image img {
     left: -1px;
     right: -1px;
     width: auto;
