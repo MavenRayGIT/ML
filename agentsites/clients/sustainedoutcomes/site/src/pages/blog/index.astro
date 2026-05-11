@@ -1,37 +1,86 @@
 ---
 /**
- * /blog — stub landing page.
+ * /blog — landing page.
  *
- * The full blog system (content collection, post template, filter
- * bar, hero card) is Step 7 work — `blog_landing-hero_v1`,
- * `blog_filter-bar_v1`, `blog_detail-hero_v1`, `blog_detail-prose_v1`
- * per `MODULES.md` → Blog modules.
+ * Replaces the Step-6 stub. Composition:
  *
- * This stub exists so the `/blog` link in the nav and footer resolves
- * to a real route during the Step-6 page-composition pass instead of
- * 404'ing. It will be replaced wholesale by the real blog landing
- * when Step 7 lands.
+ *   1. Intro       Slim eyebrow + headline + body. Same rhythm as
+ *                  every other interior-page intro on this site. No
+ *                  full hero — the cards are the visual interest.
+ *   2. FilterBar   Native <select> category dropdown. JS toggles
+ *                  visibility on cards in the grid below; URL state
+ *                  intentionally not synced (v2 candidate).
+ *   3. CardGrid    Responsive 3-col / 2-col / 1-col grid of every
+ *                  non-draft post, newest first.
+ *   4. CTABand     Page closer.
+ *
+ * Data: `getCollection('blog', ({ data }) => !data.draft)` filters out
+ * drafts, then sorted by `data.date` descending. Categories + counts
+ * derived from the loaded posts so the dropdown stays in lockstep
+ * with what's actually published.
+ *
+ * Note 2026-05-11 (user direction):
+ *   - No "latest / oldest" sort — newest-first is the only order.
+ *   - Keyword search deferred — added to MODULES.md as a v2 item.
  */
 
 import Page from '../../layouts/Page.astro';
+import { getCollection } from 'astro:content';
 
 import SectionEyebrow from '../../components/ui/SectionEyebrow.astro';
-import CTABand       from '../../components/sections/CTABand.astro';
+import BlogFilterBar  from '../../components/blog/BlogFilterBar.astro';
+import BlogCardGrid   from '../../components/blog/BlogCardGrid.astro';
+import CTABand        from '../../components/sections/CTABand.astro';
+
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+
+const posts = allPosts
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .map((p) => ({
+    title:    p.data.title,
+    excerpt:  p.data.excerpt ?? '',
+    image:    p.data.image,
+    imageAlt: p.data.imageAlt ?? '',
+    href:     `/blog/${p.id}`,
+    category: p.data.category,
+  }));
+
+const counts: Record<string, number> = {};
+for (const p of posts) {
+  counts[p.category] = (counts[p.category] ?? 0) + 1;
+}
+const categories = Object.keys(counts).sort();
 ---
 
 <Page
   title="Blog — Sustained Outcomes"
   description="Field notes from the Sustained Outcomes practice — strategy, programs, and what we are learning from the convening work."
 >
-  <section class="bg-white pt-section-sm pb-section md:pt-section md:pb-section" data-nav-bg="white">
+  <section
+    class="bg-white pt-section-sm pb-section md:pt-section md:pb-section"
+    data-nav-bg="white"
+    data-blog-page
+  >
     <div class="mx-auto w-full max-w-content px-margin" data-reveal="header">
       <SectionEyebrow withLeadRule class="mb-6">Blog</SectionEyebrow>
       <h1 class="font-display text-h2 tracking-display text-black md:max-w-[760px]">
         Field notes from the practice.
       </h1>
       <p class="mt-6 max-w-[640px] font-body text-body-lg leading-[1.6] text-black">
-        Short essays on strategy, programs, and what we are learning from the convening work. The full archive is being built alongside the rest of the site — check back soon, or get in touch directly if you want to know when posts go live.
+        Short essays on strategy, programs, and what we are learning from the convening work. We publish on a slow cadence — better signal, less noise.
       </p>
+    </div>
+
+    <div class="mx-auto mt-12 w-full max-w-content px-margin">
+      <BlogFilterBar
+        categories={categories}
+        totalCount={posts.length}
+        counts={counts}
+      />
+
+      <div class="mt-10">
+        <BlogCardGrid posts={posts} />
+      </div>
     </div>
   </section>
 

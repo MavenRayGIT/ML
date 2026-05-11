@@ -1,0 +1,157 @@
+---
+/**
+ * BlogCard.astro — reusable post card.
+ *
+ * One primitive, three consumers:
+ *   - `BlogPreview` on the homepage (3-card row, "Latest Insights")
+ *   - `BlogCardGrid` on `/blog` (full responsive grid)
+ *   - `BlogRelated` at the bottom of `/blog/[...slug]` detail pages
+ *
+ * Card-image-contract hover (Corporate_Elegant, refined 2026-05-11):
+ *   - Card outer height is FIXED (`size="lg"` → 500px) — never changes
+ *     on hover.
+ *   - Image wrapper shrinks vertically ~30% on hover (260 → 182px).
+ *   - Body excerpt is line-clamped at rest (3 lines); on hover the
+ *     clamp lifts and `max-height` transitions to take up the space
+ *     the image released. Result: same card footprint, image
+ *     compresses, more excerpt text reveals.
+ *   - 250ms `--ease-default` on both height + max-height so they
+ *     animate together as one motion.
+ *   - Mobile (< 768px): hover suppressed; card flows to auto height.
+ *
+ * Category tag: amber pill displayed above the title — modeled on the
+ * Everlywell-style category chip (referenced 2026-05-11). Renders only
+ * when `post.category` is supplied; absent posts still look balanced
+ * (chip is the first child, but title falls back to no `mt-3`).
+ *
+ * Two size variants — let consumers tune the card geometry without
+ * forking the component:
+ *
+ *   size="lg"   500px tall · 260px image at rest · 24px image overflow
+ *               above the card. Used on the homepage + landing grid.
+ *               Matches the design spec from `HANDOFF.md`.
+ *
+ *   size="sm"   420px tall · 200px image at rest · no image overflow.
+ *               Used on the related-posts row at the bottom of a detail
+ *               page, where there's less vertical room and the cards
+ *               sit alongside dense prose.
+ */
+
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import TextLink from '../ui/TextLink.astro';
+
+export interface BlogCardPost {
+  title: string;
+  excerpt: string;
+  image: ImageMetadata;
+  imageAlt?: string;
+  href: string;
+  category?: string;
+}
+
+export interface Props {
+  post: BlogCardPost;
+  /** Defaults to "Read the article" per HANDOFF.md. */
+  linkText?: string;
+  /** `lg` (homepage / landing) or `sm` (related row). Defaults `lg`. */
+  size?: 'lg' | 'sm';
+}
+
+const {
+  post,
+  linkText = 'Read the article',
+  size = 'lg',
+} = Astro.props;
+---
+
+<article
+  class:list={['blog-card group relative flex flex-col bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]', `blog-card-${size}`]}
+  data-category={post.category ?? ''}
+>
+  {/* Image overflows the top of the card per the HANDOFF spec —
+      negative margin-top pulls it up out of the card bounds. Only
+      applied to `size=lg`; `size=sm` keeps the image inside the card
+      so the related row stays visually compact. */}
+  <div class:list={['blog-card-image relative w-full overflow-hidden', size === 'lg' && '-mt-6']}>
+    <Image
+      src={post.image}
+      alt={post.imageAlt ?? ''}
+      widths={[400, 600, 800]}
+      sizes="(max-width: 768px) 100vw, 33vw"
+      class="h-full w-full object-cover"
+    />
+  </div>
+  <div class="blog-card-body flex flex-1 flex-col p-6">
+    {post.category && (
+      <p class="font-body text-caption font-semibold uppercase tracking-eyebrow text-amber">
+        {post.category}
+      </p>
+    )}
+    <h3 class:list={['font-display text-card-sm tracking-display text-black', post.category && 'mt-3']}>
+      <a href={post.href} class="transition-colors duration-base ease-default hover:text-amber">
+        {post.title}
+      </a>
+    </h3>
+    <div class="blog-card-excerpt mt-3 overflow-hidden">
+      <p class="blog-card-excerpt-text font-body text-body leading-[1.6] text-black">
+        {post.excerpt}
+      </p>
+    </div>
+    <div class="mt-auto pt-6">
+      <TextLink href={post.href}>{linkText}</TextLink>
+    </div>
+  </div>
+</article>
+
+<style>
+  /* ===== Size variants ============================================ */
+  .blog-card-lg                                 { height: 500px; }
+  .blog-card-lg .blog-card-image                { height: 260px; }
+  .blog-card-lg:hover .blog-card-image          { height: 182px; }
+
+  .blog-card-sm                                 { height: 420px; }
+  .blog-card-sm .blog-card-image                { height: 200px; }
+  .blog-card-sm:hover .blog-card-image          { height: 140px; }
+
+  /* ===== Card-image-contract hover ================================ */
+  /* Image cell — base transition; size-specific resting/hover heights
+     are above. `object-cover` on the image absorbs the crop with
+     minimal subject drift. */
+  .blog-card-image {
+    transition: height var(--duration-base) var(--ease-default);
+  }
+
+  /* Excerpt wrapper — owns the max-height transition. Initial clamp:
+     3 lines × 24px (text-body lh) = 72px. On hover: enough extra
+     headroom to take the image's freed space so the card footprint
+     stays the same.
+
+     lg: 260 → 182 = 78px freed → 72 + 78 = 150
+     sm: 200 → 140 = 60px freed → 72 + 60 = 132 */
+  .blog-card-excerpt {
+    max-height: 72px;
+    transition: max-height var(--duration-base) var(--ease-default);
+  }
+  .blog-card-lg:hover .blog-card-excerpt { max-height: 150px; }
+  .blog-card-sm:hover .blog-card-excerpt { max-height: 132px; }
+
+  .blog-card-excerpt-text {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+  }
+  .blog-card:hover .blog-card-excerpt-text {
+    -webkit-line-clamp: unset;
+  }
+
+  /* ===== Mobile fallback ========================================== */
+  @media (max-width: 767.98px) {
+    .blog-card                            { height: auto; }
+    .blog-card-image                      { height: auto; aspect-ratio: 4 / 3; }
+    .blog-card:hover .blog-card-image     { height: auto; }
+    .blog-card-excerpt                    { max-height: none; }
+    .blog-card-excerpt-text               { -webkit-line-clamp: unset; display: block; }
+  }
+</style>

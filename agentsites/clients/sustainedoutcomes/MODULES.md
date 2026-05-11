@@ -52,14 +52,29 @@ component props.
 | `ContactModal.astro` | planned | Modal wrapper around `ContactAmber` — `data-modal="contact"`. Library module. |
 | `CTABand.astro` | done | Dark-green band, eyebrow + H2 + two CTAs. Closes the homepage in place of any inline contact form. |
 
-## Blog modules (Cursor-designed — see `CURSOR_BRIEF.md` → Blog Templates)
+## Blog modules (`src/components/blog/`)
+
+Sustained Outcomes blog system — Step 7. Decisions for this build
+(per user direction 2026-05-11, Everlywell reference):
+
+- **Detail page** — title block, scrollable body with **persistent
+  sidebar TOC**, share-by-copy-URL, optional inline / sidebar promo
+  banners (stub for v1), related-articles row at the bottom.
+- **Landing page** — list of all posts, **native `<select>` category
+  filter** (no chip rail), visible category tag on each card. No
+  latest/oldest sort. No keyword search yet — both deferred to v2.
 
 | Component | Status | Notes |
 | --- | --- | --- |
-| `blog_landing-hero_v1` | planned | Featured post large card — top of `/blog` |
-| `blog_filter-bar_v1` | planned | Category pills + search input row |
-| `blog_detail-hero_v1` | planned | Post title, category, date, author header |
-| `blog_detail-prose_v1` | planned | MDX prose styles — body, h2, h3, pullquote, images |
+| `BlogCard.astro` | done | Reusable post card with the Step-5 card-image-contract hover (image shrinks 30% on hover, excerpt expands into the released space, card footprint stays fixed). Two sizes: `lg` (homepage / landing grid, 500px tall) and `sm` (related row at bottom of detail, 420px tall). Visible amber category pill above the title. Single source of truth — `BlogPreview`, `BlogCardGrid`, and `BlogRelated` all consume it. |
+| `BlogFilterBar.astro` | done | Native `<select>` category dropdown with per-category counts + "All (N)" default. Client-side filter — toggles `[hidden]` on `[data-blog-card]` inside the nearest `[data-blog-page]`. No URL state synced (v2). Empty-state element revealed when filter narrows to zero. |
+| `BlogCardGrid.astro` | done | 3-col / 2-col / 1-col responsive grid. Exposes `data-blog-grid` + per-card `data-category` for the filter script. Server-renders every post; filter is JS-progressive (works with JS off). |
+| `BlogDetailHero.astro` | done | Editorial title block — eyebrow row (category + date + duration), H1 (`text-h2-lg`, not the hero scale), excerpt, "By Author", optional cover image at `max-w-[1100px]`. Sits inside the standard content margin — no full-bleed photo hero on posts. |
+| `BlogToc.astro` | done | Persistent sticky sidebar TOC (H2-level only) at `position: sticky; top: 96px`. Active section tracked by `IntersectionObserver` (top-of-viewport heuristic) — adds `[data-active]` + amber tick. Collapses to a `<details>` element above the article below 1024px. JS-progressive: anchor links still navigate if the observer doesn't load. |
+| `BlogShareButton.astro` | done | Copy current URL to clipboard via `navigator.clipboard.writeText` (with `execCommand` fallback). Inline label swaps to "Link copied" for 1.6s. No social-network share intents — those would clutter the sidebar for now. |
+| `BlogPromoBanner.astro` | done | Stub callout (heading + body + CTA) for download / register / newsletter promos. Two visual styles: `amber` (light sidebar) and `dark` (green panel). Content currently hardcoded per-page; a banners content collection is a v2 lift. |
+| `BlogRelated.astro` | done | Bottom-of-post related row — 3× `BlogCard size="sm"`, same-category-first with top-up from other categories. Renders nothing when no related posts. |
+| `.prose` (MDX body styles in `global.css`) | done | Vertical-rhythm rules for h2 / h3 / p / ul / ol / blockquote / hr / code / pre / img inside MDX bodies. `scroll-margin-top: 96px` on headings so #anchor jumps clear the nav. Anchor rule pre-existed from Step 3. |
 
 ## Pages (`src/pages/`)
 
@@ -76,8 +91,8 @@ milestone — final copy is not in scope for the build pass.
 | `/support` | `support.astro` | done | Hero + FocusAreas (3 ways to support, centered) + FeatureSplit (why non-profit, angled-dark) + VideoSection + CTABand. |
 | `/partners` | `partners.astro` | done | Hero (color-only) + FocusAreas (current partners, centered) + FeatureSplit (become a partner, angled-dark) + CTABand. |
 | `/contact` | `contact.astro` | done | Slim intro block (no full hero — form is the focus) + ContactSection + CTABand. Form unwired pending Step 8. |
-| `/blog` | `blog/index.astro` | stub | Holds the URL so the nav link resolves. Replaced wholesale by the Step 7 blog system (`blog_landing-hero_v1` + `blog_filter-bar_v1`). |
-| `/blog/[slug]` | — | planned | Step 7 — MDX content collection. |
+| `/blog` | `blog/index.astro` | done | Intro block + `BlogFilterBar` + `BlogCardGrid` + `CTABand`. Reads from `getCollection('blog', !draft)`, newest-first. Category dropdown + counts derived from the loaded posts. |
+| `/blog/[...slug]` | `blog/[...slug].astro` | done | Static-paths over every published post. `BlogDetailHero` → two-col body (`.prose` left + sticky sidebar with `BlogToc` / `BlogShareButton` / `BlogPromoBanner` right) → `BlogRelated` → `CTABand`. 3 sample posts seeded in `src/content/blog/`. |
 
 ## Motion Polish Pass (deferred — pick up after page composition)
 
@@ -101,6 +116,19 @@ independently.
 When picking up the polish pass: drive each item from a single
 `motion-pass` working branch with a screenshot diff per change. Don't
 re-litigate the design decisions — these were locked 2026-05-11.
+
+## Blog v2 (deferred from Step 7)
+
+Items the user explicitly OK'd for "later" or "maybe later" during the
+Step 7 conversation. Captured here so they aren't lost.
+
+| Item | Status | Notes |
+| --- | --- | --- |
+| Keyword search on `/blog` | deferred | User: "We may want a keyword search? we don't have to have it now." Likely implementation: small client-side fuzzy index over title + excerpt + tags, no server round-trip. |
+| URL-state filter sync on `/blog` | deferred | Current dropdown is purely client-side (refresh resets to All). Sync to `?category=` so filter state is shareable / back-button friendly. |
+| Banner content collection | deferred | `BlogPromoBanner` v1 takes inline props; a `banners` content collection (similar shape to `blog`) would let banners be CMS-managed and reused across posts without touching MDX. |
+| Web Share API fallback | deferred | `BlogShareButton` currently always copies URL. A native share sheet on mobile (where it works) would be a nice progressive enhancement. |
+| H3-depth TOC | deferred | TOC currently lists H2 only. Optional flag on `BlogToc` to drop down a level when posts get long and structured. |
 
 ## Archived module list (Design v1 / Breakdance naming)
 

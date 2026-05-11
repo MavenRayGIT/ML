@@ -1,0 +1,135 @@
+---
+/**
+ * /blog/[...slug] — blog post detail.
+ *
+ * Pulls every published post via `getStaticPaths` so Astro
+ * pre-renders one route per post. Renders the title block, a
+ * two-column article body + persistent sidebar (TOC, share, promo
+ * banner), then a related-posts row.
+ *
+ * Layout (desktop ≥ 1024px):
+ *
+ *   [—— BlogDetailHero (full width inside max-w-[1100px]) ——]
+ *   [—— article body ——][—— sticky sidebar ——]
+ *   [—————————— BlogRelated (max-w-content) ——————————]
+ *   [—————————————— CTABand ——————————————]
+ *
+ * Below 1024px the sidebar collapses (TOC becomes a `<details>` above
+ * the article — see BlogToc.astro — share + promo move inline below
+ * the body).
+ *
+ * Related-posts policy:
+ *   - Same category as the current post, excluding self.
+ *   - Up to 3 posts. If fewer than 3 in the category, top up with the
+ *     next-newest posts from *other* categories so the row is always
+ *     either full or empty (never half-populated, which reads
+ *     accidentally sparse).
+ *   - Renders nothing when there are no other posts at all.
+ */
+
+import type { CollectionEntry } from 'astro:content';
+import { getCollection, render } from 'astro:content';
+
+import Page             from '../../layouts/Page.astro';
+import BlogDetailHero   from '../../components/blog/BlogDetailHero.astro';
+import BlogToc          from '../../components/blog/BlogToc.astro';
+import BlogShareButton  from '../../components/blog/BlogShareButton.astro';
+import BlogPromoBanner  from '../../components/blog/BlogPromoBanner.astro';
+import BlogRelated      from '../../components/blog/BlogRelated.astro';
+import CTABand          from '../../components/sections/CTABand.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props:  { post },
+  }));
+}
+
+interface RouteProps {
+  post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props as RouteProps;
+const { Content, headings } = await render(post);
+
+// Related posts — same category first, top up with newest from other
+// categories until we have 3.
+const allPosts = (await getCollection('blog', ({ data }) => !data.draft))
+  .filter((p) => p.id !== post.id)
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const sameCategory = allPosts.filter((p) => p.data.category === post.data.category);
+const otherCategory = allPosts.filter((p) => p.data.category !== post.data.category);
+
+const related = [...sameCategory, ...otherCategory].slice(0, 3).map((p) => ({
+  title:    p.data.title,
+  excerpt:  p.data.excerpt ?? '',
+  image:    p.data.image!,                       // schema validates presence per HANDOFF
+  imageAlt: p.data.imageAlt ?? '',
+  href:     `/blog/${p.id}`,
+  category: p.data.category,
+}));
+
+const description = post.data.excerpt
+  ?? `${post.data.title} — a field note from Sustained Outcomes.`;
+---
+
+<Page
+  title={`${post.data.title} — Sustained Outcomes`}
+  description={description}
+  ogType="article"
+>
+  <BlogDetailHero
+    title={post.data.title}
+    category={post.data.category}
+    date={post.data.date}
+    author={post.data.author}
+    duration={post.data.duration}
+    excerpt={post.data.excerpt}
+    image={post.data.image}
+    imageAlt={post.data.imageAlt ?? ''}
+  />
+
+  {/* ---------- Body + sidebar ---------- */}
+  <section class="bg-white py-section-sm md:py-section" data-nav-bg="white">
+    <div class="mx-auto grid w-full max-w-[1100px] grid-cols-1 gap-x-12 px-margin lg:grid-cols-[1fr_240px]">
+      <article class="prose w-full">
+        <Content />
+      </article>
+
+      <aside class="blog-sidebar flex flex-col gap-8 lg:order-2">
+        <BlogToc headings={headings} />
+        <div>
+          <BlogShareButton />
+        </div>
+        <BlogPromoBanner
+          kind="amber"
+          eyebrow="Stay in touch"
+          heading="Get the next post in your inbox."
+          body="Short, infrequent. No tracking pixels — we'd notice."
+          cta={{ text: 'Request to subscribe', href: '/contact' }}
+        />
+      </aside>
+    </div>
+  </section>
+
+  <BlogRelated posts={related} />
+
+  <CTABand
+    eyebrow="Get in touch"
+    headline="Ready to start a conversation?"
+    primaryCta={{ text: 'Request a meeting', href: '/contact' }}
+    secondaryCta={{ text: 'About the practice', href: '/about' }}
+  />
+</Page>
+
+<style>
+  /* On desktop the sidebar is the second column; on tablet/mobile it
+     falls below the article. The TOC component itself handles its own
+     collapsed/desktop swap — this just orders the surrounding sidebar
+     block correctly. */
+  @media (max-width: 1023.98px) {
+    .blog-sidebar { margin-top: 3rem; }
+  }
+</style>

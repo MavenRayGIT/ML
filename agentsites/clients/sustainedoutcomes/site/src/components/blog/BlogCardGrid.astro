@@ -1,0 +1,47 @@
+---
+/**
+ * BlogCardGrid.astro — responsive grid of `BlogCard`s for /blog.
+ *
+ * Wraps a list of posts in a 3-col / 2-col / 1-col grid (desktop /
+ * tablet / mobile) and pairs with `BlogFilterBar` for client-side
+ * category filtering.
+ *
+ * The grid exposes `data-blog-grid` so the filter script can find it.
+ * Each card wrapper exposes `data-blog-card` + `data-category` for
+ * the same script to toggle visibility. The empty-state element
+ * (`data-blog-empty`) is hidden until the filter narrows the visible
+ * count to zero, then revealed by the script. Server-rendered so the
+ * grid is fully functional with JS disabled (no filter — every post
+ * visible).
+ */
+
+import BlogCard, { type BlogCardPost } from './BlogCard.astro';
+
+export interface Props {
+  posts: BlogCardPost[];
+}
+
+const { posts } = Astro.props;
+---
+
+<div class="relative">
+  <ul
+    class="grid grid-cols-1 gap-x-8 gap-y-16 md:grid-cols-2 lg:grid-cols-3"
+    data-blog-grid
+  >
+    {posts.map((post) => (
+      <li data-blog-card data-category={post.category ?? ''}>
+        <BlogCard post={post} size="lg" />
+      </li>
+    ))}
+  </ul>
+
+  <div
+    data-blog-empty
+    hidden
+    class="mt-12 rounded-[4px] border border-gray-light bg-white p-12 text-center"
+  >
+    <p class="font-body text-body-lg text-black">No posts in this category yet.</p>
+    <p class="mt-2 font-body text-body text-gray-mid">Try another filter, or come back soon — we publish on a slow cadence.</p>
+  </div>
+</div>

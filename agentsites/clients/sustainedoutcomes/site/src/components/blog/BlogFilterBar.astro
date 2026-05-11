@@ -1,0 +1,106 @@
+---
+/**
+ * BlogFilterBar.astro — category filter for the /blog landing grid.
+ *
+ * Decisions for the v1 (2026-05-11 — user direction):
+ *   - Native `<select>` for category. No fancy custom dropdown. Native
+ *     gets us keyboard, mobile system-picker, and accessibility for
+ *     free, and the brand voice doesn't need flash here.
+ *   - No "latest / oldest" sort — posts are always newest-first.
+ *   - Keyword search is parked for v2 (called out in MODULES.md).
+ *   - Client-side filter only. The page server-renders every card;
+ *     the script toggles `[hidden]` on cards whose `data-category`
+ *     doesn't match. URL state is intentionally NOT synced for v1 —
+ *     refresh resets to "All".
+ *
+ * Contract with the grid:
+ *   - This bar emits a `change` event from a `<select>` with id
+ *     `blog-category-filter`.
+ *   - An inline script (below) listens on that select and toggles
+ *     `[hidden]` on every `[data-blog-card]` inside the nearest
+ *     `[data-blog-grid]` ancestor of the bar's container. Either
+ *     component can render without the other; missing peers are
+ *     no-ops.
+ */
+
+export interface Props {
+  /** Categories to expose in the dropdown. The "All" option is added automatically. */
+  categories: string[];
+  /** Optional total count for the "All" label, e.g. "All (12)". */
+  totalCount?: number;
+  /** Optional per-category counts, keyed by category label. */
+  counts?: Record<string, number>;
+}
+
+const { categories, totalCount, counts = {} } = Astro.props;
+
+const allLabel = totalCount != null ? `All (${totalCount})` : 'All';
+---
+
+<div class="blog-filter-bar flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+  <label class="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
+    <span class="font-body text-caption uppercase tracking-eyebrow font-semibold text-black">
+      Filter by
+    </span>
+    <select
+      id="blog-category-filter"
+      class="blog-filter-select font-body text-body text-black"
+      aria-label="Filter posts by category"
+    >
+      <option value="">{allLabel}</option>
+      {categories.map((cat) => (
+        <option value={cat}>
+          {counts[cat] != null ? `${cat} (${counts[cat]})` : cat}
+        </option>
+      ))}
+    </select>
+  </label>
+</div>
+
+<script is:inline>
+  (() => {
+    const select = document.getElementById('blog-category-filter');
+    if (!select) return;
+
+    function applyFilter() {
+      const value = select.value;
+      const grid = select.closest('[data-blog-page]')?.querySelector('[data-blog-grid]');
+      if (!grid) return;
+      const cards = grid.querySelectorAll('[data-blog-card]');
+      let visible = 0;
+      cards.forEach((card) => {
+        const match = !value || card.getAttribute('data-category') === value;
+        card.toggleAttribute('hidden', !match);
+        if (match) visible += 1;
+      });
+
+      const empty = grid.parentElement?.querySelector('[data-blog-empty]');
+      if (empty) empty.toggleAttribute('hidden', visible !== 0);
+    }
+
+    select.addEventListener('change', applyFilter);
+    applyFilter();
+  })();
+</script>
+
+<style>
+  /* Native select restyled to match brand. We keep the OS-controlled
+     dropdown panel for mobile/a11y; the trigger surface is restyled. */
+  .blog-filter-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: #ffffff;
+    border: 1px solid var(--color-gray-light);
+    border-radius: 4px;
+    padding: 10px 36px 10px 14px;
+    min-width: 220px;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='8' viewBox='0 0 14 8' fill='none'><path d='M1 1l6 6 6-6' stroke='%23020302' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 12px 7px;
+    transition: border-color var(--duration-quick) var(--ease-default);
+  }
+  .blog-filter-select:hover  { border-color: var(--color-amber); }
+  .blog-filter-select:focus  { outline: none; border-color: var(--color-amber); box-shadow: 0 0 0 1px var(--color-amber); }
+</style>

@@ -237,6 +237,131 @@
 }
 
 /* ------------------------------------------------------------
+   Long-form prose treatment (blog post bodies).
+   Applied to MDX-rendered article bodies via `<div class="prose">`.
+   Tokens come from @theme — type scale + spacing — so the prose
+   tracks the rest of the brand. The `.not-prose` escape hatch (used
+   on `BlogPromoBanner` etc.) opts a subtree out of these rules.
+
+   Vertical rhythm: `--prose-block` is the canonical paragraph gap;
+   headings get more above (`--prose-h2-mt` / `--prose-h3-mt`) and
+   the same below as a paragraph.
+   ------------------------------------------------------------ */
+
+.prose {
+  --prose-block: 1.25em;
+  --prose-h2-mt: 2.5em;
+  --prose-h3-mt: 1.75em;
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--color-black);
+}
+
+.prose > * + *           { margin-top: var(--prose-block); }
+.prose > .not-prose + *  { margin-top: var(--prose-block); }
+.prose > * + .not-prose  { margin-top: var(--prose-block); }
+
+.prose h2 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: var(--tracking-display);
+  font-weight: 700;
+  color: var(--color-black);
+  margin-top: var(--prose-h2-mt);
+  scroll-margin-top: 96px;             /* clear sticky nav for #anchor jumps */
+}
+
+.prose h3 {
+  font-family: var(--font-display);
+  font-size: 21px;
+  line-height: 1.25;
+  letter-spacing: var(--tracking-display);
+  font-weight: 700;
+  color: var(--color-black);
+  margin-top: var(--prose-h3-mt);
+  scroll-margin-top: 96px;
+}
+
+.prose p,
+.prose ul,
+.prose ol,
+.prose blockquote,
+.prose pre,
+.prose figure {
+  /* spacing handled by `* + *` rule above — these declarations exist
+     only to centralise font tokens for each block element. */
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.6em;
+}
+.prose ul       { list-style: disc;    }
+.prose ol       { list-style: decimal; }
+.prose li + li  { margin-top: 0.5em;   }
+.prose li > p   { margin-top: 0.5em;   }
+.prose li > p:first-child { margin-top: 0; }
+
+.prose strong   { font-weight: 700; color: var(--color-black); }
+.prose em       { font-style: italic; }
+
+.prose blockquote {
+  border-left: 3px solid var(--color-amber);
+  padding: 0.5em 1.25em;
+  font-family: var(--font-display);
+  font-size: 21px;
+  line-height: 1.4;
+  letter-spacing: var(--tracking-display);
+  color: var(--color-black);
+}
+.prose blockquote p { margin-top: 0; }
+
+.prose hr {
+  border: 0;
+  height: 1px;
+  background: var(--color-gray-light);
+  margin: 2.5em 0;
+}
+
+.prose code {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  background: var(--color-gray-bg);
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+}
+
+.prose pre {
+  background: var(--color-green-dark);
+  color: var(--color-cream);
+  padding: 1em 1.25em;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+.prose pre code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font-size: 0.95em;
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.prose figure figcaption {
+  margin-top: 0.75em;
+  font-size: var(--text-caption);
+  line-height: 1.4;
+  color: var(--color-gray-mid);
+  text-align: center;
+}
+
+/* ------------------------------------------------------------
    Reveal animations (Corporate_Elegant — see ANIMATION.md)
    Sections opt in via `data-reveal="header|row-shift|angle-shift|none"`.
    Base.astro's IntersectionObserver flips `data-revealed=""` on entry.

@@ -1,0 +1,45 @@
+---
+/**
+ * BlogRelated.astro — "Related articles" row at the bottom of a post.
+ *
+ * Same `BlogCard` primitive as the homepage / landing — sized `sm`
+ * so the row reads as a compact closing affordance rather than
+ * another full grid. Caller supplies up to 3 already-filtered posts
+ * (same-category, exclude-self is the page's job; this component
+ * just renders what it's given).
+ *
+ * Renders nothing when there are no related posts — the page above
+ * already has a CTABand close-out, so an empty row would be dead
+ * space.
+ */
+
+import BlogCard, { type BlogCardPost } from './BlogCard.astro';
+
+export interface Props {
+  posts: BlogCardPost[];
+  /** Header label. Defaults to "Related articles". */
+  headline?: string;
+}
+
+const { posts, headline = 'Related articles' } = Astro.props;
+---
+
+{posts.length > 0 && (
+  <section
+    class="bg-gray-bg py-section-sm md:py-section"
+    data-nav-bg="white"
+  >
+    <div class="mx-auto w-full max-w-content px-margin">
+      <h2 class="font-display text-h2 tracking-display text-black">
+        {headline}
+      </h2>
+      <ul class="mt-12 grid grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
+        {posts.map((post) => (
+          <li>
+            <BlogCard post={post} size="sm" />
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+)}

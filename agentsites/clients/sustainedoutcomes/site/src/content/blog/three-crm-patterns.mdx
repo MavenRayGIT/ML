@@ -1,0 +1,57 @@
+---
+title: "Three patterns we keep seeing in mission-driven CRMs"
+date: 2026-02-08
+category: "Connecting with Nature"
+excerpt: "Tooling failures repeat across mission-driven organizations with surprising consistency. Three patterns, and the cheapest credible fix for each."
+image: "../../assets/FPO-Lake-Reflection.jpg"
+imageAlt: "Reflection on still water at first light."
+duration: "7 min read"
+author: "Ken Jacobsen"
+---
+
+We spent the last quarter inside the CRMs of seven mission-driven organizations. The tools were different (three Salesforce, two Raiser's Edge, one HubSpot, one custom), the missions ranged from regional conservancy to youth program to research institute, and the team sizes spanned six to two hundred.
+
+The failures were nearly identical.
+
+## Pattern 1 — Duplicate constituent records nobody owns
+
+Every organization had between 8% and 22% duplicate records. None of them had a single person whose job was to keep the constituent database clean. The "data steward" role either didn't exist or had been folded into a development assistant's other twelve responsibilities.
+
+### Why it happens
+
+CRMs reward additive activity. Adding a contact is one click; merging duplicates is twelve. The marketing automation tool creates records the development team doesn't know about. The events platform imports records that don't pass through the CRM's de-dupe rule.
+
+### The cheapest credible fix
+
+Name the role. Not "data quality" as a project — a person, one day a week, with documented authority to merge records. Most organizations can find half a day a week if they stop pretending the problem will solve itself.
+
+## Pattern 2 — Marketing automation diverging from the system of record
+
+In every shop, the email tool's contact list had drifted from the CRM. Sometimes by months; in one case, by years. Constituent segmentation was being done in the marketing tool, not the CRM, because the CRM segmentation was too painful.
+
+> The drift compounds. Once the marketing tool becomes the de facto system of record, the CRM stops being trusted, which means people stop updating it, which means the drift accelerates.
+
+### The cheapest credible fix
+
+A weekly automated sync from CRM → marketing tool, with the marketing tool's segmentation rebuilt to read directly from CRM custom fields. It's a two-day project in most platforms. The reason it doesn't happen is that nobody owns the boundary between the two systems.
+
+## Pattern 3 — Ops dashboards everyone distrusts
+
+Every organization had a dashboard. Half had three. None of them were trusted enough to drive a real decision in the last twelve months.
+
+### Why it happens
+
+Dashboards usually fail in one of two ways:
+
+1. **They report on activity the team already feels.** Number of emails sent. Events held. The numbers are accurate; they're just not informative.
+2. **They report on outcomes the team doesn't believe.** Engagement rates. Donor lifetime value. The numbers exist; the team can't trace them back to a definition they trust.
+
+### The cheapest credible fix
+
+Pick one metric the team would actually act on if it moved. Rebuild it from the source data, end to end. Have one person walk every executive through the calculation. Sunset everything else for a quarter.
+
+A dashboard with one trusted number beats a dashboard with twelve disputed ones.
+
+## A short caveat
+
+These patterns aren't tooling problems. They're ownership problems wearing tooling clothes. Switching CRMs almost never fixes them. Naming roles usually does.

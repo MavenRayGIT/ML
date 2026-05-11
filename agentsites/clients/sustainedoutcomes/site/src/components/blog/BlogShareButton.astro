@@ -1,0 +1,87 @@
+---
+/**
+ * BlogShareButton.astro — copy current URL to clipboard.
+ *
+ * The simplest credible share affordance:
+ *   - One button labelled "Share" with a link-chain icon.
+ *   - Click → copies `window.location.href` to the clipboard via
+ *     `navigator.clipboard.writeText()`, with a `document.execCommand`
+ *     fallback for older browsers.
+ *   - Confirmation: an inline toast (`Link copied`) swaps in for the
+ *     label for 1.6s, then reverts. No global toast plumbing — keeps
+ *     the contract local to this component.
+ *
+ * Future v2 candidates (deferred — would clutter the sidebar):
+ *   - Twitter / X share intent
+ *   - LinkedIn share
+ *   - Email mailto:
+ *
+ * The Web Share API isn't used by default because the desktop UX is a
+ * blank no-op on the platforms most likely to read these posts; the
+ * copy-url affordance is more universal.
+ */
+---
+
+<button
+  type="button"
+  class="blog-share inline-flex items-center gap-2 font-body text-body-sm font-semibold uppercase tracking-eyebrow text-black transition-colors duration-quick ease-default hover:text-amber"
+  data-share-trigger
+  aria-label="Copy article URL to clipboard"
+>
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <path
+      d="M6.5 9.5 9.5 6.5M6.5 6h-2A2.5 2.5 0 0 0 2 8.5v0A2.5 2.5 0 0 0 4.5 11h2M9.5 11h2A2.5 2.5 0 0 0 14 8.5v0A2.5 2.5 0 0 0 11.5 6h-2"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+  <span data-share-label>Share</span>
+</button>
+
+<script is:inline>
+  (() => {
+    const btn = document.querySelector('[data-share-trigger]');
+    if (!btn) return;
+    const label = btn.querySelector('[data-share-label]');
+    if (!label) return;
+
+    async function copyUrl() {
+      const url = window.location.href;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(url);
+        } else {
+          // Fallback path — temporary input + execCommand.
+          const input = document.createElement('input');
+          input.value = url;
+          document.body.appendChild(input);
+          input.select();
+          document.execCommand('copy');
+          document.body.removeChild(input);
+        }
+        return true;
+      } catch (err) {
+        return false;
+      }
+    }
+
+    let resetTimer;
+    btn.addEventListener('click', async () => {
+      const ok = await copyUrl();
+      label.textContent = ok ? 'Link copied' : 'Copy failed';
+      btn.setAttribute('data-share-state', ok ? 'copied' : 'error');
+      clearTimeout(resetTimer);
+      resetTimer = setTimeout(() => {
+        label.textContent = 'Share';
+        btn.removeAttribute('data-share-state');
+      }, 1600);
+    });
+  })();
+</script>
+
+<style>
+  .blog-share[data-share-state='copied'] { color: var(--color-amber); }
+  .blog-share[data-share-state='error']  { color: var(--color-gray-mid); }
+</style>

@@ -1,0 +1,78 @@
+---
+/**
+ * BlogPromoBanner.astro — stub for inline / sidebar callout banners.
+ *
+ * Per user direction 2026-05-11: blog detail pages should support
+ * "standard global banners (downloads, registers, etc.)" — for now
+ * this component is a stub. The structure is real (heading + body +
+ * CTA), the styling is final, but the *content* is hardcoded /
+ * placeholder copy. When the real banner system lands (likely a
+ * separate content collection so banners can be managed without
+ * touching post MDX), this component becomes the renderer for that
+ * collection's entries.
+ *
+ * Two visual styles for v1 — `kind="amber"` (light surface, amber
+ * panel) and `kind="dark"` (dark-green panel). Both fit the brand and
+ * can sit either in the sidebar or inline between body paragraphs.
+ *
+ * Use:
+ *   <BlogPromoBanner
+ *     kind="amber"
+ *     eyebrow="Download"
+ *     heading="A field guide to operating-strategy alignment"
+ *     body="Twelve pages, no email gate. Free to share."
+ *     cta={{ text: 'Get the PDF', href: '#' }}
+ *   />
+ */
+
+import Button from '../ui/Button.astro';
+import SectionEyebrow from '../ui/SectionEyebrow.astro';
+
+export interface BannerCta {
+  text: string;
+  href: string;
+}
+
+export interface Props {
+  /** Visual style. */
+  kind?: 'amber' | 'dark';
+  /** Small caps label above the heading (e.g. "Download", "Register"). */
+  eyebrow?: string;
+  heading: string;
+  body?: string;
+  cta: BannerCta;
+}
+
+const {
+  kind = 'amber',
+  eyebrow,
+  heading,
+  body,
+  cta,
+} = Astro.props;
+
+const isAmber = kind === 'amber';
+
+const bg     = isAmber ? 'bg-amber'      : 'bg-green-dark';
+const eybCol = isAmber ? 'black' as const : 'amber' as const;
+const text   = isAmber ? 'text-black'    : 'text-white';
+const btnVar = isAmber ? 'green-fill'   : 'amber-fill';
+const btnSrf = isAmber ? 'amber' as const : 'dark' as const;
+---
+
+<aside class:list={['blog-promo-banner not-prose w-full rounded-[4px] p-6 md:p-8', bg]}>
+  {eyebrow && (
+    <SectionEyebrow color={eybCol} class="mb-4">{eyebrow}</SectionEyebrow>
+  )}
+  <h3 class:list={['font-display text-card tracking-display', text]}>
+    {heading}
+  </h3>
+  {body && (
+    <p class:list={['mt-3 font-body text-body leading-[1.6]', text]}>{body}</p>
+  )}
+  <div class="mt-5">
+    <Button variant={btnVar} surface={btnSrf} href={cta.href}>
+      {cta.text}
+    </Button>
+  </div>
+</aside>
