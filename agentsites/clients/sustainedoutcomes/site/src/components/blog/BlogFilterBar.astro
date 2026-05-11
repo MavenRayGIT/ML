@@ -10,8 +10,13 @@
  *   - Keyword search is parked for v2 (called out in MODULES.md).
  *   - Client-side filter only. The page server-renders every card;
  *     the script toggles `[hidden]` on cards whose `data-category`
- *     doesn't match. URL state is intentionally NOT synced for v1 —
- *     refresh resets to "All".
+ *     doesn't match.
+ *   - URL state IS read on load (2026-05-11): a `?category=…` query
+ *     param pre-selects the dropdown and applies the filter. Changing
+ *     the dropdown also writes back to the URL via `replaceState` so
+ *     the filtered view is bookmarkable + shareable. This lets the
+ *     category chip on a blog detail page deep-link to the filtered
+ *     landing.
  *
  * Contract with the grid:
  *   - This bar emits a `change` event from a `<select>` with id
@@ -58,9 +63,26 @@ const allLabel = totalCount != null ? `All (${totalCount})` : 'All';
 </div>
 
 <script is:inline>
-  (() => {
+  /* The filter bar renders ABOVE the card grid in document order, so
+     this inline script would execute before the grid exists in the
+     DOM if we ran immediately. We defer to DOMContentLoaded so
+     `applyFilter()` can find both peers and the URL-driven initial
+     filter actually takes effect. (Bug discovered 2026-05-11 —
+     clicking a category chip from a detail page landed on /blog with
+     the dropdown pre-selected but no cards hidden.) */
+  function initBlogFilter() {
     const select = document.getElementById('blog-category-filter');
     if (!select) return;
+
+    // 1. Read `?category=` from the URL and pre-select the matching
+    //    option, if any. Falls back silently to "All" when the param
+    //    is absent or doesn't match a known category.
+    const params = new URLSearchParams(window.location.search);
+    const initial = params.get('category');
+    if (initial) {
+      const match = Array.from(select.options).find((o) => o.value === initial);
+      if (match) select.value = initial;
+    }
 
     function applyFilter() {
       const value = select.value;
@@ -78,9 +100,30 @@ const allLabel = totalCount != null ? `All (${totalCount})` : 'All';
       if (empty) empty.toggleAttribute('hidden', visible !== 0);
     }
 
-    select.addEventListener('change', applyFilter);
+    // 2. Sync the dropdown change back to the URL so the filter view
+    //    is bookmarkable / shareable. `replaceState` instead of
+    //    `pushState` — back-button shouldn't cycle through every
+    //    dropdown change.
+    function syncUrl() {
+      const value = select.value;
+      const url = new URL(window.location.href);
+      if (value) url.searchParams.set('category', value);
+      else       url.searchParams.delete('category');
+      window.history.replaceState({}, '', url);
+    }
+
+    select.addEventListener('change', () => {
+      applyFilter();
+      syncUrl();
+    });
     applyFilter();
-  })();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBlogFilter);
+  } else {
+    initBlogFilter();
+  }
 </script>
 
 <style>
