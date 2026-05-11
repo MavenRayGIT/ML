@@ -92,6 +92,42 @@ Notes:
 
 ---
 
+## Track A — Environments
+
+Every Track A client gets four environments. Same site code in all of them, different deploy targets.
+
+| Environment | Branch | URL pattern | Cloudflare Pages project | Audience |
+|-------------|--------|-------------|--------------------------|----------|
+| **Local dev** | any | `localhost:4321` | n/a | Cursor / developer |
+| **Preview** | feature/* | `<hash>.<project>.pages.dev` | auto, per push | M&L internal review |
+| **Staging** | `staging` | `<client>.mackandlee.com` | `<client>` (staging project) | **Client review** |
+| **Prod verification** | `main` | `<client>-prod.mackandlee.com` | `<client>-prod` (prod project) | M&L final verification before DNS cutover |
+| **Live** | `main` | `<client-domain>.com` | same as prod-verification, custom domain swapped at launch | **Public** |
+
+Notes:
+- **Two Pages projects per client.** Cloudflare's UI only lets the production branch carry a custom domain, so we run separate projects: one tracking `staging`, one tracking `main`. Both are wired to the same GitHub repo; each filters to its own branch.
+- **Naming.** Staging project = `<client>`; prod project = `<client>-prod`. Custom domains follow the same pattern: `<client>.mackandlee.com` / `<client>-prod.mackandlee.com`. No hyphens inside the client slug.
+- **Promotion flow.** Feature branch → PR → merge to `staging` → client reviews on `<client>.mackandlee.com` → approve → PR `staging` → `main` → verify on `<client>-prod.mackandlee.com` → at launch, swap custom domain on prod project to client's real domain.
+
+### Environment banner standard
+
+While a site is in build/staging phase, the homepage carries a fixed top banner identifying the environment. Banner colors are **global standard across every client** — do not restyle per brand.
+
+| Environment | Background | Text | Permanence |
+|-------------|------------|------|------------|
+| Staging | `#020302` (M&L black) | white | **Permanent.** Stays on staging forever. |
+| Prod verification | `#D72511` (red) | white | **Temporary.** Removed at launch (see Launch phase). |
+| Live | none | n/a | No banner. Site looks like production. |
+
+**Why this standard:**
+- Red on prod-verification = "this is not live yet, do not share publicly."
+- Black on staging = the client's permanent review environment. Treated as a stable surface.
+- Local dev does not need a banner (URL itself is unambiguous).
+
+**Future direction (v2):** the staging banner evolves into an interactive **client toolbar** — quick actions for "chat with M&L," "talk to Claude," "view analytics," "request a change." This is part of the M&L-wide multi-tenant admin app, not built into individual client sites. See `ML_ADMIN.md` parking lot.
+
+---
+
 ## Track A — Per-Project Cost
 
 | Item | Cost/mo |
@@ -149,6 +185,8 @@ Target client charge: $75-150/mo managed hosting.
 
 ### 6. Launch
 - DNS → Cloudflare Pages
+- **Remove prod-verification banner** from `site/src/pages/index.astro` (red `#D72511` bar)
+- Custom domain on prod Pages project swapped from `<client>-prod.mackandlee.com` to client's real domain
 - Green hosting verified at thegreenwebfoundation.org
 - sitemap.xml submitted
 - OG meta verified

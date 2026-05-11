@@ -1,7 +1,18 @@
 # ML ADMIN — Mack & Lee
 > Internal guide for M&L team members managing client sites
 > built on the Astro + Cloudflare + Claude API stack.
-> Read alongside ML_System/ARCHITECTURE.md and ANALYTICS.md.
+> Read alongside `agentsites/ARCHITECTURE.md` and `agentsites/ANALYTICS.md`.
+
+---
+
+## Parking lot — things to fix later (not blocking)
+
+Items noted in passing. Pick up when there's spare time; none of these block client work.
+
+| Item | Noted | Notes |
+|---|---|---|
+| `www.mackandlee.com` returns Cloudflare 522 (origin timeout from WPX) | 2026-05-11 | Apex `https://mackandlee.com` works fine; only the `www` variant fails. Pre-existing — WPX vhost likely not configured for `www`. Fix options: (a) Cloudflare Page Rule / Bulk Redirect `www.mackandlee.com/*` → `https://mackandlee.com/$1` (5 min, recommended), or (b) ask WPX to add `www` to the vhost. Low priority because canonical apex works and search engines respect it. |
+| **Staging banner → client toolbar (v2 concept)** | 2026-05-11 | Right now `<client>.mackandlee.com` shows a plain black banner identifying the env. Concept for v2: turn that bar into an interactive **client toolbar** with quick actions — "Chat with M&L," "Talk to Claude," "View analytics," "Request a change," "Push to prod." Belongs in the M&L-wide multi-tenant admin app (`admin.mackandlee.com`), injected into staging sites via a small embed script — **not** baked into each client repo. Keeps client codebases clean and lets us ship the toolbar once for all clients. Worth doing once we have 2+ Track A clients live. |
 
 ---
 
