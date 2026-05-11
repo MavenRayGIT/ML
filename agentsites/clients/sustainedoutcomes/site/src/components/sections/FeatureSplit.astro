@@ -34,24 +34,23 @@
  *         bot-right  (100%, calc(100% - var(--angle-grow)))  — slides UP   from y=100%
  *
  *   Progress mapping (rAF script lower in this file):
- *         p = 0  (just entered viewport)  →  --angle-grow: 0px           →  polygon == full rectangle
- *         p = 1  (just exited the top)    →  --angle-grow: ~3.75% width  →  polygon == angled silhouette
+ *         p = 0  (just entered viewport)  →  --angle-grow: 0px            →  polygon == full rectangle
+ *         p = 1  (just exited the top)    →  --angle-grow: ~12.28% width  →  polygon == angled silhouette
  *
  *   The depth at `p = 1` is computed as `SLOPE × section.width`
- *   (SLOPE = 0.0375), so the resulting **angle is consistent across
- *   viewport widths** — a 1280px-wide section ends at ~48px deep, a
- *   640px-wide section ends at ~24px deep, both reading as the same
- *   ~2.15° slope. (Calibrated by visual tuning on staging at ~1280px
- *   viewport width.)
+ *   where `SLOPE = tan(7°) ≈ 0.1228`. So the **angle is consistent
+ *   across viewport widths** — a 1280px-wide section ends at ~157px
+ *   deep, a 640px-wide section ends at ~79px deep, both reading as
+ *   the same 7° slope. (Calibrated by visual tuning on staging.)
  *
  *   Because the moving vertices stay strictly inside `0..100%` and
  *   each diagonal pivots around an anchored corner, the lines develop
  *   as continuous straight diagonals — no corner-flatten artefact
  *   (which was the early v2 bug; see git history).
  *
- *   `prefers-reduced-motion: reduce` locks `--angle-grow` to `3.75vw`
- *   (which approximates `SLOPE × section.width` whenever the section
- *   is full-bleed, which all angled FeatureSplits are by design) so
+ *   `prefers-reduced-motion: reduce` locks `--angle-grow` to `12.28vw`
+ *   (which equals `SLOPE × section.width` whenever the section is
+ *   full-bleed, which all angled FeatureSplits are by design) so
  *   reduced-motion users see the intended angled silhouette statically.
  *
  *   The v1 one-shot entry reveal (`data-reveal="angle-shift"`) was
@@ -265,8 +264,8 @@ const reveal = angled ? undefined : 'header';
                                         i.e. the angled silhouette. This is the
                                         section's state when it has just scrolled
                                         past the top of the viewport. SLOPE =
-                                        0.0375 (≈2.15°). On a 1280px section:
-                                        Δ = 48px. On a 640px section: Δ = 24px.
+                                        tan(7°) ≈ 0.1228. On a 1280px section:
+                                        Δ = 157px. On a 640px section: Δ = 79px.
 
      Top-right (100%, 0%) and bottom-left (0%, 100%) are anchored at
      the section's corners and never move. The diagonals pivot around
@@ -282,17 +281,38 @@ const reveal = angled ? undefined : 'header';
       100% calc(100% - var(--angle-grow)),
       0%   100%
     );
+
+    /* GPU compositor layer hints — clip-path animation otherwise
+       forces a per-frame re-rasterization of the section content,
+       which makes the angled edge's anti-aliasing dance against the
+       pixel grid (visible as vibration/flicker during scroll).
+       Promoting to a backing texture lets the browser treat the
+       clip-path as a cheap mask over a static rasterization. */
+    will-change: clip-path;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* Image inside an angled FeatureSplit also needs its own layer —
+     the clip-path repaints the section content each frame, and
+     without compositor promotion the image is re-rasterized too,
+     which can compound the flicker (especially on Retina, where
+     the image has sub-pixel positioning from the seam-fix rule
+     below). Belt-and-suspenders. */
+  .feature-split-angled .feature-split-image img {
+    transform: translateZ(0);
+    backface-visibility: hidden;
   }
 
   /* prefers-reduced-motion: lock to the FULLY-ANGLED silhouette.
-     `3.75vw` is the CSS equivalent of `SLOPE × width` whenever the
+     `12.28vw` is the CSS equivalent of `SLOPE × width` whenever the
      section is full-bleed (= 100vw) — which all angled FeatureSplits
      are by design. Reduced-motion users see the intended design
-     state, just statically, with the same width-consistent slope.
+     state, just statically, with the same width-consistent 7° slope.
      `!important` because the script writes inline styles. */
   @media (prefers-reduced-motion: reduce) {
     .feature-split-angled {
-      --angle-grow: 3.75vw !important;
+      --angle-grow: 12.28vw !important;
     }
   }
 
