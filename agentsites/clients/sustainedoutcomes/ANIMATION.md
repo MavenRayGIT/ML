@@ -139,10 +139,10 @@ p = (viewport.height - rect.top) / (viewport.height + rect.height)
 
 - `p = 0` — section top is at viewport bottom (just entering from below). `--angle-grow = 0px` → polygon == full rectangle.
 - `p = 0.5` — section is roughly half-developed.
-- `p = 1` — section bottom is at viewport top (just exited above). `--angle-grow = SLOPE × section.width` → fully angled silhouette. SLOPE = 0.0375 (~2.15° / 3.75% rise) — the value the JS uses to scale the depth to section width so the angle reads as the same slope across viewport sizes.
-  - 1280px section → Δ = 48px (calibrated reference)
-  - 800px section  → Δ = 30px
-  - 375px mobile   → Δ = 14px
+- `p = 1` — section bottom is at viewport top (just exited above). `--angle-grow = SLOPE × section.width` → fully angled silhouette. SLOPE = `tan(7°) ≈ 0.1228` — the value the JS uses to scale the depth to section width so the angle reads as the same 7° slope across viewport sizes.
+  - 1280px section → Δ = 157px (calibrated reference)
+  - 800px section  → Δ = 98px
+  - 375px mobile   → Δ = 46px
 
 Progress is mapped **linearly** to the single CSS var (`--angle-grow`).
 Structural motion reads more honestly without easing — the
@@ -163,23 +163,32 @@ Implementation lives in `FeatureSplit.astro`:
 
 @media (prefers-reduced-motion: reduce) {
   .feature-split-angled {
-    --angle-grow: 3.75vw !important;  /* width-relative full-angled silhouette */
+    --angle-grow: 12.28vw !important;  /* width-relative full-angled silhouette */
   }
 }
 ```
 
 A small inline script (rAF-throttled scroll listener gated by
 `IntersectionObserver`, ~40 LoC) writes `--angle-grow = p × SLOPE × section.width`
-per frame for every in-view angled section, where `SLOPE = 0.0375`.
-Width-relative so the angle slope (~2.15°) reads as the same on every
-viewport size — wider sections get more absolute pixels of depth, but
-the apparent angle stays constant.
+per frame for every in-view angled section, where `SLOPE = tan(7°) ≈ 0.1228`.
+Width-relative so the **7° slope** reads as the same apparent angle on
+every viewport size — wider sections get more absolute pixels of
+depth, but the apparent angle stays constant.
 
 `prefers-reduced-motion: reduce` short-circuits the script and
-`!important`-locks the var to `3.75vw` (= the CSS equivalent of
+`!important`-locks the var to `12.28vw` (= the CSS equivalent of
 `SLOPE × width` when the section is full-bleed, which all angled
 FeatureSplits are by design), so reduced-motion users see the
 fully-angled silhouette statically.
+
+The angled section is also promoted to its own GPU compositor layer
+(`will-change: clip-path; transform: translateZ(0); backface-visibility:
+hidden;`) — without that the per-frame clip-path repaint forces a
+re-rasterization of the section content and the diagonal's
+anti-aliasing dances against the pixel grid (visible as flicker /
+vibration). The image inside the section gets the same treatment so
+its sub-pixel positioning (from the seam-fix rule) doesn't compound
+the issue.
 
 Could be ported to pure CSS via `animation-timeline: view()` once
 Safari and Firefox catch up — until then the JS path is the only path
@@ -269,6 +278,6 @@ Functional state changes (Nav state, modal open/close) still occur — just inst
 
 ## Open / refinement notes
 
-- The angle-grow magnitude (`SLOPE = 0.0375`, ~2.15° / 3.75% rise) was calibrated by live-tuning on staging at ~1280px viewport width (where it works out to 48px of absolute depth) — 24px was perceptually invisible at that width, 48px is the smallest value that reads as deliberate motion without overpowering the surrounding sections. Single knob: `SLOPE` in the inline script + the matching `3.75vw` in the `prefers-reduced-motion` rule in `<style>`. Bump both in lockstep if the angle needs more (or less) energy. Slope is width-relative so the value works the same on mobile, tablet, and ultrawide.
+- The angle-grow magnitude (`SLOPE = tan(7°) ≈ 0.1228`, ~7° slope / 12.28% rise) was calibrated by live-tuning on staging — earlier passes at 2.15° were too subtle to read as a deliberate visual gesture, 7° is the value that lands on the design intent without overpowering the section content. Single knob: `SLOPE` in the inline script + the matching `12.28vw` in the `prefers-reduced-motion` rule in `<style>`. Bump both in lockstep if the angle needs more (or less) energy. Slope is width-relative so the value works the same on mobile, tablet, and ultrawide.
 - If the motion ever needs to extend *past* the section's vertical bounds (e.g. the angled wedges should reach further into the section than the bounding box allows), the next refactor is an SVG-overlay approach: render the section as a plain rectangle and overlay two SVG polygons at top and bottom whose points animate on scroll. SVG overflow-visible lets the diagonal extend outside the section box without engaging the clip-path corner-flatten failure mode. Sticking with clip-path until/unless that's needed — fewer DOM nodes, one CSS rule, one var.
 - Italic font weights are not yet shipped (`public/fonts/` ships uprights only — the italic source files exist under `src/assets/fonts/` and can be added when prose blockquotes / `<em>` need them).

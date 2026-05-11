@@ -367,17 +367,19 @@ const reveal = angled ? undefined : 'header';
    * without easing; an easing curve would compete with the user's
    * scroll velocity.
    *
-   * Angle slope (SLOPE): 0.0375 — i.e. the angled depth at p=1 is
-   * 3.75% of the section's measured width. Width-relative so the
-   * angle reads as the same slope at every viewport size:
-   *   1280px section → Δ = 48px  (calibrated reference)
-   *    800px section → Δ = 30px
-   *    375px mobile  → Δ = 14px
+   * Angle slope (SLOPE): tan(7°) ≈ 0.1228 — i.e. the angled depth
+   * at p=1 is 12.28% of the section's measured width. Width-relative
+   * so the angle reads as the same 7° slope at every viewport size:
+   *   1280px section → Δ = 157px  (calibrated reference)
+   *    800px section → Δ = 98px
+   *    375px mobile  → Δ = 46px
    *
    * Bump SLOPE if the angle needs to read more strongly; also bump
-   * the matching `3.75vw` in the `prefers-reduced-motion` rule in
+   * the matching `12.28vw` in the `prefers-reduced-motion` rule in
    * <style> above so reduced-motion users land at the same final
-   * silhouette.
+   * silhouette. Convenient degree → slope:
+   *    5° → 0.0875,  7° → 0.1228,  10° → 0.1763
+   *   12° → 0.2126, 15° → 0.2679, 18° → 0.3249
    *
    * Performance contract:
    *   - rAF-throttled: at most one update per frame regardless of how
@@ -392,7 +394,7 @@ const reveal = angled ? undefined : 'header';
    * itself uses `%`/`px` calc that the browser composites cheaply.
    */
   (() => {
-    const SLOPE = 0.0375;
+    const SLOPE = 0.1228; // tan(7°) — match the value in the reduced-motion CSS rule above
 
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
