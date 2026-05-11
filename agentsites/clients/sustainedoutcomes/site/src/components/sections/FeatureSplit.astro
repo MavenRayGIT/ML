@@ -34,18 +34,25 @@
  *         bot-right  (100%, calc(100% - var(--angle-grow)))  — slides UP   from y=100%
  *
  *   Progress mapping (rAF script lower in this file):
- *         p = 0  (just entered viewport)  →  --angle-grow: 0px   →  polygon == full rectangle
- *         p = 1  (just exited the top)    →  --angle-grow: 48px  →  polygon == angled silhouette
+ *         p = 0  (just entered viewport)  →  --angle-grow: 0px           →  polygon == full rectangle
+ *         p = 1  (just exited the top)    →  --angle-grow: ~3.75% width  →  polygon == angled silhouette
+ *
+ *   The depth at `p = 1` is computed as `SLOPE × section.width`
+ *   (SLOPE = 0.0375), so the resulting **angle is consistent across
+ *   viewport widths** — a 1280px-wide section ends at ~48px deep, a
+ *   640px-wide section ends at ~24px deep, both reading as the same
+ *   ~2.15° slope. (Calibrated by visual tuning on staging at ~1280px
+ *   viewport width.)
  *
  *   Because the moving vertices stay strictly inside `0..100%` and
  *   each diagonal pivots around an anchored corner, the lines develop
  *   as continuous straight diagonals — no corner-flatten artefact
  *   (which was the early v2 bug; see git history).
  *
- *   `prefers-reduced-motion: reduce` locks `--angle-grow` to MAX so
- *   the section reads in its fully-angled silhouette without
- *   animating. Reduced-motion users still see the intended design,
- *   just statically.
+ *   `prefers-reduced-motion: reduce` locks `--angle-grow` to `3.75vw`
+ *   (which approximates `SLOPE × section.width` whenever the section
+ *   is full-bleed, which all angled FeatureSplits are by design) so
+ *   reduced-motion users see the intended angled silhouette statically.
  *
  *   The v1 one-shot entry reveal (`data-reveal="angle-shift"`) was
  *   intentionally dropped — the scroll-tied motion below now serves
@@ -247,16 +254,19 @@ const reveal = angled ? undefined : 'header';
   /* Angled silhouette — clip-path "grows" the angle on scroll.
      A single CSS custom property (`--angle-grow`) drives the two
      non-anchored polygon vertices. The inline script writes this
-     value per frame off scroll progress.
+     value per frame off scroll progress, scaled to section width so
+     the slope (~2.15°) stays consistent across viewport sizes.
 
-       --angle-grow: 0px    → polygon == (0% 0%, 100% 0%, 100% 100%, 0% 100%)
-                              i.e. a full rectangle, no angle. This is the
-                              section's state when it first enters the
-                              viewport from below.
-       --angle-grow: 48px   → polygon == (0% 48px, 100% 0%, 100% calc(100% - 48px), 0% 100%)
-                              i.e. the angled silhouette. This is the
-                              section's state when it has just scrolled
-                              past the top of the viewport.
+       --angle-grow: 0px              → polygon == (0% 0%, 100% 0%, 100% 100%, 0% 100%)
+                                        i.e. a full rectangle, no angle. This is
+                                        the section's state when it first enters
+                                        the viewport from below.
+       --angle-grow: SLOPE × width    → polygon == (0% Δpx, 100% 0%, 100% calc(100% - Δpx), 0% 100%)
+                                        i.e. the angled silhouette. This is the
+                                        section's state when it has just scrolled
+                                        past the top of the viewport. SLOPE =
+                                        0.0375 (≈2.15°). On a 1280px section:
+                                        Δ = 48px. On a 640px section: Δ = 24px.
 
      Top-right (100%, 0%) and bottom-left (0%, 100%) are anchored at
      the section's corners and never move. The diagonals pivot around
@@ -274,14 +284,15 @@ const reveal = angled ? undefined : 'header';
     );
   }
 
-  /* prefers-reduced-motion: lock to the FULLY-ANGLED silhouette
-     (--angle-grow == MAX). Reduced-motion users see the section in
-     its intended design state — angled — just statically, without
-     the entry-flat-to-angle animation. `!important` because the
-     script writes inline styles. */
+  /* prefers-reduced-motion: lock to the FULLY-ANGLED silhouette.
+     `3.75vw` is the CSS equivalent of `SLOPE × width` whenever the
+     section is full-bleed (= 100vw) — which all angled FeatureSplits
+     are by design. Reduced-motion users see the intended design
+     state, just statically, with the same width-consistent slope.
+     `!important` because the script writes inline styles. */
   @media (prefers-reduced-motion: reduce) {
     .feature-split-angled {
-      --angle-grow: 48px !important;
+      --angle-grow: 3.75vw !important;
     }
   }
 
@@ -331,15 +342,22 @@ const reveal = angled ? undefined : 'header';
    *   p = 1  →  section's bottom edge is at the viewport top  (just exited)
    *   p = 0.5  →  section is roughly centred in the viewport
    *
-   * Mapping: var runs 0px (flat, rectangle) at p=0 → 48px (angled) at p=1.
-   * Linear — structural motion reads more honestly without easing; an
-   * easing curve would compete with the user's scroll velocity.
+   * Mapping: var runs 0px (flat, rectangle) at p=0 → `SLOPE × width`
+   * (angled) at p=1. Linear — structural motion reads more honestly
+   * without easing; an easing curve would compete with the user's
+   * scroll velocity.
    *
-   * Magnitude (MAX): 48px. Calibrated by visual inspection on staging
-   * at 622px section height (= ~7.7% slope). Bump this if the angle
-   * needs to read more strongly; also bump the matching `48px` in the
-   * `prefers-reduced-motion` rule in <style> above so reduced-motion
-   * users land at the same final silhouette.
+   * Angle slope (SLOPE): 0.0375 — i.e. the angled depth at p=1 is
+   * 3.75% of the section's measured width. Width-relative so the
+   * angle reads as the same slope at every viewport size:
+   *   1280px section → Δ = 48px  (calibrated reference)
+   *    800px section → Δ = 30px
+   *    375px mobile  → Δ = 14px
+   *
+   * Bump SLOPE if the angle needs to read more strongly; also bump
+   * the matching `3.75vw` in the `prefers-reduced-motion` rule in
+   * <style> above so reduced-motion users land at the same final
+   * silhouette.
    *
    * Performance contract:
    *   - rAF-throttled: at most one update per frame regardless of how
@@ -354,7 +372,7 @@ const reveal = angled ? undefined : 'header';
    * itself uses `%`/`px` calc that the browser composites cheaply.
    */
   (() => {
-    const MAX = 48;
+    const SLOPE = 0.0375;
 
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
@@ -391,9 +409,11 @@ const reveal = angled ? undefined : 'header';
         let p = (vh - r.top) / (vh + r.height);
         if (p < 0) p = 0;
         else if (p > 1) p = 1;
-        // p=0 (entering) → 0px (flat), p=1 (exiting) → MAX (angled).
-        // The angle "grows in" as the user scrolls through the section.
-        const value = (p * MAX).toFixed(2) + 'px';
+        // p=0 (entering) → 0px (flat), p=1 (exiting) → SLOPE × width (angled).
+        // Width-relative so the angle reads as the same slope at every
+        // viewport size — wider sections get more absolute pixels but
+        // the apparent angle stays constant.
+        const value = (p * r.width * SLOPE).toFixed(2) + 'px';
         el.style.setProperty('--angle-grow', value);
       }
     };

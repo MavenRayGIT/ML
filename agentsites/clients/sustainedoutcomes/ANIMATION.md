@@ -138,8 +138,11 @@ p = (viewport.height - rect.top) / (viewport.height + rect.height)
 ```
 
 - `p = 0` — section top is at viewport bottom (just entering from below). `--angle-grow = 0px` → polygon == full rectangle.
-- `p = 0.5` — section is roughly centred in the viewport. `--angle-grow ≈ 24px` (half developed).
-- `p = 1` — section bottom is at viewport top (just exited above). `--angle-grow = 48px` → fully angled silhouette: polygon `(0% 48px, 100% 0%, 100% calc(100% - 48px), 0% 100%)`. On a 622px section that's roughly a 7.7% slope.
+- `p = 0.5` — section is roughly half-developed.
+- `p = 1` — section bottom is at viewport top (just exited above). `--angle-grow = SLOPE × section.width` → fully angled silhouette. SLOPE = 0.0375 (~2.15° / 3.75% rise) — the value the JS uses to scale the depth to section width so the angle reads as the same slope across viewport sizes.
+  - 1280px section → Δ = 48px (calibrated reference)
+  - 800px section  → Δ = 30px
+  - 375px mobile   → Δ = 14px
 
 Progress is mapped **linearly** to the single CSS var (`--angle-grow`).
 Structural motion reads more honestly without easing — the
@@ -157,14 +160,26 @@ Implementation lives in `FeatureSplit.astro`:
     0%   100%
   );
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .feature-split-angled {
+    --angle-grow: 3.75vw !important;  /* width-relative full-angled silhouette */
+  }
+}
 ```
 
 A small inline script (rAF-throttled scroll listener gated by
-`IntersectionObserver`, ~40 LoC) writes `--angle-grow = p * 48px` per
-frame for every in-view angled section. `prefers-reduced-motion:
-reduce` short-circuits the script and `!important`-locks the var to
-`48px` so the section reads in its fully-angled silhouette without
-animating — reduced-motion users still see the intended design.
+`IntersectionObserver`, ~40 LoC) writes `--angle-grow = p × SLOPE × section.width`
+per frame for every in-view angled section, where `SLOPE = 0.0375`.
+Width-relative so the angle slope (~2.15°) reads as the same on every
+viewport size — wider sections get more absolute pixels of depth, but
+the apparent angle stays constant.
+
+`prefers-reduced-motion: reduce` short-circuits the script and
+`!important`-locks the var to `3.75vw` (= the CSS equivalent of
+`SLOPE × width` when the section is full-bleed, which all angled
+FeatureSplits are by design), so reduced-motion users see the
+fully-angled silhouette statically.
 
 Could be ported to pure CSS via `animation-timeline: view()` once
 Safari and Firefox catch up — until then the JS path is the only path
@@ -254,6 +269,6 @@ Functional state changes (Nav state, modal open/close) still occur — just inst
 
 ## Open / refinement notes
 
-- The angle-grow magnitude (`MAX = 48px`) was calibrated by live-tuning on staging — 24px was perceptually invisible, 48px is the smallest value that reads as a deliberate motion without overpowering the surrounding sections. Single knob: `MAX` in the inline script + the matching `48px` in the `prefers-reduced-motion` rule in `<style>`. Bump in lockstep if the motion needs more (or less) energy.
+- The angle-grow magnitude (`SLOPE = 0.0375`, ~2.15° / 3.75% rise) was calibrated by live-tuning on staging at ~1280px viewport width (where it works out to 48px of absolute depth) — 24px was perceptually invisible at that width, 48px is the smallest value that reads as deliberate motion without overpowering the surrounding sections. Single knob: `SLOPE` in the inline script + the matching `3.75vw` in the `prefers-reduced-motion` rule in `<style>`. Bump both in lockstep if the angle needs more (or less) energy. Slope is width-relative so the value works the same on mobile, tablet, and ultrawide.
 - If the motion ever needs to extend *past* the section's vertical bounds (e.g. the angled wedges should reach further into the section than the bounding box allows), the next refactor is an SVG-overlay approach: render the section as a plain rectangle and overlay two SVG polygons at top and bottom whose points animate on scroll. SVG overflow-visible lets the diagonal extend outside the section box without engaging the clip-path corner-flatten failure mode. Sticking with clip-path until/unless that's needed — fewer DOM nodes, one CSS rule, one var.
 - Italic font weights are not yet shipped (`public/fonts/` ships uprights only — the italic source files exist under `src/assets/fonts/` and can be added when prose blockquotes / `<em>` need them).
