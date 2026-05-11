@@ -84,7 +84,7 @@ const navItems = [
         driven by .nav-logo-* CSS rules below so the compact state can
         shrink them on scroll. */}
     <a href="/" class="nav-logo flex items-center gap-2 nav:gap-3" aria-label="Sustained Outcomes home">
-      <span class="nav-logo-circle flex shrink-0 items-center justify-center rounded-full bg-cream">
+      <span class="nav-logo-circle flex shrink-0 items-center justify-center rounded-full bg-amber">
         <Image
           src={iconSrc}
           alt=""
@@ -230,6 +230,16 @@ const navItems = [
   }
   .site-nav[data-nav-state='white'] { background-color: #ffffff;            }
   .site-nav[data-nav-state='amber'] { background-color: var(--color-amber); }
+
+  /* Logo circle is amber by default (set on the span as `bg-amber`) — it
+     reads cleanly against transparent/dark photo heroes and against the
+     scrolled white nav state. On the amber nav state itself the amber
+     circle would melt into the bar, so swap to white there so the tree
+     icon keeps a clear ground. Background swap eases in lockstep with
+     the rest of the nav so the whole bar settles as one motion. */
+  .site-nav[data-nav-state='amber'] .nav-logo-circle {
+    background-color: #ffffff;
+  }
   .site-nav[data-nav-state='white'][data-nav-compact='true'] {
     box-shadow: 0 1px 0 rgba(2, 3, 2, 0.06);
   }
@@ -246,8 +256,9 @@ const navItems = [
   .nav-logo-icon,
   .nav-logo-wordmark {
     transition:
-      height var(--duration-base) var(--ease-default),
-      width  var(--duration-base) var(--ease-default);
+      height           var(--duration-base) var(--ease-default),
+      width            var(--duration-base) var(--ease-default),
+      background-color var(--duration-base) var(--ease-default);
   }
 
   /* Mobile baseline (also compact) — 32px circle, 28px tree, 18px wordmark */
