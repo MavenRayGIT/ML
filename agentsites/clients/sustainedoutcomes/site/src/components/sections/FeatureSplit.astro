@@ -164,29 +164,29 @@ const reveal = angled ? 'angle-shift' : 'header';
   /* Subpixel seam fix — full-bleed layouts only.
      On the 50/50 grid where the two cells sit flush against each other
      (default + angled variants), certain viewport widths land the cell
-     boundary on a half-pixel and the browser rounds it as a 1px gap,
-     exposing the page bg between the image cell and the text cell. We
-     bleed the image exactly 2px wider than its cell and shift it 1px
-     left so the image content overhangs each side by 1px. The
-     section's `overflow: hidden` clips the outer 1px at the page edge;
-     on the inner side the 1px overhang lands well inside the text
-     cell's 64px `px-margin` padding so it never visually touches the
-     eyebrow or headline.
+     boundary on a fractional pixel and the browser rounds it as a 1–2px
+     gap, exposing the page bg between the image cell and the text cell.
+     Wider viewports make this more visible (more sub-pixel accumulation
+     across a longer 50% boundary).
+
+     Approach: bleed the *image element* 1% wider than its cell, shifted
+     0.5% left, so it overhangs each cell edge by 0.5% of cell width.
+     The percentage scales with the cell so the cover holds at narrow
+     and wide widths alike. On a 950px cell that's ~4.75px each side —
+     plenty of sub-pixel headroom; the inner overhang still lands well
+     inside the text cell's 64px `px-margin` so it doesn't visually
+     touch the eyebrow or headline. The section's `overflow: hidden`
+     clips the outer overhang at the page edge.
 
      Centerline note: cell width does NOT change. The cell boundary
-     remains at exactly 50%. Only the *image element* bleeds 1px past
-     each cell edge for sub-pixel seam coverage.
+     remains at exactly 50%. Only the *image element* bleeds slightly
+     past each cell edge for sub-pixel seam coverage.
 
-     Prior implementation (`width: auto; max-width: none`) was wrong —
-     it let the image render at its intrinsic aspect ratio anchored to
-     `h-full`, so wide landscape images overflowed the cell by hundreds
-     of pixels and overlapped the text. Replaced 2026-05-11 (b).
-
-     `contained` variants are explicitly excluded: they introduce a
-     48px `gap-x-12` between cells, so there's no seam to cover. */
+     `contained` variants are excluded: they have a 48px `gap-x-12`
+     between cells, so there's no seam to cover. */
   .feature-split:not(.feature-split-contained) .feature-split-image img {
-    left: -1px;
-    width: calc(100% + 2px);
+    left: -0.5%;
+    width: 101%;
     max-width: none;
   }
 </style>
