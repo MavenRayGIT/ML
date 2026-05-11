@@ -1,48 +1,51 @@
 ---
 /**
- * BlogDetailHero.astro — amber title band for /blog/[...slug].
+ * BlogDetailHero.astro — amber 50/50 hero band for /blog/[...slug].
  *
- * Refactored 2026-05-11 to match the Figma reference at
- * `Wireframes` → node `173:59`. The previous (Step 7 v1) white
- * editorial hero with full-width cover image was replaced by an
- * amber band, no cover image, with a small circular author avatar.
+ * Per Figma reference (`Wireframes` → node 173:59) and follow-up
+ * clarification 2026-05-11: the hero is a clean 50/50 split.
  *
- * Composition (top → bottom inside the amber band):
+ *   ┌──────────────────────────────┬──────────────────────────────┐
+ *   │  ← Blog                       │                              │
+ *   │  [ACCESS TO NATURE] MAR 14 …  │                              │
+ *   │                               │       Post cover photo       │
+ *   │  The slow work of access      │   (full-bleed to right edge  │
+ *   │                               │       of the viewport)       │
+ *   │  Notes from a season with…    │                              │
+ *   │                               │                              │
+ *   │  (●) By Ken Jacobsen          │                              │
+ *   └──────────────────────────────┴──────────────────────────────┘
+ *      amber, left content margin     post.image cover, no margin
+ *                                     starts at viewport center,
+ *                                     ends at viewport right edge
  *
- *   [White category chip · MARCH 14, 2026 │ 5 MIN READ]
+ * The amber band is `data-nav-bg="amber"` so the sticky `Nav`
+ * swaps to its amber state (already wired) and the two read as one
+ * continuous band on the left half. The photo on the right keeps
+ * its own contrast — the eye reads top-nav, amber column, photo
+ * column as one composed hero.
  *
- *   The slow work of access                 ← H1, large display
+ * Mobile (< md): stacks — amber content on top (full width), photo
+ * below at 16/9. The split layout only kicks in at md+.
  *
- *   Lorem ipsum dolor sit amet…             ← excerpt, body-lg
+ * Colour tokens (no Figma hex literals — locked 2026-05-11):
  *
- *   (●)                                     ← Ken's headshot, 90px circle
+ *   amber band              → var(--color-amber)
+ *   eyebrow chip background → #ffffff
+ *   eyebrow text + meta     → var(--color-green-dark)
+ *   pipe separator          → var(--color-cream)
+ *   H1 + body + byline      → var(--color-black)
  *
- * The amber band is full-width and `data-nav-bg="amber"` so the
- * sticky `Nav` swaps to its amber state (already fully wired — see
- * `Nav.astro`). Nav background and hero background are the same
- * amber so they read as one continuous band.
- *
- * Colour translation from Figma (Wireframes 173:59) — Figma raw
- * hex on the left, project token on the right:
- *
- *   #ffc560 (band)      → var(--color-amber)
- *   #ffffff (chip)      → #ffffff (cream-ish white)
- *   #333003 (eyebrow)   → var(--color-green-dark)
- *   #000000 (body/h1)   → var(--color-black)
- *
- * Cover image: the schema still has `image` (used by `BlogCard` and
- * for OpenGraph) — the detail hero no longer renders it.
- *
- * Author headshot: hardcoded import of `Ken-Jacobsen-Portrait.jpg`
- * for now since Ken is the only author. When the practice adds a
- * second author the schema will gain `authorImage?: image()` and
- * this component will read it via `Astro.props.authorImage`.
+ * Author headshot: hardcoded Ken portrait import — Ken is the only
+ * author for now. When the practice adds a second author the
+ * schema will gain `authorImage?: image()` and this component will
+ * read it via `Astro.props`.
  */
 
+import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
 
-import SectionEyebrow from '../ui/SectionEyebrow.astro';
-import kenPortrait    from '../../assets/Ken-Jacobsen-Portrait.jpg';
+import kenPortrait from '../../assets/Ken-Jacobsen-Portrait.jpg';
 
 export interface Props {
   title: string;
@@ -51,6 +54,9 @@ export interface Props {
   author?: string;
   duration?: string;
   excerpt?: string;
+  /** Post cover image — rendered as the right half of the hero. */
+  image?: ImageMetadata;
+  imageAlt?: string;
 }
 
 const {
@@ -60,6 +66,8 @@ const {
   author = 'Ken Jacobsen',
   duration,
   excerpt,
+  image,
+  imageAlt = '',
 } = Astro.props;
 
 const dateLabel = new Intl.DateTimeFormat('en-US', {
@@ -72,78 +80,134 @@ const dateIso = date.toISOString().slice(0, 10);
 ---
 
 <header
-  class="blog-detail-hero relative w-full bg-amber pt-section-sm pb-section-sm md:pt-section md:pb-section"
+  class="blog-detail-hero relative w-full bg-amber"
   data-nav-bg="amber"
 >
-  <div class="mx-auto w-full max-w-content px-margin">
+  {/* 50/50 grid — amber column already has the section's bg, so we
+      only need to render the right column when there's an image.
+      `min-height` keeps the band tall enough to feel like a hero
+      even on posts with a short excerpt. */}
+  <div class="grid grid-cols-1 md:grid-cols-2 md:min-h-[600px]">
 
-    {/* ----- Eyebrow row ----- */}
-    {/* White chip wraps the category pill; date + duration sit inline
-        beside it on the amber background. Pipe separator uses the
-        cream divider tone so it reads on amber. All caps + tracking
-        match `SectionEyebrow` so it ties back to the rest of the site
-        (we don't render the component here because the chip wants the
-        category in a discrete pill — easier to render flat). */}
-    <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
-      <span
-        class="
-          blog-detail-eyebrow-chip
-          inline-flex items-center
-          rounded-[2px]
-          bg-white
-          px-2.5 py-1
-          font-body text-eyebrow font-semibold uppercase tracking-eyebrow
-          text-green-dark
-        "
-      >
-        {category}
-      </span>
+    {/* ===================== Left: amber content ===================== */}
+    {/* Inner content respects the standard page gutter on the left and
+        keeps a comfortable breathing margin on the right so copy
+        doesn't kiss the photo. `max-w-[640px]` matches the body
+        column on the article below so the H1 sets type that reads
+        consistently across the page. */}
+    <div class="flex flex-col justify-center py-section-sm md:py-section">
+      <div class="ml-margin mr-margin md:mr-12 lg:mr-16 max-w-[640px]">
 
-      <span class="font-body text-eyebrow font-semibold uppercase tracking-eyebrow text-green-dark">
-        <time datetime={dateIso}>{dateLabel}</time>
-      </span>
+        {/* ----- Back-to-blog breadcrumb -----
+            Sits flush left at the top of the amber column. Same type
+            treatment as the eyebrow row beneath. Hover flips to white
+            to match the Nav's amber-state link hover. */}
+        <a
+          href="/blog"
+          class="
+            blog-back-link
+            -ml-1 inline-flex items-center gap-2
+            py-2 pr-2 pl-1
+            font-body text-eyebrow font-semibold uppercase tracking-eyebrow
+            text-green-dark
+            transition-colors duration-quick ease-default
+            hover:text-white
+            focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black
+          "
+          aria-label="Back to the blog index"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path
+              d="M9 3 L4.5 7 L9 11"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          Blog
+        </a>
 
-      {duration && (
-        <>
-          <span class="font-body text-eyebrow text-cream" aria-hidden="true">|</span>
-          <span class="font-body text-eyebrow font-semibold uppercase tracking-eyebrow text-green-dark">
-            {duration}
+        {/* ----- Eyebrow row ----- */}
+        <div class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span
+            class="
+              blog-detail-eyebrow-chip
+              inline-flex items-center
+              rounded-[2px]
+              bg-white
+              px-2.5 py-1
+              font-body text-eyebrow font-semibold uppercase tracking-eyebrow
+              text-green-dark
+            "
+          >
+            {category}
           </span>
-        </>
-      )}
+
+          <span class="font-body text-eyebrow font-semibold uppercase tracking-eyebrow text-green-dark">
+            <time datetime={dateIso}>{dateLabel}</time>
+          </span>
+
+          {duration && (
+            <>
+              <span class="font-body text-eyebrow text-cream" aria-hidden="true">|</span>
+              <span class="font-body text-eyebrow font-semibold uppercase tracking-eyebrow text-green-dark">
+                {duration}
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* ----- Title ----- */}
+        {/* `text-h2-lg` (48px) on the narrower left column reads
+            cleanly without breaking past the column edge. We don't
+            need full `text-hero` (72px) here — the photo half does
+            most of the visual heavy lifting. */}
+        <h1 class="mt-6 font-display text-h2-lg tracking-display font-bold text-black">
+          {title}
+        </h1>
+
+        {/* ----- Excerpt ----- */}
+        {excerpt && (
+          <p class="mt-6 font-body text-body leading-[1.6] text-black">
+            {excerpt}
+          </p>
+        )}
+
+        {/* ----- Author byline ----- */}
+        {/* Small headshot (48px) + visible "By Ken Jacobsen" beside it,
+            matching the Figma reference. The figure tag wraps so
+            screen readers announce it as a single byline unit. */}
+        <figure class="mt-10 flex items-center gap-3">
+          <Image
+            src={kenPortrait}
+            alt=""
+            widths={[80, 120]}
+            sizes="48px"
+            class="h-12 w-12 rounded-full object-cover"
+          />
+          <figcaption class="font-body text-body text-black">
+            By {author}
+          </figcaption>
+        </figure>
+
+      </div>
     </div>
 
-    {/* ----- Title ----- */}
-    {/* `text-hero` scale matches the design's 72px / 0.85 leading.
-        Sat in `--text-hero` since Step 5 — same scale as the homepage
-        HeroFullbleed headline, which is intentional: a post detail
-        hero gets the same display weight as a marketing hero. */}
-    <h1 class="mt-8 max-w-[1080px] font-display text-hero tracking-display font-bold text-black">
-      {title}
-    </h1>
-
-    {/* ----- Excerpt ----- */}
-    {excerpt && (
-      <p class="mt-8 max-w-[780px] font-body text-body-lg leading-[1.6] text-black">
-        {excerpt}
-      </p>
+    {/* ===================== Right: cover photo ===================== */}
+    {/* Mobile: 16/9 photo stacked below the content (md:hidden parent
+        keeps the photo visible at all sizes but adjusts aspect).
+        Desktop: fills the full right half of the hero. */}
+    {image && (
+      <div class="relative aspect-[16/9] md:aspect-auto md:h-full">
+        <Image
+          src={image}
+          alt={imageAlt}
+          widths={[640, 960, 1280, 1600]}
+          sizes="(max-width: 767px) 100vw, 50vw"
+          class="absolute inset-0 h-full w-full object-cover"
+        />
+      </div>
     )}
-
-    {/* ----- Author avatar ----- */}
-    {/* Circular Ken portrait. `aria-label` doubles as the author byline
-        for screen readers — the visible byline is the headshot, and
-        we add a sr-only text label so the post still announces an
-        author. */}
-    <figure class="mt-10 flex items-center gap-3">
-      <Image
-        src={kenPortrait}
-        alt={`Portrait of ${author}`}
-        widths={[120, 180]}
-        sizes="90px"
-        class="h-[90px] w-[90px] rounded-full object-cover"
-      />
-      <figcaption class="sr-only">By {author}</figcaption>
-    </figure>
-
   </div>
 </header>
