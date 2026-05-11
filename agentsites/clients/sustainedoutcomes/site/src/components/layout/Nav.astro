@@ -64,7 +64,7 @@ const navItems = [
         <li>
           <a
             href={item.href}
-            class="nav-link font-body text-nav transition-colors duration-base ease-default hover:text-amber"
+            class="nav-link font-body text-nav transition-colors duration-base ease-default"
           >
             {item.label}
           </a>
@@ -79,7 +79,7 @@ const navItems = [
           <Button variant="outline-emph" href="/contact">Request a meeting</Button>
         </span>
         <span class="nav-cta nav-cta--amber">
-          <Button variant="outline" href="/contact">Request a meeting</Button>
+          <Button variant="outline" surface="amber" href="/contact">Request a meeting</Button>
         </span>
       </li>
     </ul>
@@ -131,14 +131,14 @@ const navItems = [
       <li>
         <a
           href={item.href}
-          class="font-display text-card uppercase tracking-tight text-black"
+          class="font-display text-card tracking-tight text-black transition-colors duration-base ease-default hover:text-white"
         >
           {item.label}
         </a>
       </li>
     ))}
     <li class="mt-4">
-      <Button variant="green-fill" href="/contact" class="w-full">Request a meeting</Button>
+      <Button variant="green-fill" surface="amber" href="/contact" class="w-full">Request a meeting</Button>
     </li>
   </ul>
 </div>
@@ -150,10 +150,17 @@ const navItems = [
   .site-nav[data-nav-state='white'] { background-color: #ffffff;                 }
   .site-nav[data-nav-state='amber'] { background-color: var(--color-amber);      }
 
-  /* Nav-link text colour */
+  /* Nav-link text colour (rest) */
   .site-nav[data-nav-state='dark']  .nav-link { color: var(--color-cream); }
   .site-nav[data-nav-state='white'] .nav-link { color: var(--color-black); }
   .site-nav[data-nav-state='amber'] .nav-link { color: var(--color-black); }
+
+  /* Nav-link hover — dark/white hover to amber (accent), amber hovers
+     to white (since amber-on-amber would be invisible). Mack & Lee
+     2026-05-11. */
+  .site-nav[data-nav-state='dark']  .nav-link:hover { color: var(--color-amber); }
+  .site-nav[data-nav-state='white'] .nav-link:hover { color: var(--color-amber); }
+  .site-nav[data-nav-state='amber'] .nav-link:hover { color: #ffffff;             }
 
   /* Hamburger icon colour mirrors the nav-link colour */
   .site-nav[data-nav-state='dark']  .nav-hamburger { color: var(--color-cream); }

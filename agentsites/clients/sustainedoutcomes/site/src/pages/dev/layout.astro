@@ -75,12 +75,13 @@ import Button from '../../components/ui/Button.astro';
       <h2 class="mt-6 font-display text-h2-lg">Amber surface</h2>
       <p class="mt-6 max-w-[60ch] font-body text-body-lg">
         Nav is now <code>data-nav-state="amber"</code>. Amber background, black nav links, dark
-        logo, <code>outline × light</code> CTA (green border + green text → hovers to amber
-        border).
+        logo, <code>outline × amber</code> CTA (green border + green text → hovers to white
+        border). Link hover swaps amber→white for the same reason: amber-on-amber would be
+        invisible.
       </p>
       <div class="mt-8 flex flex-wrap gap-4">
-        <Button variant="green-fill" href="#">Primary CTA</Button>
-        <Button variant="outline" href="#">Secondary CTA</Button>
+        <Button variant="green-fill" surface="amber" href="#">Primary CTA</Button>
+        <Button variant="outline" surface="amber" href="#">Secondary CTA</Button>
       </div>
       <p class="mt-12 font-body text-caption text-black/60">
         Scroll down ↓ to see the nav crossfade back to <strong>white</strong>.

@@ -2,10 +2,12 @@
 /**
  * Button.astro — primary CTA primitive.
  *
- * Variant × Surface model per HANDOFF.md → Button Variants + amendment
+ * Variant × Surface model per HANDOFF.md → Button Variants + amendments
  * (2026-05-11): hover behaviour locked in by Mack & Lee. `amber-ghost`
  * removed (no brown in the design — on hero, use the dark-surface
- * variants over the hero's dark green wash).
+ * variants over the hero's dark green wash). Second amendment same day:
+ * added `surface="amber"` so buttons placed on the amber-bg nav state
+ * hover to *white* instead of amber-on-amber.
  *
  * All buttons: Libre Franklin SemiBold 11px, +1.5% tracking, ALL CAPS,
  * border-radius 2px, padding 12×24px. Hover: 150ms colour crossfade,
@@ -16,47 +18,47 @@
  *
  * Variant × Surface matrix:
  *
- *                │ surface="light" (default)         │ surface="dark"
- * ───────────────┼───────────────────────────────────┼──────────────────────────────
- *  amber-fill    │ amber bg · black text             │ amber bg · black text
- *                │ → hover: green-dark bg            │ → hover: white bg
- *                │          amber text               │          green-dark text
- * ───────────────┼───────────────────────────────────┼──────────────────────────────
- *  green-fill    │ green-dark bg · amber text        │ (not designed — falls back
- *                │ → hover: amber bg                 │  to light-surface behaviour)
- *                │          green-dark text          │
- * ───────────────┼───────────────────────────────────┼──────────────────────────────
- *  outline       │ transparent · green-dark border   │ transparent · amber border
- *                │ green-dark text                   │ amber text
- *                │ → hover: amber border             │ → hover: white border
- *                │          green-dark text (held)   │          amber text (held)
- * ───────────────┼───────────────────────────────────┼──────────────────────────────
- *  outline-emph  │ transparent · amber border        │ (light-surface variant —
- *                │ green-dark text                   │  on dark surfaces use the
- *                │ → hover: amber bg                 │  standard `outline` variant,
- *                │          black text               │  which already has amber border)
+ *                │ surface="light"                   │ surface="dark"                 │ surface="amber"
+ * ───────────────┼───────────────────────────────────┼────────────────────────────────┼─────────────────────────────────
+ *  amber-fill    │ amber bg · black text             │ amber bg · black text          │ (amber-on-amber — falls back
+ *                │ → hover: green-dark bg            │ → hover: white bg              │  to light-surface behaviour)
+ *                │          amber text               │          green-dark text       │
+ * ───────────────┼───────────────────────────────────┼────────────────────────────────┼─────────────────────────────────
+ *  green-fill    │ green-dark bg · amber text        │ (falls back to light)          │ green-dark bg · amber text
+ *                │ → hover: amber bg                 │                                │ → hover: white bg
+ *                │          green-dark text          │                                │          green-dark text
+ * ───────────────┼───────────────────────────────────┼────────────────────────────────┼─────────────────────────────────
+ *  outline       │ transparent · green-dark border   │ transparent · amber border     │ transparent · green-dark border
+ *                │ green-dark text                   │ amber text                     │ green-dark text
+ *                │ → hover: amber border             │ → hover: white border          │ → hover: white border
+ *                │          green-dark text (held)   │          amber text (held)     │          green-dark text (held)
+ * ───────────────┼───────────────────────────────────┼────────────────────────────────┼─────────────────────────────────
+ *  outline-emph  │ transparent · amber border        │ (aliases to outline × dark —   │ (amber border on amber is
+ *                │ green-dark text                   │  amber border is the default   │  invisible — aliases to
+ *                │ → hover: amber bg                 │  on dark surfaces)             │  outline × amber)
+ *                │          black text               │                                │
  *
  * `outline-emph` ("emphasized outline") is the high-attention version
  * of `outline` for use on light surfaces — amber border draws the eye
  * the way the standard green-bordered outline doesn't. Used for the
- * scrolled-white nav state CTA. On dark surfaces it aliases to the
- * standard `outline` behaviour (amber border there is the default).
+ * scrolled-white nav state CTA.
  *
  * Migration from previous schema:
  *   amber-fill              → amber-fill, surface="light"  (or "dark" on hero)
- *   green-fill              → green-fill                   (light only)
+ *   green-fill              → green-fill                   (light or amber)
  *   amber-outline           → outline, surface="dark"
- *   green-outline           → outline, surface="light"
+ *   green-outline           → outline, surface="light" or "amber"
  *   amber-ghost  REMOVED    → use amber-fill or outline w/ surface="dark"
  *
  * Copy via slot (never hardcoded):
  *   <Button variant="amber-fill" href="/contact">Request a meeting</Button>
  *   <Button variant="outline" surface="dark">Learn more</Button>
+ *   <Button variant="outline" surface="amber">Get involved</Button>
  *   <Button variant="outline-emph">Request a meeting</Button>   // nav CTA
  */
 
 type ButtonVariant = 'amber-fill' | 'green-fill' | 'outline' | 'outline-emph';
-type ButtonSurface = 'light' | 'dark';
+type ButtonSurface = 'light' | 'dark' | 'amber';
 
 export interface Props {
   variant?: ButtonVariant;
@@ -94,24 +96,30 @@ const base = [
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber',
 ].join(' ');
 
-// Variant × Surface → Tailwind class string. `green-fill × dark` falls
-// back to light behaviour (not a designed combination — kept for safety).
+// Variant × Surface → Tailwind class string. Some combinations are
+// nonsensical (amber-on-amber, green-fill on dark) and alias to the
+// nearest sensible behaviour rather than throwing — keeps the API
+// forgiving for placeholder data while the build is in flight.
 const styles: Record<ButtonVariant, Record<ButtonSurface, string>> = {
   'amber-fill': {
     light: 'bg-amber text-black hover:bg-green-dark hover:text-amber',
     dark:  'bg-amber text-black hover:bg-white hover:text-green-dark',
+    amber: 'bg-amber text-black hover:bg-green-dark hover:text-amber', // alias light
   },
   'green-fill': {
     light: 'bg-green-dark text-amber hover:bg-amber hover:text-green-dark',
-    dark:  'bg-green-dark text-amber hover:bg-amber hover:text-green-dark',
+    dark:  'bg-green-dark text-amber hover:bg-amber hover:text-green-dark', // alias light
+    amber: 'bg-green-dark text-amber hover:bg-white hover:text-green-dark',
   },
   'outline': {
     light: 'bg-transparent border border-green-dark text-green-dark hover:border-amber',
     dark:  'bg-transparent border border-amber text-amber hover:border-white',
+    amber: 'bg-transparent border border-green-dark text-green-dark hover:border-white',
   },
   'outline-emph': {
     light: 'bg-transparent border border-amber text-green-dark hover:bg-amber hover:text-black',
-    dark:  'bg-transparent border border-amber text-amber hover:border-white',
+    dark:  'bg-transparent border border-amber text-amber hover:border-white',         // alias dark outline
+    amber: 'bg-transparent border border-green-dark text-green-dark hover:border-white', // alias amber outline
   },
 };
 ---
