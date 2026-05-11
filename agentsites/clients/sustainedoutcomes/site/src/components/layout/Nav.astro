@@ -389,17 +389,40 @@ const navItems = [
       }
 
       let ticking = false;
+      let settleTimer;
+
       function onScroll() {
-        if (ticking) return;
-        ticking = true;
-        requestAnimationFrame(() => {
-          update();
-          ticking = false;
-        });
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(() => {
+            update();
+            ticking = false;
+          });
+        }
+        // Settled-scroll reconcile — catches the final position even
+        // when the rAF throttle drops the last scroll event (common on
+        // Safari momentum scroll, fast wheel-flicks, and after touch
+        // releases). Without this the nav can latch onto whatever state
+        // was current at the previous rAF tick (e.g. white) and never
+        // re-evaluate once the page comes to rest at scrollY=0. Fixed
+        // 2026-05-11 after the blog-detail amber-hero bug.
+        clearTimeout(settleTimer);
+        settleTimer = setTimeout(update, 160);
       }
 
       window.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll);
+      // `scrollend` is the most reliable signal for "scroll has truly
+      // stopped" — supported in modern Chrome/Firefox/Safari. Falls
+      // back gracefully (no-op) on browsers without support.
+      window.addEventListener('scrollend', update);
+
+      // Re-run once after fonts settle in case the document layout
+      // shifted enough to move section boundaries past the probe.
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(update);
+      }
+
       update();
     })();
 
