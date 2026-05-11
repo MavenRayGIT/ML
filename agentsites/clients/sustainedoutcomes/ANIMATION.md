@@ -98,13 +98,28 @@ Net effect: card "trades vertical real estate" on hover — image compresses, mo
 > animation reading at a time. One coherent motion, no fighting
 > transitions.
 
-**Single motion — clip-path edges spread on scroll.** As the user
-scrolls through the section, the **top angled edge lifts up 0 → 24px**
-and the **bottom angled edge drops down 0 → 24px** as a function of
-scroll progress through the section's viewport range. Net: the panel
-appears to open up vertically by ~48px total. Content (image, text,
-eyebrow, headline, body, CTA) stays anchored — only the diagonal
-clipping edges move.
+**Single motion — both angled lines translate vertically on scroll.**
+As the user scrolls through the section, the **top angled edge lifts
+up by 24px** and the **bottom angled edge drops down by 24px** as a
+function of scroll progress through the section's viewport range.
+**Both endpoints of each diagonal shift by the same pixel amount**, so
+the lines translate as continuous straight diagonals — the slope (10%)
+stays fixed; only the line position moves. Content (image, text,
+eyebrow, headline, body, CTA) stays anchored. Net: the panel reads as
+opening up ~48px vertically while everything inside it holds still.
+
+> **Geometry note — why the polygon vertices stay inside the box.**
+> A common-but-wrong implementation moves the polygon vertices past
+> the section's box edges (e.g. `y < 0` at the top, `y > 100%` at the
+> bottom). The clipping engine has nowhere to draw outside the box,
+> so it kinks the diagonal against the box edge — the top-right and
+> bottom-left corners visibly **flatten** as scroll progresses,
+> instead of the line translating. To keep the diagonal straight,
+> both endpoints have to stay strictly inside `0%..100%` y at all
+> times. We accomplish this by defining the **resting (entry) state**
+> as slightly *inset* from the natural edge positions, and the
+> **end-of-scroll state** as the natural edge positions. Both
+> endpoints then shift by the same `0 → 24px` amount.
 
 Progress is defined exactly like the CSS `animation-timeline: view()`
 model — `cover 0% → cover 100%`:
@@ -113,34 +128,34 @@ model — `cover 0% → cover 100%`:
 p = (viewport.height - rect.top) / (viewport.height + rect.height)
 ```
 
-- `p = 0` — section top is at viewport bottom (just entering from below)
-- `p = 0.5` — section is roughly centred in the viewport
-- `p = 1` — section bottom is at viewport top (just exited above)
+- `p = 0` — section top is at viewport bottom (just entering from below). `--angle-shift = 24px` → polygon ~(14%, 4%, 86%, 96%) on a 622px section. Diagonals are slightly inset from the box edges.
+- `p = 0.5` — section is roughly centred in the viewport. `--angle-shift ≈ 12px`.
+- `p = 1` — section bottom is at viewport top (just exited above). `--angle-shift = 0px` → polygon (10%, 0%, 90%, 100%) — the v1 resting design.
 
-Progress is mapped **linearly** to the two CSS vars (`--angle-top`,
-`--angle-bot`). Structural motion reads more honestly without easing —
-the timing-function shape would compete with the user's scroll velocity.
+Progress is mapped **linearly** to a single CSS var (`--angle-shift`).
+Structural motion reads more honestly without easing — the
+timing-function shape would compete with the user's scroll velocity.
 
 Implementation lives in `FeatureSplit.astro`:
 
 ```css
 .feature-split-angled {
-  --angle-top: 0px;
-  --angle-bot: 0px;
+  --angle-shift: 24px;        /* tight/inset rest state — fallback if JS never runs */
   clip-path: polygon(
-    0%   calc(10%  - var(--angle-top)),
-    100% calc(0%   - var(--angle-top)),
-    100% calc(90%  + var(--angle-bot)),
-    0%   calc(100% + var(--angle-bot))
+    0%   calc(10%  + var(--angle-shift)),
+    100% calc(0%   + var(--angle-shift)),
+    100% calc(90%  - var(--angle-shift)),
+    0%   calc(100% - var(--angle-shift))
   );
 }
 ```
 
 A small inline script (rAF-throttled scroll listener gated by
-`IntersectionObserver`, ~40 LoC) writes the vars per frame for every
-in-view angled section. `prefers-reduced-motion: reduce` short-circuits
-the script and `!important`-locks both vars to 0 so the section reads
-in its tight resting silhouette.
+`IntersectionObserver`, ~40 LoC) writes `--angle-shift = (1 - p) * 24px`
+per frame for every in-view angled section. `prefers-reduced-motion:
+reduce` short-circuits the script and `!important`-locks the var to
+`0px` so the section settles to the v1 resting design — the same
+silhouette the rest of the design system was tuned against.
 
 Could be ported to pure CSS via `animation-timeline: view()` once
 Safari and Firefox catch up — until then the JS path is the only path
@@ -230,5 +245,6 @@ Functional state changes (Nav state, modal open/close) still occur — just inst
 
 ## Open / refinement notes
 
-- The angle-shift magnitude (±24px each direction, ±48px total) is calibrated to Whitestone's blue-panel scale. Single knob — `MAX` in the inline script + the matching `24px` in the CSS docstring — bump in lockstep if it reads as too strong or too weak.
+- The angle-shift magnitude (24px on each line, ±48px combined for top + bottom) is calibrated to Whitestone's blue-panel scale. Single knob — `MAX` in the inline script + the matching `24px` default on `--angle-shift` in the CSS — bump in lockstep if it reads as too strong or too weak.
+- If the motion ever needs to extend *past* the section's vertical bounds (i.e. an even more pronounced shift), the next refactor is an SVG-overlay approach: render the section as a plain rectangle and overlay two SVG polygons at top and bottom whose points animate on scroll. SVG overflow-visible lets the diagonal extend outside the section box without engaging the clip-path corner-flatten failure mode. Sticking with clip-path until/unless that's needed — fewer DOM nodes, one CSS rule, one var.
 - Italic font weights are not yet shipped (`public/fonts/` ships uprights only — the italic source files exist under `src/assets/fonts/` and can be added when prose blockquotes / `<em>` need them).
