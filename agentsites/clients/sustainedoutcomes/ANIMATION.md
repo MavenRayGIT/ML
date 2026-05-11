@@ -90,37 +90,63 @@ Net effect: card "trades vertical real estate" on hover — image compresses, mo
 
 ### Angle-shift — `FeatureSplit` angled variants
 
-> **Implementation status 2026-05-11 — Motion Polish Pass.** Only
-> motion (1) below — the one-shot entry clip-path expand — is wired in
-> v1. Motion (2), the continuous edge spread tied to scroll, is
-> deferred to the post-page-composition polish pass (see
-> [`MODULES.md` → Motion Polish Pass](MODULES.md)). Rationale: the
-> magnitude needs to be tuned against finished pages, not placeholder
-> ones, and we'd rather tune once than twice. Spec below stands as the
-> design intent for that pass.
+> **Implementation status 2026-05-11 — shipped.** v2 design is now
+> wired in `FeatureSplit.astro`. The v1 one-shot entry reveal that
+> sat on `data-reveal="angle-shift"` was intentionally dropped — the
+> scroll-tied motion described below now serves as both the entry
+> effect and the through-scroll effect, so there's exactly one
+> animation reading at a time. One coherent motion, no fighting
+> transitions.
 
-Two layered motions, both bound to scroll:
+**Single motion — clip-path edges spread on scroll.** As the user
+scrolls through the section, the **top angled edge lifts up 0 → 24px**
+and the **bottom angled edge drops down 0 → 24px** as a function of
+scroll progress through the section's viewport range. Net: the panel
+appears to open up vertically by ~48px total. Content (image, text,
+eyebrow, headline, body, CTA) stays anchored — only the diagonal
+clipping edges move.
 
-1. **One-shot entry — clip-path expand.** Fires the first time the section crosses the viewport entry threshold (`threshold: 0.15`, `rootMargin: '0px 0px -10% 0px'`). Clip-path animates from an inset polygon to flush rectangle. 600ms `--ease-out-soft`. Once only — observer disconnects after fire.
+Progress is defined exactly like the CSS `animation-timeline: view()`
+model — `cover 0% → cover 100%`:
 
-2. **Continuous — top and bottom edges spread.** While the section is on-screen, the **top angled edge translates up 0 → 24px** and the **bottom angled edge translates down 0 → 24px** as a function of scroll progress through the section's viewport range. Net: panel appears to expand vertically by ~48px total as the user scrolls through it. Content stays anchored — only the diagonal clipping edges move.
+```
+p = (viewport.height - rect.top) / (viewport.height + rect.height)
+```
 
-Implementation note: the clip-path container is rendered ~48px taller than the visible panel at rest (24px hidden top, 24px hidden bottom). Scroll progress drives two CSS custom properties (`--angle-top`, `--angle-bot`) that pull the clip-path vertices outward.
+- `p = 0` — section top is at viewport bottom (just entering from below)
+- `p = 0.5` — section is roughly centred in the viewport
+- `p = 1` — section bottom is at viewport top (just exited above)
+
+Progress is mapped **linearly** to the two CSS vars (`--angle-top`,
+`--angle-bot`). Structural motion reads more honestly without easing —
+the timing-function shape would compete with the user's scroll velocity.
+
+Implementation lives in `FeatureSplit.astro`:
 
 ```css
 .feature-split-angled {
-  --angle-top: 24px;
-  --angle-bot: 24px;
+  --angle-top: 0px;
+  --angle-bot: 0px;
   clip-path: polygon(
-    0 calc(8%  + var(--angle-top)),
-    100% calc(0%   + var(--angle-top)),
-    100% calc(100% - var(--angle-bot)),
-    0  calc(92% - var(--angle-bot))
+    0%   calc(10%  - var(--angle-top)),
+    100% calc(0%   - var(--angle-top)),
+    100% calc(90%  + var(--angle-bot)),
+    0%   calc(100% + var(--angle-bot))
   );
 }
 ```
 
-CSS animation-timeline (`view()`) where supported; rAF + IntersectionObserver fallback for Safari ≤ 17.
+A small inline script (rAF-throttled scroll listener gated by
+`IntersectionObserver`, ~40 LoC) writes the vars per frame for every
+in-view angled section. `prefers-reduced-motion: reduce` short-circuits
+the script and `!important`-locks both vars to 0 so the section reads
+in its tight resting silhouette.
+
+Could be ported to pure CSS via `animation-timeline: view()` once
+Safari and Firefox catch up — until then the JS path is the only path
+that works in every shipping browser. The JS approach is cheap enough
+(one rAF per frame, one getBoundingClientRect per in-view section) that
+the swap isn't urgent.
 
 ### BlogPreview row-shift
 
@@ -174,10 +200,10 @@ Functional state changes (Nav state, modal open/close) still occur — just inst
 
 ## Implementation contract
 
-- One `data-reveal="header|hero|row-shift|angle-shift|eyebrow|none"` attribute on a target element (sections AND smaller accents like `SectionEyebrow` both opt in).
+- One `data-reveal="header|hero|row-shift|stagger|eyebrow|none"` attribute on a target element (sections AND smaller accents like `SectionEyebrow` both opt in). Angled `FeatureSplit` is the deliberate exception — its motion is scroll-progress not viewport-entry, so it doesn't go through the observer at all.
 - Single ~30-line vanilla-JS `IntersectionObserver` in `Base.astro` reads the attribute and applies a `data-revealed` flag. **No motion library.**
 - IntersectionObserver: `threshold: 0.15`, `rootMargin: '0px 0px -10% 0px'`.
-- Scroll-tied angled-edge motion: CSS `animation-timeline: view()` where supported; rAF + IntersectionObserver fallback for Safari ≤ 17.
+- Scroll-tied angled-edge motion: rAF + IntersectionObserver script, ~40 LoC, ships in `FeatureSplit.astro`. CSS `animation-timeline: view()` is a candidate refactor once Safari + Firefox catch up.
 - All entry reveals are **once-only** — observer disconnects after each target fires.
 - Nesting is supported: a parent (`hero`/`header`) reveal composes with a child (`eyebrow`) reveal because they operate on disjoint properties (parent: container opacity + translateY; child: rule scaleX + label opacity).
 - Every transition obeys `--ease-default` or `--ease-out-soft` and one of the four duration tokens. No bespoke easings or durations elsewhere.
@@ -190,7 +216,7 @@ Functional state changes (Nav state, modal open/close) still occur — just inst
 |---|---|
 | `HeroFullbleed` | `hero` on the content stack (load-time staggered fade-up of direct children) |
 | `FocusAreas` | `header` on the header block; `row-shift` on the card row |
-| `FeatureSplit` (angled) | `angle-shift` on the section |
+| `FeatureSplit` (angled) | none — clip-path is driven by the scroll-progress script (see Angle-shift above) |
 | `FeatureSplit` (plain) | `header` on the section |
 | `VideoSection` | none |
 | `ServicesGrid` | `header` on the header block |
@@ -204,5 +230,5 @@ Functional state changes (Nav state, modal open/close) still occur — just inst
 
 ## Open / refinement notes
 
-- The `angle-shift` magnitude (±24px each direction, ±48px total) is calibrated to Whitestone's blue-panel scale. Refine if it reads as too strong or too weak in context.
+- The angle-shift magnitude (±24px each direction, ±48px total) is calibrated to Whitestone's blue-panel scale. Single knob — `MAX` in the inline script + the matching `24px` in the CSS docstring — bump in lockstep if it reads as too strong or too weak.
 - Italic font weights are not yet shipped (`public/fonts/` ships uprights only — the italic source files exist under `src/assets/fonts/` and can be added when prose blockquotes / `<em>` need them).

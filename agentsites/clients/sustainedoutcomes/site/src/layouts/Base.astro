@@ -140,7 +140,10 @@ const ogImageURL = ogImage.startsWith('http') ? ogImage : new URL(ogImage, siteO
     <slot />
 
     {/* Corporate_Elegant reveal observer.
-        Sections opt in via `data-reveal="header|row-shift|angle-shift|none"`.
+        Sections opt in via `data-reveal="header|row-shift|hero|stagger|eyebrow|none"`.
+        (Angled FeatureSplits opt out entirely — their clip-path
+        motion is driven by a dedicated scroll-progress script in
+        FeatureSplit.astro.)
         When the section crosses the viewport entry threshold, the observer
         flips `data-revealed=""` on the element — CSS handles the rest.
         prefers-reduced-motion: skip observation, mark everything revealed

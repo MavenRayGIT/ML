@@ -363,7 +363,7 @@
 
 /* ------------------------------------------------------------
    Reveal animations (Corporate_Elegant — see ANIMATION.md)
-   Sections opt in via `data-reveal="header|hero|row-shift|stagger|angle-shift|eyebrow|none"`.
+   Sections opt in via `data-reveal="header|hero|row-shift|stagger|eyebrow|none"`.
    Base.astro's IntersectionObserver flips `data-revealed=""` on entry.
    ------------------------------------------------------------ */
 
@@ -442,15 +442,13 @@
 [data-reveal="stagger"][data-revealed] > *:nth-child(3) { transition-delay: 380ms; }
 [data-reveal="stagger"][data-revealed] > *:nth-child(4) { transition-delay: 520ms; }
 
-/* angle-shift — one-shot clip-path expand on the FeatureSplit angled
-   variants (ERB + Ready). The continuous scroll-tied edge motion is wired
-   per-component in Step 5; this rule covers the entry reveal only. */
-[data-reveal="angle-shift"] {
-  transition: clip-path var(--duration-slow) var(--ease-out-soft);
-}
-[data-reveal="angle-shift"]:not([data-revealed]) {
-  clip-path: polygon(0% 6%, 100% 0%, 100% 94%, 0% 100%);
-}
+/* angle-shift (REMOVED 2026-05-11).
+   The v1 one-shot clip-path entry reveal used to live here. With the
+   scroll-tied edge motion now wired in `FeatureSplit.astro`, the entry
+   reveal became redundant (and visually fought the through-scroll
+   motion). The angled FeatureSplits no longer carry a `data-reveal`
+   attribute at all — the clip-path is driven entirely by the
+   per-section CSS custom properties + scroll-progress script. */
 
 /* eyebrow — Corporate_Elegant "barely noticeable accent" reveal used
    by SectionEyebrow.astro.

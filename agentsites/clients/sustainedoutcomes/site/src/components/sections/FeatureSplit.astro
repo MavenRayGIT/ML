@@ -17,12 +17,25 @@
  *
  * Mobile: stacks to 1-col with the image above the text.
  *
- * Angled treatment (per ANIMATION.md → Angle-shift):
- *   - Resting clip-path applies a diagonal top + bottom edge.
- *   - One-shot clip-path expand on entry via `data-reveal="angle-shift"`.
- *   - The continuous scroll-tied edge spread (±24px each direction) is
- *     a planned refinement pass and is intentionally NOT wired here yet.
- *     The static angled silhouette + entry reveal is the v1.
+ * Angled treatment (per ANIMATION.md → Angle-shift) — v2 shipped 2026-05-11:
+ *   - Clip-path is driven by two CSS custom properties (`--angle-top`,
+ *     `--angle-bot`) that range 0px → 24px as the section moves
+ *     through the viewport.
+ *   - At progress 0 (just entered from below the fold), both vars are
+ *     0 and the section reads in its "tight" angled rest state:
+ *     polygon(0% 10%, 100% 0%, 100% 90%, 0% 100%).
+ *   - At progress 1 (just about to exit at the top), the top angled
+ *     edge has lifted by 24px and the bottom edge has dropped by
+ *     24px — the panel appears to open up by ~48px total while the
+ *     content inside stays anchored.
+ *   - The v1 one-shot entry reveal (data-reveal="angle-shift") was
+ *     intentionally dropped — the scroll-tied motion now serves as
+ *     both the entry effect and the through-scroll effect. One
+ *     coherent motion, no fighting transitions.
+ *
+ *   Progress is tracked by a small inline script lower in this file
+ *   (rAF-throttled scroll + IntersectionObserver). `prefers-reduced-
+ *   motion` short-circuits to the resting state.
  *
  * Copy & content come from props only.
  */
@@ -112,9 +125,11 @@ const navBg = dark ? 'dark' : 'white';
 const ctaSurface: FeatureCtaSurface = dark ? 'dark' : 'light';
 const ctaVariant: FeatureCtaVariant = cta?.variant ?? (dark ? 'amber-fill' : 'outline');
 
-// Angled sections opt into `angle-shift` for the one-shot entry clip-path
-// reveal. Plain sections use the standard `header` block reveal.
-const reveal = angled ? 'angle-shift' : 'header';
+// Plain sections use the standard `header` block reveal. Angled
+// sections have NO entry data-reveal — the scroll-progress motion
+// below drives clip-path directly from the section's viewport
+// position, which already serves as the entry effect.
+const reveal = angled ? undefined : 'header';
 ---
 
 {/* Frame wrapper — only used as a host for the angled-wedge blend
@@ -212,11 +227,38 @@ const reveal = angled ? 'angle-shift' : 'header';
 </div>
 
 <style>
-  /* Resting angled silhouette — diagonal top edge slopes up-right, diagonal
-     bottom edge slopes down-right. Held statically here; the entry reveal
-     transition is owned by global.css `[data-reveal="angle-shift"]`. */
+  /* Angled silhouette — clip-path is driven by two CSS custom
+     properties so the inline script can tween them off scroll
+     progress. `0px` defaults give the section a sensible resting
+     shape if the script never runs (no-JS, slow boot, error).
+     Falls back to the same polygon the v1 entry-reveal landed at:
+     polygon(0% 10%, 100% 0%, 100% 90%, 0% 100%).
+
+     At progress=1 (vars=24px), the polygon becomes:
+       polygon(0% calc(10% - 24px), 100% calc(0% - 24px),
+               100% calc(90% + 24px), 0% calc(100% + 24px))
+     — i.e. the top edge has lifted, the bottom edge has dropped,
+     and the panel reads as "opened up" by ~48px total. */
   .feature-split-angled {
-    clip-path: polygon(0% 10%, 100% 0%, 100% 90%, 0% 100%);
+    --angle-top: 0px;
+    --angle-bot: 0px;
+    clip-path: polygon(
+      0%   calc(10%   - var(--angle-top)),
+      100% calc(0%    - var(--angle-top)),
+      100% calc(90%   + var(--angle-bot)),
+      0%   calc(100%  + var(--angle-bot))
+    );
+  }
+
+  /* prefers-reduced-motion: lock both vars to 0 so the section
+     stays at its resting silhouette and the script's setProperty
+     calls become no-ops. `!important` because the script writes
+     inline styles. */
+  @media (prefers-reduced-motion: reduce) {
+    .feature-split-angled {
+      --angle-top: 0px !important;
+      --angle-bot: 0px !important;
+    }
   }
 
   /* Subpixel seam fix — full-bleed layouts only.
@@ -248,3 +290,85 @@ const reveal = angled ? 'angle-shift' : 'header';
     max-width: none;
   }
 </style>
+
+<script>
+  /* Angled FeatureSplit — scroll-tied edge motion.
+   *
+   * Maps each `.feature-split-angled` element's viewport progress to a
+   * pair of CSS custom properties (`--angle-top`, `--angle-bot`) that
+   * drive the clip-path polygon defined in <style> above.
+   *
+   * Progress definition matches the CSS `animation-timeline: view()`
+   * model — `cover 0% → cover 100%`:
+   *
+   *     p = (viewport.height - rect.top) / (viewport.height + rect.height)
+   *
+   *   p = 0  →  section's top edge is at the viewport bottom (just entering)
+   *   p = 1  →  section's bottom edge is at the viewport top  (just exited)
+   *   p = 0.5  →  section is roughly centred in the viewport
+   *
+   * The vars run 0px (tight) at p=0 to 24px (open) at p=1. Linear map —
+   * structural motion reads more honestly without easing.
+   *
+   * Performance contract:
+   *   - rAF-throttled: at most one update per frame regardless of how
+   *     many scroll events fire.
+   *   - IntersectionObserver gates which sections are in the active
+   *     set, so off-screen sections skip getBoundingClientRect every
+   *     frame (free).
+   *   - One scroll/resize listener total, even with N angled sections.
+   *   - prefers-reduced-motion exits the script entirely.
+   *
+   * Footprint: ~40 LoC, no library, no measurable jank. The clip-path
+   * itself uses `%`/`px` calc that the browser composites cheaply.
+   */
+  (() => {
+    const MAX = 24;
+
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const sections = document.querySelectorAll<HTMLElement>('.feature-split-angled');
+    if (sections.length === 0) return;
+
+    const inView = new Set<HTMLElement>();
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) inView.add(e.target as HTMLElement);
+          else inView.delete(e.target as HTMLElement);
+        }
+        // schedule one paint so newly-in-view sections don't lag a frame
+        schedule();
+      },
+      { rootMargin: '0px', threshold: 0 },
+    );
+
+    sections.forEach((s) => io.observe(s));
+
+    let rafId = 0;
+    const schedule = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(update);
+    };
+
+    const update = () => {
+      rafId = 0;
+      const vh = window.innerHeight;
+      for (const el of inView) {
+        const r = el.getBoundingClientRect();
+        let p = (vh - r.top) / (vh + r.height);
+        if (p < 0) p = 0;
+        else if (p > 1) p = 1;
+        const value = (p * MAX).toFixed(2) + 'px';
+        el.style.setProperty('--angle-top', value);
+        el.style.setProperty('--angle-bot', value);
+      }
+    };
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule, { passive: true });
+    // Initial paint covers sections already inside the viewport at load.
+    requestAnimationFrame(update);
+  })();
+</script>
