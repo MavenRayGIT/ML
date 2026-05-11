@@ -102,24 +102,35 @@ Net effect: card "trades vertical real estate" on hover — image compresses, mo
 > entry effect and the through-scroll effect. One coherent motion, no
 > fighting transitions.
 
-**Single motion — the angled silhouette grows in on scroll.** The
-section enters the viewport as a **plain rectangle** (no angle). As the
-user scrolls through it, the top-left and bottom-right vertices of the
-clip-path slide inward, **carving the angled silhouette out of the
-rectangle**. Top-right (0% from top, at the right edge) and bottom-left
-(100% from top, at the left edge) are **anchored** at the section's
-corners and never move — each diagonal pivots around its anchor.
+**Staggered motion — top and bottom edges develop on separate scroll
+windows.** The section enters the viewport as a **plain rectangle**
+(no angle) and holds flat for the first ~25% of its scroll-through.
+The **top edge** then develops as the section approaches mid-viewport
+(p=0.25 → p=0.50). After top finishes, the **bottom edge** follows on
+a slow stagger (p=0.50 → p=0.80). Top-right (0% from top, at the right
+edge) and bottom-left (100% from top, at the left edge) are
+**anchored** at the section's corners and never move — each diagonal
+pivots around its anchor.
 
 Visually:
 
 - At viewport entry, the panel looks like a normal full-bleed
-  rectangle. No drama.
-- As the user scrolls past it, the top edge tilts down on the left and
-  the bottom edge tilts up on the right. By the time the section has
-  scrolled past the top of the viewport, it has its full angled
-  silhouette.
+  rectangle. No drama. Holds flat for the first quarter of its scroll.
+- As the section approaches the middle of the viewport, the top edge
+  commits to motion — tilts down on the left, develops the angled
+  cut.
+- Once the top edge has finished developing, the bottom edge starts
+  its own motion — tilts up on the right.
+- Both then hold at full angle until the section exits the top of the
+  viewport.
 - Content inside (image, text, eyebrow, headline, body, CTA) stays
   anchored. Only the clip-path moves.
+
+The hold-then-move-then-hold pattern is the point: it reads as a
+deliberate "this is moving now" beat rather than a
+continuous-but-imperceptible drift. The stagger between edges
+reinforces that beat — top finishes, then bot starts. Sequential,
+not synchronized.
 
 > **Geometry note — why the moving vertices stay inside the box.**
 > Earlier attempts moved polygon vertices past the section's box edges
@@ -137,12 +148,18 @@ model — `cover 0% → cover 100%`:
 p = (viewport.height - rect.top) / (viewport.height + rect.height)
 ```
 
-- `p = 0` — section top is at viewport bottom (just entering from below). `--angle-grow = 0px` → polygon == full rectangle.
-- `p = 0.5` — section is roughly half-developed.
-- `p = 1` — section bottom is at viewport top (just exited above). `--angle-grow = SLOPE × section.width` → fully angled silhouette. SLOPE = `tan(7°) ≈ 0.1228` — the value the JS uses to scale the depth to section width so the angle reads as the same 7° slope across viewport sizes.
-  - 1280px section → Δ = 157px (calibrated reference)
-  - 800px section  → Δ = 98px
-  - 375px mobile   → Δ = 46px
+- `p ∈ [0, 0.25]` — section is entering; both edges held flat (`--angle-grow-top: 0; --angle-grow-bot: 0`).
+- `p ∈ [0.25, 0.50]` — **top edge active window**. `--angle-grow-top` animates linearly from `0` → `SLOPE × width`. Bot still flat.
+- `p ∈ [0.50, 0.80]` — **bot edge active window**. `--angle-grow-bot` animates linearly from `0` → `SLOPE × width`. Top now held at full angle.
+- `p ∈ [0.80, 1]` — section exiting; both edges held fully angled.
+
+SLOPE = `tan(7°) ≈ 0.1228` — the value the JS uses to scale the depth to section width so the angle reads as the same 7° slope across viewport sizes.
+- 1280px section → fully-angled Δ = 157px (calibrated reference)
+- 800px section  → fully-angled Δ = 98px
+- 375px mobile   → fully-angled Δ = 46px
+
+Re-tuning the stagger is four constants in `FeatureSplit.astro`:
+`TOP_START`, `TOP_END`, `BOT_START`, `BOT_END`. Make windows narrower → motion commits faster per edge. Increase `BOT_START - TOP_END` → longer pause between top finishing and bot starting (slower stagger). Set `BOT_START < TOP_END` → edges overlap (less sequential feel).
 
 Progress is mapped **linearly** to the single CSS var (`--angle-grow`).
 Structural motion reads more honestly without easing — the
@@ -152,31 +169,41 @@ Implementation lives in `FeatureSplit.astro`:
 
 ```css
 .feature-split-angled {
-  --angle-grow: 0px;              /* flat rectangle — fallback if JS never runs */
+  --angle-grow-top: 0px;            /* flat — fallback if JS never runs */
+  --angle-grow-bot: 0px;
   clip-path: polygon(
-    0%   var(--angle-grow),
+    0%   var(--angle-grow-top),
     100% 0%,
-    100% calc(100% - var(--angle-grow)),
+    100% calc(100% - var(--angle-grow-bot)),
     0%   100%
   );
 }
 
 @media (prefers-reduced-motion: reduce) {
   .feature-split-angled {
-    --angle-grow: 12.28vw !important;  /* width-relative full-angled silhouette */
+    --angle-grow-top: 12.28vw !important;   /* width-relative full angle */
+    --angle-grow-bot: 12.28vw !important;
   }
 }
 ```
 
 A small inline script (rAF-throttled scroll listener gated by
-`IntersectionObserver`, ~40 LoC) writes `--angle-grow = p × SLOPE × section.width`
-per frame for every in-view angled section, where `SLOPE = tan(7°) ≈ 0.1228`.
-Width-relative so the **7° slope** reads as the same apparent angle on
-every viewport size — wider sections get more absolute pixels of
-depth, but the apparent angle stays constant.
+`IntersectionObserver`) remaps the raw scroll progress through two
+edge-specific active windows and writes each variable per frame:
+
+```
+pTop = remap(p, TOP_START=0.25, TOP_END=0.50)   // 0 outside window, 0→1 inside
+pBot = remap(p, BOT_START=0.50, BOT_END=0.80)
+--angle-grow-top = pTop × SLOPE × section.width
+--angle-grow-bot = pBot × SLOPE × section.width
+```
+
+SLOPE = `tan(7°) ≈ 0.1228`. Width-relative so the **7° apparent
+slope** is consistent across viewport sizes — wider sections get more
+absolute pixels of depth.
 
 `prefers-reduced-motion: reduce` short-circuits the script and
-`!important`-locks the var to `12.28vw` (= the CSS equivalent of
+`!important`-locks both vars to `12.28vw` (= the CSS equivalent of
 `SLOPE × width` when the section is full-bleed, which all angled
 FeatureSplits are by design), so reduced-motion users see the
 fully-angled silhouette statically.

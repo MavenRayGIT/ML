@@ -17,7 +17,7 @@
  *
  * Mobile: stacks to 1-col with the image above the text.
  *
- * Angled treatment (per ANIMATION.md → Angle-grow) — v3 shipped 2026-05-11:
+ * Angled treatment (per ANIMATION.md → Angle-grow) — v4 shipped 2026-05-11:
  *
  *   The angled silhouette is not a static decoration — it **develops**
  *   on scroll. The section enters the viewport as a plain rectangle
@@ -28,30 +28,48 @@
  *     and never move:
  *         top-right  (100%, 0%)
  *         bot-left   (0%,   100%)
- *   - Two polygon vertices are **driven** by the CSS custom property
- *     `--angle-grow` and slide inward as the user scrolls:
- *         top-left   (0%,   var(--angle-grow))               — slides DOWN from y=0
- *         bot-right  (100%, calc(100% - var(--angle-grow)))  — slides UP   from y=100%
+ *   - Two polygon vertices are **driven** by per-edge CSS custom
+ *     properties and slide inward as the user scrolls:
+ *         top-left   (0%,   var(--angle-grow-top))               — slides DOWN from y=0
+ *         bot-right  (100%, calc(100% - var(--angle-grow-bot)))  — slides UP   from y=100%
  *
- *   Progress mapping (rAF script lower in this file):
- *         p = 0  (just entered viewport)  →  --angle-grow: 0px            →  polygon == full rectangle
- *         p = 1  (just exited the top)    →  --angle-grow: ~12.28% width  →  polygon == angled silhouette
+ *   v4 introduces a **staggered active window** for each edge. Each
+ *   edge holds flat (0px) until its scroll-progress window starts,
+ *   animates linearly to fully-angled across the window, then holds
+ *   fully-angled (SLOPE × width) until the section exits the
+ *   viewport:
  *
- *   The depth at `p = 1` is computed as `SLOPE × section.width`
- *   where `SLOPE = tan(7°) ≈ 0.1228`. So the **angle is consistent
- *   across viewport widths** — a 1280px-wide section ends at ~157px
- *   deep, a 640px-wide section ends at ~79px deep, both reading as
- *   the same 7° slope. (Calibrated by visual tuning on staging.)
+ *     TOP edge:   p < 0.25  →  flat                  (held flat at entry)
+ *                 0.25 → 0.50  →  animating          (develops first)
+ *                 p > 0.50  →  fully angled
+ *
+ *     BOT edge:   p < 0.50  →  flat                  (waits for top to finish)
+ *                 0.50 → 0.80  →  animating          (develops second)
+ *                 p > 0.80  →  fully angled
+ *
+ *   Net feel: section enters flat, holds flat through ~25% of its
+ *   scroll-through, top edge then develops as the section
+ *   approaches the middle of the viewport, bottom edge follows on
+ *   a slow stagger, both then sit fully-angled before the section
+ *   exits. The hold-then-move-then-hold pattern makes the motion
+ *   read as deliberate rather than continuous-and-imperceptible.
+ *
+ *   Depth at fully-angled = `SLOPE × section.width` where
+ *   `SLOPE = tan(7°) ≈ 0.1228`. Width-relative so the apparent
+ *   angle is consistent across viewport sizes:
+ *     1280px section → Δ = 157px (calibrated reference)
+ *      640px section → Δ = 79px
+ *      375px mobile  → Δ = 46px
  *
  *   Because the moving vertices stay strictly inside `0..100%` and
  *   each diagonal pivots around an anchored corner, the lines develop
  *   as continuous straight diagonals — no corner-flatten artefact
- *   (which was the early v2 bug; see git history).
+ *   (early v2 bug; see git history).
  *
- *   `prefers-reduced-motion: reduce` locks `--angle-grow` to `12.28vw`
- *   (which equals `SLOPE × section.width` whenever the section is
- *   full-bleed, which all angled FeatureSplits are by design) so
- *   reduced-motion users see the intended angled silhouette statically.
+ *   `prefers-reduced-motion: reduce` locks both vars to `12.28vw`
+ *   (CSS equivalent of `SLOPE × width` for full-bleed sections, which
+ *   all angled FeatureSplits are by design) so reduced-motion users
+ *   see the fully-angled silhouette statically.
  *
  *   The v1 one-shot entry reveal (`data-reveal="angle-shift"`) was
  *   intentionally dropped — the scroll-tied motion below now serves
@@ -250,22 +268,20 @@ const reveal = angled ? undefined : 'header';
 </div>
 
 <style>
-  /* Angled silhouette — clip-path "grows" the angle on scroll.
-     A single CSS custom property (`--angle-grow`) drives the two
-     non-anchored polygon vertices. The inline script writes this
-     value per frame off scroll progress, scaled to section width so
-     the slope (~2.15°) stays consistent across viewport sizes.
+  /* Angled silhouette — clip-path "grows" the angle on scroll, with
+     per-edge staggered scroll-progress windows.
 
-       --angle-grow: 0px              → polygon == (0% 0%, 100% 0%, 100% 100%, 0% 100%)
-                                        i.e. a full rectangle, no angle. This is
-                                        the section's state when it first enters
-                                        the viewport from below.
-       --angle-grow: SLOPE × width    → polygon == (0% Δpx, 100% 0%, 100% calc(100% - Δpx), 0% 100%)
-                                        i.e. the angled silhouette. This is the
-                                        section's state when it has just scrolled
-                                        past the top of the viewport. SLOPE =
-                                        tan(7°) ≈ 0.1228. On a 1280px section:
-                                        Δ = 157px. On a 640px section: Δ = 79px.
+     Two CSS custom properties drive the two non-anchored polygon
+     vertices independently:
+
+       --angle-grow-top  →  drives the top-left vertex (top edge)
+       --angle-grow-bot  →  drives the bot-right vertex (bottom edge)
+
+     The inline script writes each variable per frame off scroll
+     progress, scaled to section width so the 7° slope stays
+     consistent across viewport sizes. Each edge holds at 0 (flat)
+     until its scroll-progress window starts, animates linearly to
+     `SLOPE × width` across its window, then holds fully-angled.
 
      Top-right (100%, 0%) and bottom-left (0%, 100%) are anchored at
      the section's corners and never move. The diagonals pivot around
@@ -274,11 +290,12 @@ const reveal = angled ? undefined : 'header';
      range, the diagonals never get kinked against a box edge (= no
      corner-flatten artefact). */
   .feature-split-angled {
-    --angle-grow: 0px;
+    --angle-grow-top: 0px;
+    --angle-grow-bot: 0px;
     clip-path: polygon(
-      0%   var(--angle-grow),
+      0%   var(--angle-grow-top),
       100% 0%,
-      100% calc(100% - var(--angle-grow)),
+      100% calc(100% - var(--angle-grow-bot)),
       0%   100%
     );
 
@@ -304,15 +321,17 @@ const reveal = angled ? undefined : 'header';
     backface-visibility: hidden;
   }
 
-  /* prefers-reduced-motion: lock to the FULLY-ANGLED silhouette.
-     `12.28vw` is the CSS equivalent of `SLOPE × width` whenever the
-     section is full-bleed (= 100vw) — which all angled FeatureSplits
-     are by design. Reduced-motion users see the intended design
-     state, just statically, with the same width-consistent 7° slope.
-     `!important` because the script writes inline styles. */
+  /* prefers-reduced-motion: lock both edges to the FULLY-ANGLED
+     silhouette. `12.28vw` is the CSS equivalent of `SLOPE × width`
+     whenever the section is full-bleed (= 100vw) — which all angled
+     FeatureSplits are by design. Reduced-motion users see the
+     intended design state, just statically, with the same
+     width-consistent 7° slope. `!important` because the script
+     writes inline styles. */
   @media (prefers-reduced-motion: reduce) {
     .feature-split-angled {
-      --angle-grow: 12.28vw !important;
+      --angle-grow-top: 12.28vw !important;
+      --angle-grow-bot: 12.28vw !important;
     }
   }
 
@@ -347,11 +366,12 @@ const reveal = angled ? undefined : 'header';
 </style>
 
 <script>
-  /* Angled FeatureSplit — scroll-tied "angle-grow" motion.
+  /* Angled FeatureSplit — scroll-tied "angle-grow" motion with
+   * per-edge staggered windows.
    *
    * Maps each `.feature-split-angled` element's viewport progress to
-   * the `--angle-grow` CSS custom property that drives the clip-path
-   * polygon defined in <style> above.
+   * two CSS custom properties (`--angle-grow-top`, `--angle-grow-bot`)
+   * that drive the clip-path polygon defined in <style> above.
    *
    * Progress definition matches the CSS `animation-timeline: view()`
    * model — `cover 0% → cover 100%`:
@@ -362,24 +382,36 @@ const reveal = angled ? undefined : 'header';
    *   p = 1  →  section's bottom edge is at the viewport top  (just exited)
    *   p = 0.5  →  section is roughly centred in the viewport
    *
-   * Mapping: var runs 0px (flat, rectangle) at p=0 → `SLOPE × width`
-   * (angled) at p=1. Linear — structural motion reads more honestly
-   * without easing; an easing curve would compete with the user's
-   * scroll velocity.
+   * Each edge gets its own active window inside `p ∈ [0, 1]`. Outside
+   * its window the edge holds flat (entering window) or fully angled
+   * (after window). Inside its window the edge animates linearly to
+   * `SLOPE × width`.
    *
-   * Angle slope (SLOPE): tan(7°) ≈ 0.1228 — i.e. the angled depth
-   * at p=1 is 12.28% of the section's measured width. Width-relative
-   * so the angle reads as the same 7° slope at every viewport size:
-   *   1280px section → Δ = 157px  (calibrated reference)
-   *    800px section → Δ = 98px
-   *    375px mobile  → Δ = 46px
+   *   TOP_WINDOW = [0.25, 0.50]   — top develops first, around mid-view
+   *   BOT_WINDOW = [0.50, 0.80]   — bot follows on a slow stagger
    *
-   * Bump SLOPE if the angle needs to read more strongly; also bump
-   * the matching `12.28vw` in the `prefers-reduced-motion` rule in
-   * <style> above so reduced-motion users land at the same final
-   * silhouette. Convenient degree → slope:
+   * Net feel: section enters flat, holds flat through ~25% of its
+   * scroll-through, top edge then commits to motion as the section
+   * approaches the middle of the viewport, bottom edge follows after
+   * top finishes, both then hold at full angle until the section
+   * exits the viewport. The hold-then-move-then-hold pattern reads
+   * as a deliberate "this is moving now" beat rather than a
+   * continuous-but-imperceptible drift.
+   *
+   * To re-tune the stagger: edit the four boundary constants below.
+   * Move TOP_START down → motion begins earlier (less hold-flat).
+   * Move BOT_START up → longer pause between top finishing and bot
+   * starting (slower stagger). Make windows narrower → faster
+   * commit per edge. Bot can overlap top by setting BOT_START <
+   * TOP_END if a less-sequential feel is wanted.
+   *
+   * Angle slope (SLOPE): tan(7°) ≈ 0.1228 — width-relative, so the
+   * apparent angle is consistent across viewport sizes. Convenient
+   * degree → slope:
    *    5° → 0.0875,  7° → 0.1228,  10° → 0.1763
    *   12° → 0.2126, 15° → 0.2679, 18° → 0.3249
+   * Bump SLOPE in lockstep with the `12.28vw` in the
+   * `prefers-reduced-motion` rule in <style> above.
    *
    * Performance contract:
    *   - rAF-throttled: at most one update per frame regardless of how
@@ -389,12 +421,21 @@ const reveal = angled ? undefined : 'header';
    *     frame (free).
    *   - One scroll/resize listener total, even with N angled sections.
    *   - prefers-reduced-motion exits the script entirely.
-   *
-   * Footprint: ~40 LoC, no library, no measurable jank. The clip-path
-   * itself uses `%`/`px` calc that the browser composites cheaply.
    */
   (() => {
     const SLOPE = 0.1228; // tan(7°) — match the value in the reduced-motion CSS rule above
+
+    // Per-edge active windows in scroll progress p ∈ [0, 1].
+    const TOP_START = 0.25;
+    const TOP_END   = 0.50;
+    const BOT_START = 0.50;
+    const BOT_END   = 0.80;
+
+    const remap = (p: number, start: number, end: number): number => {
+      if (p <= start) return 0;
+      if (p >= end) return 1;
+      return (p - start) / (end - start);
+    };
 
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
@@ -431,12 +472,17 @@ const reveal = angled ? undefined : 'header';
         let p = (vh - r.top) / (vh + r.height);
         if (p < 0) p = 0;
         else if (p > 1) p = 1;
-        // p=0 (entering) → 0px (flat), p=1 (exiting) → SLOPE × width (angled).
-        // Width-relative so the angle reads as the same slope at every
-        // viewport size — wider sections get more absolute pixels but
-        // the apparent angle stays constant.
-        const value = (p * r.width * SLOPE).toFixed(2) + 'px';
-        el.style.setProperty('--angle-grow', value);
+
+        // Remap raw progress into each edge's active window.
+        const pTop = remap(p, TOP_START, TOP_END);
+        const pBot = remap(p, BOT_START, BOT_END);
+
+        // Width-relative depth so the slope is consistent across
+        // viewport sizes — wider sections get more absolute pixels,
+        // but the apparent angle stays the same 7°.
+        const maxDepth = r.width * SLOPE;
+        el.style.setProperty('--angle-grow-top', (pTop * maxDepth).toFixed(2) + 'px');
+        el.style.setProperty('--angle-grow-bot', (pBot * maxDepth).toFixed(2) + 'px');
       }
     };
 
