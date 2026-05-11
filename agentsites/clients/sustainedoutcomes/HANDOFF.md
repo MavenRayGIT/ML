@@ -373,11 +373,16 @@ hover white, green-fill CTA at bottom.
   - Top: `rgba(5,8,3,0.82)` → transparent, 342px, mix-blend-multiply
   - Bottom: dark overlay on lower 40%
 - Content: left-aligned, lower third
-  - H1: Mona Sans Bold 72px desktop · 44–48px mobile, white, -3% tracking
-  - **H1 line-height: 1.0 when `photo-blocks` is active** (was 0.85);
-    the per-line semi-transparent bg rects compound their alpha when
-    they overlap, producing "lens"-stripe artifacts. Locked at `1.0` so
-    adjacent rects exactly touch. The other two variants keep `0.85`.
+  - H1: Mona Sans Bold 72px desktop · 44px mobile, white, -3% tracking
+  - **H1 line-height: 1.2 when `photo-blocks` is active** (was 0.85
+    in the design spec; first patched to 1.0 then to 1.2 after on-page
+    review). The per-line semi-transparent bg rects compound their
+    alpha when they overlap, producing "lens"-stripe artifacts.
+    Mona Sans' inline content-area is 1.2em (HHEA ascender 950 +
+    |descender 250| against a 1000 em-square), so any leading below
+    1.2 still leaves the rects overlapping regardless of vertical
+    padding. Locked at `1.2` for this variant. The `photo-gradient`
+    and `color-only` variants keep the design's tight `0.85`.
     Decided 2026-05-11.
   - Body: Libre Franklin Regular 15px, white, lh 24px
   - Primary CTA: `amber-fill` button (surface auto-tunes per variant)

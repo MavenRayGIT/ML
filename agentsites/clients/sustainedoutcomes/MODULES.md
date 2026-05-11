@@ -41,7 +41,7 @@ component props.
 
 | Component | Status | Notes |
 | --- | --- | --- |
-| `HeroFullbleed.astro` | done | 3 variants in one component. Homepage default = `photo-blocks`. H1 lh **forced to 1.0** in this variant so the per-line dark-green rects don't compound alpha and create "lens" artifacts. |
+| `HeroFullbleed.astro` | done | 3 variants in one component. Homepage default = `photo-blocks`. H1 lh **forced to 1.2** in this variant (matches Mona Sans' 1.2em inline content-area) so the per-line dark-green rects don't overlap and compound alpha into "lens" bands. `font-bold` is explicit since this branch drops the `text-hero` token. |
 | `FocusAreas.astro` | done | Homepage default = **left-aligned** intro block above the 3-col card grid. Images locked to 16:9 (was square — refined 2026-05-11). |
 | `FeatureSplit.astro` | done | Reused 3× on homepage: ERB (image-left, dark, angled), Oakland (image-right, light, angled), Founder (image-left, light, **`contained`** — image stays inside `max-w-content` per 2026-05-11). |
 | `VideoSection.astro` | done | Bunny Stream iframe embed (16:9, preload). Bunny owns the poster + play UI — section renders the iframe directly. |

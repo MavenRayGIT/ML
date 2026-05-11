@@ -125,10 +125,15 @@ const btnSurface: 'dark' | 'light' = hasPhoto ? 'dark' : 'light';
       class:list={[
         'hero-headline font-display max-w-[820px] tracking-display',
         hasBlocks
-          /* photo-blocks variant: line-height MUST be ≥ 1 so the
-             per-line semi-transparent bg rects don't overlap and
-             compound their alpha into "lens"-stripe artifacts. */
-          ? 'text-[44px] leading-[1] md:text-[72px] md:leading-[1]'
+          /* photo-blocks variant: bg-rect overlap is governed by the
+             font's content-area, not just line-height. Mona Sans has
+             HHEA ascender 950 / descender -250 against a 1000 em-square,
+             i.e. each inline rect is 1.2em tall regardless of line-height.
+             Anything below `leading-[1.2]` makes the rects overlap and
+             compounds the 0.51 alpha into visible darker bands.
+             `font-bold` is explicit because dropping the `text-hero`
+             token in this branch also drops its 700 weight binding. */
+          ? 'font-bold text-[44px] leading-[1.2] md:text-[72px] md:leading-[1.2]'
           : 'text-[48px] leading-[0.9] md:text-hero',
       ]}
     >
@@ -173,10 +178,12 @@ const btnSurface: 'dark' | 'light' = hasPhoto ? 'dark' : 'light';
      line break so the block hugs the text instead of stretching the whole
      paragraph width.
 
-     Vertical padding is intentionally 0: the H1 carries `line-height: 1`
-     when this variant is active, so each line's rect ends up exactly
-     `1em` tall and adjacent rects touch without overlapping. Any positive
-     vertical padding would re-introduce the alpha-compounding artifact. */
+     Vertical padding is intentionally 0: the inline content-area for Mona
+     Sans is 1.2em (HHEA ascender 950 + |descender 250| against a 1000
+     em-square), and the H1 carries `line-height: 1.2` when this variant
+     is active. The two match exactly so adjacent rects touch without
+     overlapping. ANY positive vertical padding would push the rects
+     past the line-spacing and re-introduce the "lens" alpha bands. */
   .hero-block {
     background-color: rgba(8, 57, 40, 0.51);
     padding: 0 0.3em;
