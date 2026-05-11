@@ -153,8 +153,15 @@ const dateIso = date.toISOString().slice(0, 10);
             on the blog landing pre-filtered to that category (2026-05-11
             — user feedback). The filter bar reads `?category=` on
             page-load and applies it via the same client-side filter
-            script the dropdown uses. */}
-        <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+            script the dropdown uses.
+
+            `data-reveal="stagger"` runs the three items in as a
+            quick 1-2-3 fade-in once the hero crosses the reveal
+            threshold (which on this page is always at load since the
+            hero is the first thing on screen). See the <style> block
+            below for the cascade — pipe+duration are grouped into one
+            element so they step in together as item #3. */}
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-2" data-reveal="stagger">
           <a
             href={`/blog?category=${encodeURIComponent(category)}`}
             class="
@@ -179,12 +186,12 @@ const dateIso = date.toISOString().slice(0, 10);
           </span>
 
           {duration && (
-            <>
+            <span class="inline-flex items-center gap-3">
               <span class="font-body text-eyebrow text-cream" aria-hidden="true">|</span>
               <span class="font-body text-eyebrow font-semibold uppercase tracking-eyebrow text-green-dark">
                 {duration}
               </span>
-            </>
+            </span>
           )}
         </div>
 
