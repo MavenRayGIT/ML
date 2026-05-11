@@ -1,0 +1,104 @@
+---
+/**
+ * /partners — partner organizations & affiliated programs.
+ *
+ * Composition (top → bottom):
+ *
+ *   1. HeroFullbleed   color-only. Partners pages typically have no
+ *                      hero photo — the visual interest comes from the
+ *                      partner cards below.
+ *   2. FocusAreas      Partner organizations as cards. Centered.
+ *                      Using FocusAreas as the placeholder grid until
+ *                      a dedicated `PartnerGallery.astro` is built
+ *                      (deferred — added to MODULES.md if it sticks).
+ *   3. FeatureSplit    "Become a partner" — angled, dark, image-left.
+ *                      Hooks into /contact.
+ *   4. CTABand         Get in touch.
+ *
+ * The nav doesn't surface this page (it's a footer + support-page
+ * link). That's intentional — partners is a reference page, not a
+ * primary user destination.
+ */
+
+import Page from '../layouts/Page.astro';
+
+import HeroFullbleed from '../components/sections/HeroFullbleed.astro';
+import FocusAreas    from '../components/sections/FocusAreas.astro';
+import FeatureSplit  from '../components/sections/FeatureSplit.astro';
+import CTABand       from '../components/sections/CTABand.astro';
+
+import becomePartnerImage from '../assets/FPO-Bluebell-Forest.jpg';
+
+import partner1 from '../assets/FPO-Lake-Reflection.jpg';
+import partner2 from '../assets/FPO-Aspen-Path.jpg';
+import partner3 from '../assets/FPO-Photographers-Autumn.jpg';
+
+const partners = [
+  {
+    title: 'Regional Land Conservancy',
+    body: 'Field-research partner on the ERB cohort. Two field seasons completed; a third is scoping for 2026.',
+    image: partner1,
+    imageAlt: '',
+    linkText: 'External site',
+    href: '#',
+  },
+  {
+    title: 'East Bay Coalition',
+    body: 'Convening partner for the Oakland Hills initiative — providing venue, regional context, and community access.',
+    image: partner2,
+    imageAlt: '',
+    linkText: 'External site',
+    href: '#',
+  },
+  {
+    title: 'Field Studies Press',
+    body: 'Production partner for the cohort field-research write-ups. Editorial and distribution support for the public report series.',
+    image: partner3,
+    imageAlt: '',
+    linkText: 'External site',
+    href: '#',
+  },
+];
+---
+
+<Page
+  title="Partners — Sustained Outcomes"
+  description="The organizations that make the Sustained Outcomes convening work possible — research partners, regional coalitions, and production allies."
+  hasHero
+>
+  <HeroFullbleed
+    variant="color-only"
+    eyebrow="Partners"
+    headline="The organizations behind the work."
+    body="Every Sustained Outcomes initiative runs in partnership with at least two other organizations — for field research, regional context, or production capacity."
+    primaryCta={{ text: 'Become a partner', href: '/contact' }}
+    secondaryCta={{ text: 'See the initiatives', href: '/initiatives' }}
+  />
+
+  <FocusAreas
+    eyebrow="Current partners"
+    headline="Active collaborations."
+    body="A short list — Sustained Outcomes runs lean, and partnerships are deliberately long-horizon rather than transactional."
+    items={partners}
+    align="center"
+  />
+
+  <FeatureSplit
+    eyebrow="Become a partner"
+    headline="Working with us starts with a conversation."
+    body="We partner with a small number of aligned organizations per initiative. If your work overlaps with one of our cohorts — or if you can imagine a fourth — drop us a line and we'll start the conversation."
+    image={becomePartnerImage}
+    imageAlt=""
+    imagePosition="left"
+    dark
+    angled
+    cta={{ text: 'Get in touch', href: '/contact' }}
+  />
+
+  <CTABand
+    eyebrow="Talk to us"
+    headline="Tell us about your work."
+    primaryCta={{ text: 'Request a meeting', href: '/contact' }}
+    secondaryCta={{ text: 'See the initiatives', href: '/initiatives' }}
+  />
+</Page>

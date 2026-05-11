@@ -1,0 +1,44 @@
+---
+/**
+ * /blog — stub landing page.
+ *
+ * The full blog system (content collection, post template, filter
+ * bar, hero card) is Step 7 work — `blog_landing-hero_v1`,
+ * `blog_filter-bar_v1`, `blog_detail-hero_v1`, `blog_detail-prose_v1`
+ * per `MODULES.md` → Blog modules.
+ *
+ * This stub exists so the `/blog` link in the nav and footer resolves
+ * to a real route during the Step-6 page-composition pass instead of
+ * 404'ing. It will be replaced wholesale by the real blog landing
+ * when Step 7 lands.
+ */
+
+import Page from '../../layouts/Page.astro';
+
+import SectionEyebrow from '../../components/ui/SectionEyebrow.astro';
+import CTABand       from '../../components/sections/CTABand.astro';
+---
+
+<Page
+  title="Blog — Sustained Outcomes"
+  description="Field notes from the Sustained Outcomes practice — strategy, programs, and what we are learning from the convening work."
+>
+  <section class="bg-white pt-section-sm pb-section md:pt-section md:pb-section" data-nav-bg="white">
+    <div class="mx-auto w-full max-w-content px-margin" data-reveal="header">
+      <SectionEyebrow withLeadRule class="mb-6">Blog</SectionEyebrow>
+      <h1 class="font-display text-h2 tracking-display text-black md:max-w-[760px]">
+        Field notes from the practice.
+      </h1>
+      <p class="mt-6 max-w-[640px] font-body text-body-lg leading-[1.6] text-black">
+        Short essays on strategy, programs, and what we are learning from the convening work. The full archive is being built alongside the rest of the site — check back soon, or get in touch directly if you want to know when posts go live.
+      </p>
+    </div>
+  </section>
+
+  <CTABand
+    eyebrow="Stay in touch"
+    headline="Want to know when we post?"
+    primaryCta={{ text: 'Request a meeting', href: '/contact' }}
+    secondaryCta={{ text: 'About the practice', href: '/about' }}
+  />
+</Page>

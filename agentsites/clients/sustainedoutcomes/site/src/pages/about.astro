@@ -1,0 +1,87 @@
+---
+/**
+ * /about — Ken Jacobsen and the Sustained Outcomes practice.
+ *
+ * Composition (top → bottom):
+ *
+ *   1. HeroFullbleed   photo-blocks variant, founder portrait — frames
+ *                      the page as a personal practice rather than an
+ *                      institutional one.
+ *   2. FeatureSplit    The long-form story of why Ken built the
+ *                      practice. Plain (no clip-path) so the copy reads
+ *                      as deliberate biography. Image-left.
+ *   3. FeatureSplit    How the practice operates today. Image-right,
+ *                      `contained` so the image stays inside max-w-
+ *                      content and the page rhythm tightens.
+ *   4. VideoSection    Founder intro embed. Reuses the Bunny URL
+ *                      placeholder from the homepage until a real
+ *                      about-page video is recorded.
+ *   5. CTABand         Closes with "Request a meeting" + "Read the blog".
+ *
+ * All copy below is placeholder for the visual review pass. Final copy
+ * will be drafted with Ken at the client review milestone.
+ */
+
+import Page from '../layouts/Page.astro';
+
+import HeroFullbleed from '../components/sections/HeroFullbleed.astro';
+import FeatureSplit  from '../components/sections/FeatureSplit.astro';
+import VideoSection  from '../components/sections/VideoSection.astro';
+import CTABand       from '../components/sections/CTABand.astro';
+
+import heroImage    from '../assets/FPO-Hiker-Portrait.jpg';
+import storyImage   from '../assets/FPO-Photographers-Autumn.jpg';
+import practiceImage from '../assets/FPO-Lake-Reflection.jpg';
+---
+
+<Page
+  title="About — Sustained Outcomes"
+  description="Ken Jacobsen on the work behind Sustained Outcomes — twenty-five years at the intersection of conservation, business, and community service."
+  hasHero
+>
+  <HeroFullbleed
+    variant="photo-blocks"
+    eyebrow="About"
+    headline="A practice built around mission-driven leaders."
+    body="Sustained Outcomes is a boutique advisory practice founded by Ken Jacobsen. Every engagement is led personally and shaped to the organization in front of us."
+    image={heroImage}
+    imageAlt="Hiker on a sunrise ridge — placeholder portrait."
+    primaryCta={{ text: 'Request a meeting', href: '/contact' }}
+    secondaryCta={{ text: 'Our consulting', href: '/consulting' }}
+  />
+
+  <FeatureSplit
+    eyebrow="The story"
+    headline="Twenty-five years of doing the work."
+    body="Ken's career has moved between conservation, business strategy, and community service — building the kind of cross-sector fluency that mission-driven organizations need but rarely find in a single advisor. Sustained Outcomes is the distillation of that work into a practice."
+    image={storyImage}
+    imageAlt=""
+    imagePosition="left"
+    cta={{ text: 'Connect with Ken', href: '/contact', variant: 'outline' }}
+  />
+
+  <FeatureSplit
+    eyebrow="How we work"
+    headline="A practice, not an agency."
+    body="Every engagement is led by Ken and shaped to the organization. We don't sell deliverables — we sell strategic capacity. Engagements typically run four to twelve months and end when the work is genuinely transferable to the in-house team."
+    image={practiceImage}
+    imageAlt=""
+    imagePosition="right"
+    contained
+    cta={{ text: 'See the consulting practice', href: '/consulting', variant: 'outline' }}
+  />
+
+  <VideoSection
+    embedUrl="https://player.mediadelivery.net/embed/599963/ddc1b13b-708b-4976-a36f-1198dd2f931d?autoplay=false&loop=false&muted=false&preload=true&responsive=true"
+    title="Meet Ken."
+    body="A two-minute introduction to the practice, in Ken's own words."
+    duration="2:48"
+  />
+
+  <CTABand
+    eyebrow="Get in touch"
+    headline="Ready to start a conversation?"
+    primaryCta={{ text: 'Request a meeting', href: '/contact' }}
+    secondaryCta={{ text: 'Read the blog', href: '/blog' }}
+  />
+</Page>

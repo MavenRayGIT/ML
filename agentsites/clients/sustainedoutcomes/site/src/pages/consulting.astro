@@ -1,0 +1,117 @@
+---
+/**
+ * /consulting — the consulting practice.
+ *
+ * Composition (top → bottom):
+ *
+ *   1. HeroFullbleed   photo-blocks. Frames consulting as the
+ *                      front-door of the practice.
+ *   2. ServicesGrid    The three lanes detailed (same shape as the
+ *                      homepage tease but with deeper copy).
+ *   3. FeatureSplit    Representative engagement — angled, dark.
+ *                      Substitutes for a case study until real client
+ *                      stories are cleared for public use.
+ *   4. FeatureSplit    "How engagements work" — image-right, contained.
+ *   5. CTABand         Closes with "Request a meeting" + "About Ken".
+ *
+ * Anchors used by other pages: #strategy, #engagement, #systems —
+ * map to the three ServicesGrid items so deep links from the
+ * homepage FocusAreas still resolve.
+ */
+
+import Page from '../layouts/Page.astro';
+
+import HeroFullbleed from '../components/sections/HeroFullbleed.astro';
+import ServicesGrid  from '../components/sections/ServicesGrid.astro';
+import FeatureSplit  from '../components/sections/FeatureSplit.astro';
+import CTABand       from '../components/sections/CTABand.astro';
+
+import heroImage    from '../assets/FPO-Lake-Reflection.jpg';
+import sampleImage  from '../assets/FPO-Bluebell-Forest.jpg';
+import processImage from '../assets/FPO-Aspen-Path.jpg';
+
+import strategyImage   from '../assets/FPO-Lake-Reflection.jpg';
+import engagementImage from '../assets/FPO-Photographers-Autumn.jpg';
+import systemsImage    from '../assets/FPO-Aspen-Path.jpg';
+
+const serviceItems = [
+  {
+    title: 'Strategy & Planning',
+    body: 'Multi-year operating strategy for boards and executives. We facilitate the conversation, structure the work, and leave the organization with a plan it can actually execute — not a binder.',
+    image: strategyImage,
+    imageAlt: '',
+    linkText: 'Read more',
+    href: '#strategy',
+  },
+  {
+    title: 'Constituent Engagement',
+    body: "Programs that bring more people closer to the natural world and keep them engaged through every season. Combines field-tested program design with the data work needed to know what's actually moving.",
+    image: engagementImage,
+    imageAlt: '',
+    linkText: 'Read more',
+    href: '#engagement',
+  },
+  {
+    title: 'CRM & Marketing Systems',
+    body: 'Operational infrastructure for mission-driven orgs: CRM, donor data, content systems, integrated reporting. We pick the right tool, set it up so it stays clean, and hand it off.',
+    image: systemsImage,
+    imageAlt: '',
+    linkText: 'Read more',
+    href: '#systems',
+  },
+];
+---
+
+<Page
+  title="Consulting — Sustained Outcomes"
+  description="Strategy, engagement, and systems work for mission-driven organizations bringing people closer to the natural world."
+  hasHero
+>
+  <HeroFullbleed
+    variant="photo-blocks"
+    eyebrow="Consulting"
+    headline="Strategy, engagement, and systems work."
+    body="Three lanes of consulting for mission-driven organizations. Every engagement is led by Ken and shaped to what the organization actually needs."
+    image={heroImage}
+    imageAlt="Reflection over a still lake — placeholder."
+    primaryCta={{ text: 'Request a meeting', href: '/contact' }}
+    secondaryCta={{ text: 'See the initiatives', href: '/initiatives' }}
+  />
+
+  <ServicesGrid
+    eyebrow="Three lanes"
+    headline="What we work on."
+    body="Three closely linked practices — most engagements draw on at least two of them."
+    items={serviceItems}
+  />
+
+  <FeatureSplit
+    eyebrow="Representative engagement"
+    headline="From planning binder to operating rhythm."
+    body="A six-month engagement with a regional conservancy: rewriting a 60-page strategic plan into a quarterly operating cadence the board could actually use. By month four, the executive team was running the rhythm without us in the room."
+    image={sampleImage}
+    imageAlt=""
+    imagePosition="left"
+    dark
+    angled
+    cta={{ text: 'Talk about a similar engagement', href: '/contact' }}
+  />
+
+  <FeatureSplit
+    eyebrow="How engagements work"
+    headline="Scoped tight. Shipped clean. Handed off."
+    body="A typical engagement runs four to twelve months — long enough to embed in the organization's rhythm, short enough that the cost stays predictable. We scope sharply at the start, ship in 90-day increments, and end the engagement when the work is genuinely transferable to the in-house team."
+    image={processImage}
+    imageAlt=""
+    imagePosition="right"
+    contained
+    cta={{ text: 'Read about Ken', href: '/about', variant: 'outline' }}
+  />
+
+  <CTABand
+    eyebrow="Get in touch"
+    headline="See if Sustained Outcomes is a fit."
+    primaryCta={{ text: 'Request a meeting', href: '/contact' }}
+    secondaryCta={{ text: 'About the practice', href: '/about' }}
+  />
+</Page>

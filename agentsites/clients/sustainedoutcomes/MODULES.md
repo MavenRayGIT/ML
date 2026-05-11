@@ -47,7 +47,7 @@ component props.
 | `VideoSection.astro` | done | Bunny Stream iframe embed (16:9, preload). Bunny owns the poster + play UI — section renders the iframe directly. |
 | `ServicesGrid.astro` | done | 3-col grid: image top, H3 title, body, TextLink. Optional header block (eyebrow + headline + body). |
 | `BlogPreview.astro` | done | "Latest Insights" — 3 most-recent posts via prop. Entry animation removed (was `row-shift`; cards now static). |
-| `ContactSection.astro` | planned | `/contact` only (full split). **Not on the homepage** — see resolved decisions in HANDOFF.md. |
+| `ContactSection.astro` | done | `/contact` only (full split). Form structurally complete — `<form method="POST">` with named fields, required flags, autocomplete, hidden `_subject`. Backend wiring (Cloudflare Pages Function / Formspree) is Step 8 work — `formAction` prop is currently unwired. **Not on the homepage** — see resolved decisions in HANDOFF.md. |
 | `ContactAmber.astro` | planned | Compact amber "Let's talk" form. Library module for ad-hoc inline use; not on the homepage. |
 | `ContactModal.astro` | planned | Modal wrapper around `ContactAmber` — `data-modal="contact"`. Library module. |
 | `CTABand.astro` | done | Dark-green band, eyebrow + H2 + two CTAs. Closes the homepage in place of any inline contact form. |
@@ -60,6 +60,24 @@ component props.
 | `blog_filter-bar_v1` | planned | Category pills + search input row |
 | `blog_detail-hero_v1` | planned | Post title, category, date, author header |
 | `blog_detail-prose_v1` | planned | MDX prose styles — body, h2, h3, pullquote, images |
+
+## Pages (`src/pages/`)
+
+Composed from the section modules above. All copy is **placeholder for
+visual review** and will be drafted with Ken at the client review
+milestone — final copy is not in scope for the build pass.
+
+| Route | File | Status | Notes |
+| --- | --- | --- | --- |
+| `/` | `index.astro` | done | Homepage — Step 5 composition. |
+| `/about` | `about.astro` | done | Hero + 2× FeatureSplit (story + practice) + VideoSection + CTABand. |
+| `/consulting` | `consulting.astro` | done | Hero + ServicesGrid + FeatureSplit (sample engagement, angled-dark) + FeatureSplit (process, contained) + CTABand. Anchors: `#strategy`, `#engagement`, `#systems`. |
+| `/initiatives` | `initiatives.astro` | done | Hero + FocusAreas (3 initiatives) + 3× FeatureSplit (ERB angled-dark, Oakland angled-light, Next contained) + CTABand. Anchors: `#erb`, `#oakland`, `#next`. |
+| `/support` | `support.astro` | done | Hero + FocusAreas (3 ways to support, centered) + FeatureSplit (why non-profit, angled-dark) + VideoSection + CTABand. |
+| `/partners` | `partners.astro` | done | Hero (color-only) + FocusAreas (current partners, centered) + FeatureSplit (become a partner, angled-dark) + CTABand. |
+| `/contact` | `contact.astro` | done | Slim intro block (no full hero — form is the focus) + ContactSection + CTABand. Form unwired pending Step 8. |
+| `/blog` | `blog/index.astro` | stub | Holds the URL so the nav link resolves. Replaced wholesale by the Step 7 blog system (`blog_landing-hero_v1` + `blog_filter-bar_v1`). |
+| `/blog/[slug]` | — | planned | Step 7 — MDX content collection. |
 
 ## Motion Polish Pass (deferred — pick up after page composition)
 

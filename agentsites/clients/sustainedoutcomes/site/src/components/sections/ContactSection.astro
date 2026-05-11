@@ -1,0 +1,219 @@
+---
+/**
+ * ContactSection.astro — full split contact form, /contact page only.
+ *
+ * Per HANDOFF.md → `ContactSection.astro`:
+ *
+ *   Layout       50/50 split — left info column + right form column.
+ *                Stacks at md: info on top, form below.
+ *   Bg           white throughout (the form's white bg matches the
+ *                info column; the visual separation comes from the
+ *                form's field borders + the section's outer
+ *                `py-section` rhythm, not a bg shift).
+ *   Left column  eyebrow + H2 "Let's start a conversation"
+ *                + contact info block (address, email, phone, hours).
+ *   Right column form — First / Last name row, Email / Organization
+ *                row, Message full-width, Submit (green-fill).
+ *   Field style  white bg, 1px border (`--color-gray-light`),
+ *                radius 4px, 12×16 padding, placeholder muted
+ *                (`--color-muted` = #9A9A9A — the one place where
+ *                non-black copy is allowed, per HANDOFF.md tokens).
+ *   Submit       green-fill on light surface (hover → amber bg,
+ *                green-dark text per Button matrix).
+ *
+ * Form submission: the component renders a real `<form>` with
+ * `action={formAction}` and `method="POST"`. When `formAction` is
+ * undefined the form posts back to the same page — the backend wiring
+ * (Cloudflare Pages Function / Formspree / etc.) is Step 8 work and
+ * intentionally not in scope here. The component emits a hidden
+ * `_subject` field + `name`-attributes on every input so any standard
+ * form-handler service will work without changes.
+ *
+ * Accessibility: every input is in a `<label>`; required fields are
+ * marked with `required` + visible asterisk in the label; the form
+ * has `aria-labelledby` pointing at the H2.
+ *
+ * Used on:  /contact (only).
+ * Not used: homepage (per 2026-05-11 resolved decision).
+ */
+
+import SectionEyebrow from '../ui/SectionEyebrow.astro';
+import Button from '../ui/Button.astro';
+import InlineLink from '../ui/InlineLink.astro';
+
+export interface ContactInfoLine {
+  /** Optional small label e.g. "Email" — omit for plain text lines. */
+  label?: string;
+  /** Body text. Use a single string for plain lines, or a slot for inline links. */
+  value: string;
+  /** If set, wraps `value` in an anchor (mailto:, tel:, https://). */
+  href?: string;
+}
+
+export interface Props {
+  eyebrow?: string;
+  headline?: string;
+  /** Lines below the headline. Order is preserved. */
+  contactInfo?: ContactInfoLine[];
+  /**
+   * Form action URL. When omitted the form posts back to the current
+   * page (which 404s without a backend — Step 8 will wire this).
+   */
+  formAction?: string;
+  /** Hidden `_subject` value to help inbox routing. */
+  subject?: string;
+}
+
+const {
+  eyebrow = "Get in touch",
+  headline = "Let's start a conversation.",
+  contactInfo = [],
+  formAction,
+  subject = 'Website contact form',
+} = Astro.props;
+---
+
+<section
+  class="contact-section bg-white py-section-xs md:py-section"
+  data-nav-bg="white"
+  aria-labelledby="contact-headline"
+>
+  <div class="mx-auto grid w-full max-w-content grid-cols-1 gap-y-12 px-margin md:grid-cols-2 md:gap-x-16">
+    {/* ---------- Left: intro + contact info ---------- */}
+    <div data-reveal="header" class="flex flex-col">
+      {eyebrow && (
+        <SectionEyebrow withLeadRule class="mb-6">{eyebrow}</SectionEyebrow>
+      )}
+      <h2
+        id="contact-headline"
+        class="font-display text-h2 tracking-display text-black"
+      >
+        {headline}
+      </h2>
+
+      {contactInfo.length > 0 && (
+        <ul class="mt-8 space-y-4 font-body text-body-lg leading-[1.6]">
+          {contactInfo.map((line) => (
+            <li class="flex flex-col">
+              {line.label && (
+                <span class="font-body text-caption uppercase tracking-eyebrow text-gray-mid">
+                  {line.label}
+                </span>
+              )}
+              {line.href ? (
+                <a href={line.href}>
+                  <InlineLink>{line.value}</InlineLink>
+                </a>
+              ) : (
+                <span class="text-black">{line.value}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+
+    {/* ---------- Right: form ---------- */}
+    <form
+      class="contact-form flex flex-col gap-5"
+      method="POST"
+      action={formAction}
+      data-reveal="header"
+      novalidate
+    >
+      <input type="hidden" name="_subject" value={subject} />
+
+      {/* First / Last */}
+      <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <label class="contact-field">
+          <span class="contact-field-label">First name <span aria-hidden="true">*</span></span>
+          <input type="text" name="first_name" required autocomplete="given-name" placeholder="First name" />
+        </label>
+        <label class="contact-field">
+          <span class="contact-field-label">Last name <span aria-hidden="true">*</span></span>
+          <input type="text" name="last_name" required autocomplete="family-name" placeholder="Last name" />
+        </label>
+      </div>
+
+      {/* Email / Organization */}
+      <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <label class="contact-field">
+          <span class="contact-field-label">Email <span aria-hidden="true">*</span></span>
+          <input type="email" name="email" required autocomplete="email" placeholder="you@organization.org" />
+        </label>
+        <label class="contact-field">
+          <span class="contact-field-label">Organization</span>
+          <input type="text" name="organization" autocomplete="organization" placeholder="Organization name" />
+        </label>
+      </div>
+
+      {/* Message */}
+      <label class="contact-field">
+        <span class="contact-field-label">Message <span aria-hidden="true">*</span></span>
+        <textarea name="message" required rows="6" placeholder="Tell us a bit about what you're working on."></textarea>
+      </label>
+
+      <div class="mt-2">
+        <Button variant="green-fill" type="submit">Send message</Button>
+      </div>
+
+      <p class="font-body text-caption text-gray-mid">
+        We'll respond within two business days. Fields marked
+        <span aria-hidden="true">*</span> are required.
+      </p>
+    </form>
+  </div>
+</section>
+
+<style>
+  /* Field style — white bg, 1px gray-light border, 4px radius, muted
+     placeholder. Focus state shifts the border to amber to match the
+     `Button.astro` focus ring and the rest of the brand interactive
+     language. */
+  .contact-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .contact-field-label {
+    font-family: var(--font-body);
+    font-size: var(--text-caption);
+    line-height: 1.4;
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--color-black);
+    font-weight: 600;
+  }
+
+  .contact-field input,
+  .contact-field textarea {
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid var(--color-gray-light);
+    border-radius: 4px;
+    padding: 12px 16px;
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    color: var(--color-black);
+    transition: border-color var(--duration-quick) var(--ease-default);
+  }
+
+  .contact-field input::placeholder,
+  .contact-field textarea::placeholder {
+    color: var(--color-muted);
+  }
+
+  .contact-field input:focus,
+  .contact-field textarea:focus {
+    outline: none;
+    border-color: var(--color-amber);
+    box-shadow: 0 0 0 1px var(--color-amber);
+  }
+
+  .contact-field textarea {
+    resize: vertical;
+    min-height: 140px;
+  }
+</style>

@@ -1,0 +1,111 @@
+---
+/**
+ * /support — fund this work. Non-profit support page.
+ *
+ * Composition (top → bottom):
+ *
+ *   1. HeroFullbleed   photo-blocks. "Support" — frames the page as
+ *                      a giving / partnership ask rather than a sale.
+ *   2. FocusAreas      "Three ways to support" — Individual, Org
+ *                      partnership, In-kind / time. Centered-align
+ *                      this time to give the cards equal weight.
+ *   3. FeatureSplit    "Why a non-profit" — angled, dark. Explains
+ *                      the structure for visitors who don't know.
+ *   4. VideoSection    Brief explainer (placeholder Bunny URL).
+ *   5. CTABand         "Fund this work" — primary CTA leads to
+ *                      /contact with a subject hint.
+ */
+
+import Page from '../layouts/Page.astro';
+
+import HeroFullbleed from '../components/sections/HeroFullbleed.astro';
+import FocusAreas    from '../components/sections/FocusAreas.astro';
+import FeatureSplit  from '../components/sections/FeatureSplit.astro';
+import VideoSection  from '../components/sections/VideoSection.astro';
+import CTABand       from '../components/sections/CTABand.astro';
+
+import heroImage   from '../assets/FPO-Photographers-Autumn.jpg';
+import whyImage    from '../assets/FPO-Bluebell-Forest.jpg';
+
+import wayIndividual   from '../assets/FPO-Hiker-Portrait.jpg';
+import wayOrganization from '../assets/FPO-Lake-Reflection.jpg';
+import wayInKind       from '../assets/FPO-Aspen-Path.jpg';
+
+const supportWays = [
+  {
+    title: 'Individual giving',
+    body: 'Recurring or one-time gifts that fund the convening work — the parts of the initiatives that grant funding rarely covers.',
+    image: wayIndividual,
+    imageAlt: '',
+    linkText: 'Talk to us',
+    href: '/contact',
+  },
+  {
+    title: 'Organization partnership',
+    body: 'Long-horizon support from foundations and aligned businesses. Best fit when an org wants to commit beyond a single grant cycle.',
+    image: wayOrganization,
+    imageAlt: '',
+    linkText: 'Talk to us',
+    href: '/contact',
+  },
+  {
+    title: 'In-kind and time',
+    body: 'Specialized skills, venue, or production capacity for the cohort sessions. We are particularly interested in field-research and convening-logistics partners.',
+    image: wayInKind,
+    imageAlt: '',
+    linkText: 'Talk to us',
+    href: '/contact',
+  },
+];
+---
+
+<Page
+  title="Support — Sustained Outcomes"
+  description="Help fund the working communities Sustained Outcomes convenes — through individual giving, organization partnership, or in-kind support."
+  hasHero
+>
+  <HeroFullbleed
+    variant="photo-blocks"
+    eyebrow="Support"
+    headline="Help fund the work."
+    body="Sustained Outcomes operates as a non-profit. The consulting practice supports the convening work — and your gifts pay for the parts of the initiatives that grant funding rarely covers."
+    image={heroImage}
+    imageAlt="Photographer at work in autumn — placeholder."
+    primaryCta={{ text: 'Fund this work', href: '/contact' }}
+    secondaryCta={{ text: 'See the initiatives', href: '/initiatives' }}
+  />
+
+  <FocusAreas
+    eyebrow="Three ways to support"
+    headline="Pick what fits your organization."
+    body="All three flow into the same convening work — the difference is the cadence and the shape of the commitment."
+    items={supportWays}
+    align="center"
+  />
+
+  <FeatureSplit
+    eyebrow="Why a non-profit"
+    headline="Built to outlast any single engagement."
+    body="The consulting practice could run as a regular business. We chose the non-profit form because the work we care about most — the cohorts, the field research, the long-horizon convening — only makes sense when the entity running it can plan beyond a single client roster."
+    image={whyImage}
+    imageAlt=""
+    imagePosition="left"
+    dark
+    angled
+    cta={{ text: 'About the practice', href: '/about' }}
+  />
+
+  <VideoSection
+    embedUrl="https://player.mediadelivery.net/embed/599963/ddc1b13b-708b-4976-a36f-1198dd2f931d?autoplay=false&loop=false&muted=false&preload=true&responsive=true"
+    title="What your support funds."
+    body="A two-minute look at how Sustained Outcomes uses individual and organizational gifts — what they cover, and what they don't."
+    duration="2:48"
+  />
+
+  <CTABand
+    eyebrow="Fund this work"
+    headline="Talk to us about a gift or partnership."
+    primaryCta={{ text: 'Request a meeting', href: '/contact' }}
+    secondaryCta={{ text: 'See the initiatives', href: '/initiatives' }}
+  />
+</Page>

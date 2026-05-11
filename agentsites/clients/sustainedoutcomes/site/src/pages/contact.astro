@@ -1,0 +1,71 @@
+---
+/**
+ * /contact — the full split contact form.
+ *
+ * Composition is intentionally minimal — the page exists to surface
+ * the form, not to retell the brand. The page does NOT use a full
+ * `HeroFullbleed` (a full-viewport photo above a contact form reads
+ * as marketing, not as conversation). Instead:
+ *
+ *   1. Page intro      Slim title + body block above the form. Uses
+ *                      the same eyebrow/H2/body type rhythm as the
+ *                      rest of the site so the page still feels of-a-
+ *                      piece without committing a full hero.
+ *   2. ContactSection  50/50 split — left info block, right form.
+ *                      The component owns the form structure; the page
+ *                      supplies headline + contact info.
+ *   3. CTABand         Alternative paths if the form isn't the right
+ *                      shape ("Read the blog", "About the practice").
+ *
+ * Form submission: `formAction` is intentionally undefined for now —
+ * the form is structurally complete (named fields, required flags,
+ * autocomplete, hidden _subject) but unwired. Step 8 of the build
+ * brief will plug in the backend (Cloudflare Pages Function or
+ * Formspree) and add the analytics event.
+ */
+
+import Page from '../layouts/Page.astro';
+
+import SectionEyebrow from '../components/ui/SectionEyebrow.astro';
+import ContactSection from '../components/sections/ContactSection.astro';
+import CTABand       from '../components/sections/CTABand.astro';
+
+const contactInfo = [
+  { label: 'Email', value: 'hello@sustainedoutcomes.org', href: 'mailto:hello@sustainedoutcomes.org' },
+  { label: 'Phone', value: '(415) 555-0142', href: 'tel:+14155550142' },
+  { label: 'Mailing', value: 'PO Box 1287, Oakland, CA 94612' },
+  { label: 'Hours', value: 'Tue–Thu, 9:00–17:00 PT. We respond within two business days.' },
+];
+---
+
+<Page
+  title="Contact — Sustained Outcomes"
+  description="Get in touch with Sustained Outcomes — to start a consulting conversation, learn about an initiative, or talk about partnership or support."
+>
+  {/* ---------- Page intro ---------- */}
+  <section class="bg-white pt-section-xs pb-section-xs md:pt-section-sm md:pb-section-sm" data-nav-bg="white">
+    <div class="mx-auto w-full max-w-content px-margin" data-reveal="header">
+      <SectionEyebrow withLeadRule class="mb-6">Contact</SectionEyebrow>
+      <h1 class="font-display text-h2 tracking-display text-black md:max-w-[720px]">
+        Get in touch.
+      </h1>
+      <p class="mt-6 max-w-[640px] font-body text-body-lg leading-[1.6] text-black">
+        Tell us a bit about what you're working on and we'll respond within two business days. If it's about a specific initiative or service, the more context you can share, the better.
+      </p>
+    </div>
+  </section>
+
+  <ContactSection
+    eyebrow="Let's talk"
+    headline="Tell us about your work."
+    contactInfo={contactInfo}
+    subject="Sustained Outcomes — website inquiry"
+  />
+
+  <CTABand
+    eyebrow="Other ways to connect"
+    headline="Not quite what you needed?"
+    primaryCta={{ text: 'About the practice', href: '/about' }}
+    secondaryCta={{ text: 'Read the blog', href: '/blog' }}
+  />
+</Page>

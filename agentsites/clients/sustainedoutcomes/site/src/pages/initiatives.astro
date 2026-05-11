@@ -1,0 +1,139 @@
+---
+/**
+ * /initiatives — programs Sustained Outcomes runs, beyond consulting.
+ *
+ * Composition (top → bottom):
+ *
+ *   1. HeroFullbleed   photo-blocks. Frames initiatives as the
+ *                      non-profit / convening side of the practice.
+ *   2. FocusAreas      "Three current initiatives" — index cards into
+ *                      the deeper sections below.
+ *   3. FeatureSplit    ERB — angled, dark, image-left (matches the
+ *                      homepage variant so the section feels canonical
+ *                      when followed from the homepage TextLink).
+ *   4. FeatureSplit    Oakland — angled, light, image-right.
+ *   5. FeatureSplit    Future initiative slot — plain (no angle) so
+ *                      the page doesn't fatigue on angled sections.
+ *                      Marked clearly as a placeholder for the next
+ *                      cohort.
+ *   6. CTABand         "Get involved" / "Support this work".
+ *
+ * Anchors: #erb, #oakland, #access, #connecting, #sustainability —
+ * the latter three are referenced from the homepage FocusAreas.
+ */
+
+import Page from '../layouts/Page.astro';
+
+import HeroFullbleed from '../components/sections/HeroFullbleed.astro';
+import FocusAreas    from '../components/sections/FocusAreas.astro';
+import FeatureSplit  from '../components/sections/FeatureSplit.astro';
+import CTABand       from '../components/sections/CTABand.astro';
+
+import heroImage    from '../assets/FPO-Hiker-Sunrise.jpg';
+import erbImage     from '../assets/FPO-Bluebell-Forest.jpg';
+import oaklandImage from '../assets/FPO-Aspen-Path.jpg';
+import nextImage    from '../assets/FPO-Photographers-Autumn.jpg';
+
+import focusBluebell from '../assets/FPO-Bluebell-Forest.jpg';
+import focusAspen    from '../assets/FPO-Aspen-Path.jpg';
+import focusLake     from '../assets/FPO-Lake-Reflection.jpg';
+
+const focusItems = [
+  {
+    title: 'ERB Cohort',
+    body: 'A working community for organizations putting ecological stewardship at the center of their operating strategy.',
+    image: focusBluebell,
+    imageAlt: '',
+    linkText: 'Read more',
+    href: '#erb',
+  },
+  {
+    title: 'Oakland Hills',
+    body: 'Bringing the Sustained Outcomes working community to the East Bay — meeting people where they already are.',
+    image: focusAspen,
+    imageAlt: '',
+    linkText: 'Read more',
+    href: '#oakland',
+  },
+  {
+    title: 'Next cohort',
+    body: 'A new region opening for the 2026–27 program year. Drop us a line if you want to know when applications open.',
+    image: focusLake,
+    imageAlt: '',
+    linkText: 'Read more',
+    href: '#next',
+  },
+];
+---
+
+<Page
+  title="Initiatives — Sustained Outcomes"
+  description="The programs Sustained Outcomes convenes alongside its consulting practice — working communities for organizations bringing ecological stewardship into operating strategy."
+  hasHero
+>
+  <HeroFullbleed
+    variant="photo-blocks"
+    eyebrow="Initiatives"
+    headline="Working communities for the long road."
+    body="Beyond direct consulting, Sustained Outcomes convenes cohorts of mission-driven organizations doing this work together — sharing the long road, not just the briefing."
+    image={heroImage}
+    imageAlt="Sunrise over a forested ridge — placeholder."
+    primaryCta={{ text: 'Request a meeting', href: '/contact' }}
+    secondaryCta={{ text: 'Support this work', href: '/support' }}
+  />
+
+  <FocusAreas
+    eyebrow="Current initiatives"
+    headline="Three working communities — at three stages."
+    body="Each cohort runs on its own calendar. The work below describes where we are today; deeper context lives in each program section."
+    items={focusItems}
+    align="left"
+  />
+
+  <div id="erb">
+    <FeatureSplit
+      eyebrow="Initiative — ERB"
+      headline="Sustainable Business Innovation Cohort."
+      body="A working community for organizations putting ecological stewardship at the center of their operating strategy. ERB convenes leaders monthly, supplies the framework, and gets out of the way."
+      image={erbImage}
+      imageAlt=""
+      imagePosition="left"
+      dark
+      angled
+      cta={{ text: 'Learn more', href: '/contact' }}
+    />
+  </div>
+
+  <div id="oakland">
+    <FeatureSplit
+      eyebrow="Initiative — Oakland"
+      headline="Ready to get started in the Oakland Hills."
+      body="Bringing the Sustained Outcomes working community to the East Bay — meeting people where they already are. Currently scoping the 2026 cohort with regional partners."
+      image={oaklandImage}
+      imageAlt=""
+      imagePosition="right"
+      angled
+      cta={{ text: 'Read the initiative', href: '/contact' }}
+    />
+  </div>
+
+  <div id="next">
+    <FeatureSplit
+      eyebrow="Next cohort"
+      headline="A new region opening for 2026–27."
+      body="We're scoping a third region for the next program year. The shape of the cohort will be similar — twelve to fifteen organizations, monthly working sessions, one shared field-research project. Drop us a line if you want to know when applications open."
+      image={nextImage}
+      imageAlt=""
+      imagePosition="left"
+      contained
+      cta={{ text: 'Notify me', href: '/contact', variant: 'outline' }}
+    />
+  </div>
+
+  <CTABand
+    eyebrow="Get involved"
+    headline="Help us run more of this."
+    primaryCta={{ text: 'Request a meeting', href: '/contact' }}
+    secondaryCta={{ text: 'Support this work', href: '/support' }}
+  />
+</Page>
