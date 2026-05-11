@@ -66,7 +66,7 @@ const {
 ---
 
 <article
-  class:list={['blog-card group relative flex flex-col bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]', `blog-card-${size}`]}
+  class:list={['blog-card group relative flex flex-col bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)] cursor-pointer', `blog-card-${size}`]}
   data-category={post.category ?? ''}
 >
   {/* Image overflows the top of the card per the HANDOFF spec —
@@ -88,8 +88,17 @@ const {
         {post.category}
       </p>
     )}
+    {/* Title anchor doubles as the card-wide click target via the
+        ::after stretched-link overlay (see <style>). Hovering anywhere
+        on the card also triggers `:hover` on this link, so the title
+        color shift to amber reads as a card-level hover affordance.
+        Added 2026-05-11 — user feedback "entire card should be
+        clickable, not just text in it." */}
     <h3 class:list={['font-display text-card-sm tracking-display text-black', post.category && 'mt-3']}>
-      <a href={post.href} class="transition-colors duration-base ease-default hover:text-amber">
+      <a
+        href={post.href}
+        class="blog-card-title-link transition-colors duration-base ease-default hover:text-amber"
+      >
         {post.title}
       </a>
     </h3>
@@ -98,13 +107,35 @@ const {
         {post.excerpt}
       </p>
     </div>
-    <div class="mt-auto pt-6">
+    {/* TextLink sits above the stretched-link overlay via z-index — its
+        click target is still the same article, but keeping it
+        independently focusable keeps keyboard users seeing the
+        familiar "Read the article" affordance. */}
+    <div class="blog-card-cta relative z-10 mt-auto pt-6">
       <TextLink href={post.href}>{linkText}</TextLink>
     </div>
   </div>
 </article>
 
 <style>
+  /* ===== Stretched-link click target =============================
+     The title's `<a>` paints an invisible ::after that fills the
+     card, turning the whole card into one click target without
+     nesting <a> tags (which is invalid HTML). The TextLink at the
+     bottom of the card is lifted above this overlay via z-index so
+     keyboard users still get a discrete focus stop on the
+     "Read the article" affordance.
+
+     Pattern lifted from Bootstrap's "stretched link"; we don't need
+     their utility class because we only use it on one component. */
+  .blog-card                                    { position: relative; }
+  .blog-card-title-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
   /* ===== Size variants ============================================ */
   .blog-card-lg                                 { height: 500px; }
   .blog-card-lg .blog-card-image                { height: 260px; }

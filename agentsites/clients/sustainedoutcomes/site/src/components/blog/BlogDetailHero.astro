@@ -84,41 +84,49 @@ const dateIso = date.toISOString().slice(0, 10);
   data-nav-bg="amber"
 >
   {/* ===================== Back-to-blog breadcrumb =====================
-      Pulled out of the content column and pinned to the top-left of
-      the hero (2026-05-11 — user feedback "closer to the logo").
-      The `ml-margin` aligns it horizontally with the logo's left edge
-      in the nav above, and the `pt-4 nav:pt-6` puts it ~16-24px below
-      the bottom of the nav (74px) so the eye reads it as a continuous
-      affordance with the nav rather than as part of the title block.
-      Same type treatment as the eyebrow row beneath; hover flips to
-      white to match the Nav's amber-state link hover convention. */}
-  <div class="ml-margin pt-4 nav:pt-6">
-    <a
-      href="/blog"
-      class="
-        blog-back-link
-        -ml-1 inline-flex items-center gap-2
-        py-2 pr-2 pl-1
-        font-body text-eyebrow font-semibold uppercase tracking-eyebrow
-        text-green-dark
-        transition-colors duration-quick ease-default
-        hover:text-white
-        focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black
-      "
-      aria-label="Back to the blog index"
-    >
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-        <path
-          d="M9 3 L4.5 7 L9 11"
-          stroke="currentColor"
-          stroke-width="1.75"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </svg>
-      Blog
-    </a>
-  </div>
+      Absolutely-positioned in the upper-left of the hero so the image
+      column on the right can still go flush to the top of the
+      viewport (the page sets `hasHero` on Page.astro so <main> has no
+      top padding — the amber band reaches the top, nav floats over
+      it, no white flash. Fixed 2026-05-11.)
+
+      `top` clears the fixed Nav (56px below the nav: breakpoint, 74px
+      at and above) plus a small breathing gap so the eye reads it as
+      a continuous step down from the nav rather than collision.
+      `left-margin` matches the page gutter so this link x-aligns with
+      the nav logo above it.
+
+      Same type treatment as the eyebrow row inside the content
+      column; hover flips to white to match the Nav's amber-state link
+      hover convention. */}
+  <a
+    href="/blog"
+    class="
+      blog-back-link
+      absolute z-10
+      top-[72px] nav:top-[88px]
+      left-[var(--spacing-margin)]
+      -ml-1 inline-flex items-center gap-2
+      py-2 pr-2 pl-1
+      font-body text-eyebrow font-semibold uppercase tracking-eyebrow
+      text-green-dark
+      transition-colors duration-quick ease-default
+      hover:text-white
+      focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black
+    "
+    aria-label="Back to the blog index"
+  >
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path
+        d="M9 3 L4.5 7 L9 11"
+        stroke="currentColor"
+        stroke-width="1.75"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+    Blog
+  </a>
 
   {/* 50/50 grid — amber column already has the section's bg, so we
       only need to render the right column when there's an image.
@@ -131,8 +139,13 @@ const dateIso = date.toISOString().slice(0, 10);
         keeps a comfortable breathing margin on the right so copy
         doesn't kiss the photo. `max-w-[640px]` matches the body
         column on the article below so the H1 sets type that reads
-        consistently across the page. */}
-    <div class="flex flex-col justify-center py-section-sm md:py-section-sm">
+        consistently across the page.
+
+        Top padding has to clear the Nav AND the back-link that sits
+        above it — `pt-[140px] nav:pt-[170px]` gives the eyebrow chip
+        about 32-40px of breathing room below the back-link's
+        baseline. Bottom padding is plain `py-section-sm`. */}
+    <div class="flex flex-col justify-center pt-[140px] pb-section-sm nav:pt-[170px]">
       <div class="ml-margin mr-margin md:mr-12 lg:mr-16 max-w-[640px]">
 
         {/* ----- Eyebrow row -----
@@ -192,19 +205,29 @@ const dateIso = date.toISOString().slice(0, 10);
         )}
 
         {/* ----- Author byline ----- */}
-        {/* Small headshot (48px) + visible "By Ken Jacobsen" beside it,
-            matching the Figma reference. The figure tag wraps so
-            screen readers announce it as a single byline unit. */}
+        {/* Small headshot (48px) + visible "By <bold-name>" beside it.
+            The figure tag wraps so screen readers announce it as a
+            single byline unit.
+
+            Headshot crop (2026-05-11 — user feedback "zoom in on
+            Ken's headshot so it's cropped to his head/face"): the
+            wrapper clips to a 48px circle, the inner <img> is scaled
+            up ~1.5× with `object-position` anchored on the upper
+            third of the source so the visible disc lands on the face
+            rather than the shirt. */}
         <figure class="mt-10 flex items-center gap-3">
-          <Image
-            src={kenPortrait}
-            alt=""
-            widths={[80, 120]}
-            sizes="48px"
-            class="h-12 w-12 rounded-full object-cover"
-          />
+          <span class="blog-detail-byline-avatar block h-12 w-12 overflow-hidden rounded-full">
+            <Image
+              src={kenPortrait}
+              alt=""
+              widths={[120, 160, 200]}
+              sizes="72px"
+              class="h-full w-full object-cover"
+              style="transform: scale(1.5); transform-origin: 50% 28%;"
+            />
+          </span>
           <figcaption class="font-body text-body text-black">
-            By {author}
+            By <span class="font-semibold">{author}</span>
           </figcaption>
         </figure>
 
