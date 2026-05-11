@@ -37,49 +37,67 @@ import Rule from '../../components/ui/Rule.astro';
       {/* ============ BUTTONS ============ */}
       <section class="mt-section">
         <SectionEyebrow withLeadRule>Buttons</SectionEyebrow>
-        <h2 class="font-display text-h2-lg mt-3 mb-2">Five variants</h2>
-        <p class="font-body text-body text-black/70">
-          Libre Franklin SemiBold 11px, +1.5% tracking, ALL CAPS, 12×24px padding, 2px corners.
+        <h2 class="font-display text-h2-lg mt-3 mb-2">Variant × Surface</h2>
+        <p class="font-body text-body text-black/70 max-w-[60ch]">
+          Three variants (<code>amber-fill</code>, <code>green-fill</code>, <code>outline</code>)
+          × two surfaces (<code>light</code>, <code>dark</code>). Libre Franklin SemiBold 11px,
+          +1.5% tracking, ALL CAPS, 12×24px padding, 2px corners. Hover: 150ms colour crossfade
+          only — no scale, no lift.
         </p>
         <Rule class="my-8" />
 
         <div class="space-y-8">
           <div>
-            <p class="font-body text-body-sm text-gray-mid mb-3">On white background</p>
+            <p class="font-body text-body-sm text-gray-mid mb-3">
+              <strong>surface="light"</strong> — on white / light backgrounds
+            </p>
             <div class="flex flex-wrap gap-4 rounded bg-white p-8">
               <Button variant="amber-fill" href="#">Request a meeting</Button>
               <Button variant="green-fill" href="#">Meet Ken</Button>
-              <Button variant="green-outline" href="#">Learn more</Button>
+              <Button variant="outline" href="#">Learn more</Button>
             </div>
+            <p class="font-body text-caption text-gray-mid mt-2">
+              Hovers: amber-fill → green-dark bg / amber text · green-fill → amber bg / green-dark text · outline → amber border (text held)
+            </p>
           </div>
 
           <div>
-            <p class="font-body text-body-sm text-gray-mid mb-3">On dark green background</p>
+            <p class="font-body text-body-sm text-gray-mid mb-3">
+              <strong>surface="dark"</strong> — on dark green / hero backgrounds
+            </p>
             <div class="flex flex-wrap gap-4 rounded bg-green-dark p-8">
-              <Button variant="amber-fill" href="#">Request a meeting</Button>
-              <Button variant="amber-outline" href="#">Learn more</Button>
+              <Button variant="amber-fill" surface="dark" href="#">Request a meeting</Button>
+              <Button variant="outline" surface="dark" href="#">Learn more</Button>
             </div>
+            <p class="font-body text-caption text-gray-mid mt-2">
+              Hovers: amber-fill → white bg / green-dark text · outline → white border (text held)
+            </p>
           </div>
 
           <div>
-            <p class="font-body text-body-sm text-gray-mid mb-3">On hero photo / overlay (ghost)</p>
+            <p class="font-body text-body-sm text-gray-mid mb-3">
+              <strong>surface="dark"</strong> — on hero photo (dark green wash overlay)
+            </p>
             <div
               class="flex flex-wrap gap-4 rounded p-8"
-              style="background:#3a3320"
+              style="background: linear-gradient(180deg, rgba(8,57,40,0.65) 0%, rgba(8,57,40,0.85) 100%), url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200') center/cover;"
             >
-              <Button variant="amber-ghost" href="#">Watch the video</Button>
-              <Button variant="amber-fill" href="#">Get involved</Button>
+              <Button variant="amber-fill" surface="dark" href="#">Watch the video</Button>
+              <Button variant="outline" surface="dark" href="#">Get involved</Button>
             </div>
           </div>
 
           <div>
-            <p class="font-body text-body-sm text-gray-mid mb-3">As <code>&lt;button&gt;</code> (no href)</p>
+            <p class="font-body text-body-sm text-gray-mid mb-3">
+              As <code>&lt;button&gt;</code> (no <code>href</code>)
+            </p>
             <div class="flex flex-wrap gap-4 rounded bg-white p-8">
               <Button variant="green-fill" type="submit">Submit</Button>
               <Button variant="amber-fill" modal="contact">Get in touch</Button>
             </div>
             <p class="font-body text-caption text-gray-mid mt-2">
-              Modal-trigger button writes <code>data-modal="contact"</code>.
+              Modal-trigger button writes <code>data-modal="contact"</code> for the opener script
+              (wired in Step 5 with <code>ContactModal.astro</code>).
             </p>
           </div>
         </div>
@@ -163,7 +181,7 @@ import Rule from '../../components/ui/Rule.astro';
         <SectionEyebrow withLeadRule>Rule</SectionEyebrow>
         <h2 class="font-display text-h2-lg mt-3 mb-2">1px horizontal rule</h2>
         <p class="font-body text-body text-black/70">
-          Six colour options matching the brand palette. Default gray-light.
+          Eight colour options matching the brand palette. Default gray-light.
         </p>
         <Rule class="my-8" />
 
@@ -177,6 +195,10 @@ import Rule from '../../components/ui/Rule.astro';
             <Rule color="amber" />
           </div>
           <div>
+            <p class="font-body text-body-sm text-gray-mid mb-2">amber-light <span class="text-black/40">(50% amber — uses --color-amber-light token)</span></p>
+            <Rule color="amber-light" />
+          </div>
+          <div>
             <p class="font-body text-body-sm text-gray-mid mb-2">green-dark</p>
             <Rule color="green-dark" />
           </div>
@@ -188,12 +210,24 @@ import Rule from '../../components/ui/Rule.astro';
 
         <div class="mt-4 space-y-6 rounded bg-green-dark p-8">
           <div>
-            <p class="font-body text-body-sm text-cream/60 mb-2">cream — footer rule (over dark green)</p>
+            <p class="font-body text-body-sm text-cream/60 mb-2">cream (over dark green)</p>
             <Rule color="cream" />
+          </div>
+          <div>
+            <p class="font-body text-body-sm text-cream/60 mb-2">amber (over dark green)</p>
+            <Rule color="amber" />
+          </div>
+          <div>
+            <p class="font-body text-body-sm text-cream/60 mb-2">amber-light (50% amber over dark green)</p>
+            <Rule color="amber-light" />
           </div>
           <div>
             <p class="font-body text-body-sm text-cream/60 mb-2">white</p>
             <Rule color="white" />
+          </div>
+          <div>
+            <p class="font-body text-body-sm text-cream/60 mb-2">white-50 <span class="text-cream/40">(50% white over dark imagery)</span></p>
+            <Rule color="white-50" />
           </div>
         </div>
       </section>

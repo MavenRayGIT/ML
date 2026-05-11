@@ -1,19 +1,29 @@
 ---
 /**
- * Rule.astro — 1px horizontal rule with color prop.
+ * Rule.astro — 1px horizontal rule with colour prop.
  *
- * Per HANDOFF.md → Footer: divider `#F2F7E5` (cream) 1px.
- * Reused as section dividers, eyebrow lead-rules, list separators.
+ * Used as section dividers, eyebrow lead-rules, list separators, and
+ * inside cards / dark sections where a hairline is needed.
  *
  * Renders <hr> for semantic correctness, styled as a solid 1px line
  * (background-color, not border) for predictable rendering.
  *
- *   <Rule />                 → 1px gray-light (default)
- *   <Rule color="amber" />   → 1px amber `#FFC560`
- *   <Rule color="cream" />   → 1px cream `#F2F7E5` (footer rule)
+ *   <Rule />                    → 1px gray-light (default)
+ *   <Rule color="amber" />      → 1px amber `#FFC560`
+ *   <Rule color="amber-light" /> → 1px 50% amber (uses --color-amber-light)
+ *   <Rule color="cream" />      → 1px cream `#F2F7E5`
+ *   <Rule color="white-50" />   → 1px 50% white (e.g. over dark imagery)
  */
 
-type RuleColor = 'amber' | 'green-dark' | 'cream' | 'gray-light' | 'black' | 'white';
+type RuleColor =
+  | 'amber'
+  | 'amber-light' // 50% amber — see `--color-amber-light` token
+  | 'green-dark'
+  | 'cream'
+  | 'gray-light'
+  | 'black'
+  | 'white'
+  | 'white-50';   // 50% white (Tailwind v4 opacity modifier)
 
 export interface Props {
   color?: RuleColor;
@@ -23,12 +33,14 @@ export interface Props {
 const { color = 'gray-light', class: className = '' } = Astro.props;
 
 const colorBg: Record<RuleColor, string> = {
-  'amber':      'bg-amber',
-  'green-dark': 'bg-green-dark',
-  'cream':      'bg-cream',
-  'gray-light': 'bg-gray-light',
-  'black':      'bg-black',
-  'white':      'bg-white',
+  'amber':       'bg-amber',
+  'amber-light': 'bg-amber-light',
+  'green-dark':  'bg-green-dark',
+  'cream':       'bg-cream',
+  'gray-light':  'bg-gray-light',
+  'black':       'bg-black',
+  'white':       'bg-white',
+  'white-50':    'bg-white/50',
 };
 ---
 

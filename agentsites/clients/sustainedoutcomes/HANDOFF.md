@@ -223,14 +223,39 @@ theme: {
 
 All buttons: Libre Franklin SemiBold, 11px, tracking +1.5%,
 border-radius 2px, ALL CAPS, padding 12px 24px.
+Hover: 150ms colour crossfade only. No scale, no lift.
 
-| Variant | Bg | Border | Text | Used on |
-|---------|-----|--------|------|---------|
-| `amber-fill` | `#FFC560` | none | `#020302` black | Hero primary, light bg primary |
-| `green-fill` | `#083928` | none | `#FFC560` amber | Light bg primary (Meet Ken, Submit) |
-| `amber-outline` | transparent | `#FFC560` | `#FFC560` | Dark section secondary |
-| `green-outline` | transparent | `#083928` | `#020302` | Light bg secondary |
-| `amber-ghost` | `rgba(52,49,3,0.49)` | `#FFC560` | `#FFC560` | Hero secondary CTA |
+**Amended 2026-05-11** — Mack & Lee feedback after primitives review:
+hover behaviour locked in, `amber-ghost` removed (no brown in the design;
+on hero use the dark-surface variants over the hero's dark green wash),
+`outline × light` text colour corrected from `#020302` (black) to
+`#083928` (green-dark) so it reads as a green outlined button.
+
+### Variant × Surface
+
+Three variants, two surface contexts. The same `amber-fill` looks
+identical at rest on light vs dark but hovers differently to maintain
+contrast against its background.
+
+| Variant | Surface | Bg | Border | Text | Hover |
+|---|---|---|---|---|---|
+| `amber-fill` | `light` (default) | `#FFC560` | none | `#020302` black | bg → `#083928` green-dark · text → `#FFC560` amber |
+| `amber-fill` | `dark` | `#FFC560` | none | `#020302` black | bg → `#FFFFFF` white · text → `#083928` green-dark |
+| `green-fill` | `light` (default) | `#083928` | none | `#FFC560` amber | bg → `#FFC560` amber · text → `#083928` green-dark |
+| `outline` | `light` (default) | transparent | `#083928` | `#083928` green-dark | border → `#FFC560` amber · text held |
+| `outline` | `dark` | transparent | `#FFC560` | `#FFC560` amber | border → `#FFFFFF` white · text held |
+
+### Used on
+
+- `amber-fill` / `light` — light-bg primary (homepage hero CTA when over a light hero, ServicesGrid, BlogPreview, ContactSection submit when on white)
+- `amber-fill` / `dark` — hero primary CTA over dark green wash / hero photo, dark CTABand primary
+- `green-fill` / `light` — light-bg primary alternate (Meet Ken, footer Submit, embedded forms)
+- `outline` / `light` — light-bg secondary (Learn more, Read more)
+- `outline` / `dark` — dark-bg / hero secondary (Watch the video, Get involved)
+
+### Removed
+
+- `amber-ghost` — replaced by `amber-fill` or `outline` with `surface="dark"`.
 
 ---
 
@@ -240,9 +265,9 @@ Nav height: 74px. Logo left at 64px. Links right. CTA far right.
 
 | State | Bg | Links | CTA |
 |-------|-----|-------|-----|
-| Over hero | `#083928` | `#F2F7E5` | amber-outline |
-| Scrolled (white) | white | `#050803` | amber-outline |
-| Amber bg | `#FFC560` | `#050803` | green-outline |
+| Over hero | `#083928` | `#F2F7E5` | `outline` × `dark` (amber border + amber text → hover white border) |
+| Scrolled (white) | white | `#050803` | `outline` × `light` (green-dark border + green-dark text → hover amber border) — _to confirm in Step 4 if amber-bordered preferred on white_ |
+| Amber bg | `#FFC560` | `#050803` | `outline` × `light` (green-dark border) — _to confirm in Step 4_ |
 
 Transition: IntersectionObserver on hero bottom edge.
 State 1 → State 2 on scroll past hero.
@@ -375,8 +400,9 @@ CTA label: "Request a meeting" (sentence case in nav)
 - 3 nav columns at 560px, 820px, 1080px
   - Heads: Libre Franklin SemiBold 13px, white
   - Links: Libre Franklin Regular 13px, `#FFC560`
-- Divider: `#F2F7E5` 1px rule
 - Copyright: Libre Franklin Regular 12px, `#F2F7E5`
+
+**Amended 2026-05-11** — cream divider rule removed from footer.
 
 ---
 
