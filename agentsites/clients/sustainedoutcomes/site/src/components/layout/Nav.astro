@@ -341,6 +341,19 @@ const navItems = [
   .site-nav[data-nav-state='white'] .nav-cta--white        { display: inline-block;  }
   .site-nav[data-nav-state='amber'] .nav-cta--amber        { display: inline-block;  }
 
+  /* Nav CTA on the dark state shares `outline × dark` with hero-body
+     buttons, but the nav already sits on top of the hero gradient (and
+     in the compact state on a semi-opaque green-dark wash) so the 50%
+     green-dark plate that helps legibility in the hero body would
+     read as a redundant pill in the nav. Strip the plate here — at
+     rest AND on hover — and keep just the border-colour swap. */
+  .site-nav .nav-cta--dark > a,
+  .site-nav .nav-cta--dark > button,
+  .site-nav .nav-cta--dark > a:hover,
+  .site-nav .nav-cta--dark > button:hover {
+    background-color: transparent;
+  }
+
   /* ----- Mobile overlay ------------------------------------------------ */
   .mobile-nav-overlay {
     transform: translateY(-100%);
