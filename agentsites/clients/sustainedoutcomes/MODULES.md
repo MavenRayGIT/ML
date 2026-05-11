@@ -25,7 +25,7 @@ Visual review page: [`/dev/primitives`](site/src/pages/dev/primitives.astro) (no
 
 | Component | Status | Notes |
 | --- | --- | --- |
-| `Nav.astro` | done | 3 scroll states — section-driven via `data-nav-bg`. **Dark state is transparent at rest**; once scrolled (`data-nav-compact="true"`, threshold 32px) it picks up `rgba(8,57,40,0.88)` + `backdrop-filter blur(8px)` so hero copy passing under no longer collides. Desktop logo shrinks 40→32px circle / 28→22px wordmark in compact. 74px desktop · 56px mobile · 20px page gutter on mobile. Mobile = hamburger → full amber overlay. |
+| `Nav.astro` | done | 3 scroll states — section-driven via `data-nav-bg`. **Dark state is transparent at rest**; once scrolled (`data-nav-compact="true"`, threshold 32px) it picks up `rgba(8,57,40,0.88)` + `backdrop-filter blur(8px)` so hero copy passing under no longer collides. Desktop logo shrinks 40→32px circle / 28→22px wordmark in compact. 74px desktop · 56px mobile · 20px page gutter on mobile. **Hamburger up to 1100px** (`--breakpoint-nav` / `nav:` Tailwind variant) — keeps the full row from wrapping on narrow laptops. Mobile = hamburger → full amber overlay. |
 | `Footer.astro` | done | 3-col, icon + wordmark logo, amber tagline, cream copyright. No divider rule (amended). |
 | `Page.astro` | done | Base + StagingBanner + Nav + Footer (`src/layouts/`). `hasHero` skips top padding so heroes sit flush; banner is a pure overlay (no chrome reflow). |
 | `StagingBanner.astro` | done | Collapsible (× → corner handle → click to re-open), fade-on-scroll, localStorage-persisted. Suppress with `PUBLIC_HIDE_STAGING_BANNER=true`. |

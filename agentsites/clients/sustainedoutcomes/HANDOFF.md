@@ -287,6 +287,14 @@ than failing.
 Nav height: 74px desktop · **56px mobile**. Logo left at the page gutter
 (64px desktop · 20px mobile). Links right. CTA far right.
 
+**Breakpoint (added 2026-05-11 (e)):** the full desktop nav (logo +
+5 links + CTA) requires ~1033px of viewport before it starts wrapping.
+We expose a custom Tailwind variant `nav:` (= `min-width: 1100px`) via
+`--breakpoint-nav` in `global.css`. Below 1100px the layout collapses to
+the mobile hamburger. This replaces the earlier `md:` (768px) gate,
+which produced visible "Support Us" wrapping and logo/link collision
+between ~768–1100px.
+
 | State | Bg | Links (rest) | Link hover | CTA |
 |-------|-----|--------------|------------|-----|
 | Over hero (dark) | **transparent** (was `#083928`) — hero gradient supplies contrast | `#F2F7E5` cream | `#FFC560` amber | `outline` × `dark` (amber border + amber text → hover white border) |

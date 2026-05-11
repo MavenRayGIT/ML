@@ -35,15 +35,21 @@
  * (over-light/amber) marks. CTA button swaps by display-toggling three
  * pre-rendered `<Button>` variants (one per state) — keeps the JS simple.
  *
- * Heights:
- *   Mobile  (< 768px) — 56px tall, 20px gutters (`px-margin` resolves
- *                       to 20px on mobile via global.css), 32px icon,
- *                       18px wordmark.
- *   Desktop (≥ 768px) — 74px tall, 64px gutters.
+ * Heights / breakpoint:
+ *   The desktop nav (logo + 5 links + CTA) needs ~1033px of viewport
+ *   to render without wrapping. Below that we collapse to the mobile
+ *   hamburger. The breakpoint is exposed as Tailwind `nav:` via
+ *   `--breakpoint-nav: 1100px` in global.css (added 2026-05-11 to fix
+ *   "Support Us" wrapping + logo/links collision on narrow laptops).
+ *
+ *   Mobile / hamburger (< 1100px) — 56px tall, 20px gutters
+ *                       (`px-margin` resolves to 20px on mobile via
+ *                       global.css), 32px icon, 18px wordmark.
+ *   Desktop (≥ 1100px) — 74px tall, 64px gutters.
  *                       Logo at rest: 40px icon + 28px wordmark.
  *                       Logo compact:  32px icon + 22px wordmark.
  *
- * Mobile (< 768px): logo + hamburger only at rest. Tap → full amber
+ * Mobile (< 1100px): logo + hamburger only at rest. Tap → full amber
  * overlay with stacked nav + CTA. Body scroll locked while open.
  * Close on link tap, on the X icon, or with Escape.
  */
@@ -66,7 +72,7 @@ const navItems = [
   id="site-nav"
   data-nav-state="dark"
   data-nav-compact="false"
-  class="site-nav fixed inset-x-0 top-0 z-50 h-14 md:h-[74px] transition-[background-color,backdrop-filter,color] duration-base ease-default"
+  class="site-nav fixed inset-x-0 top-0 z-50 h-14 nav:h-[74px] transition-[background-color,backdrop-filter,color] duration-base ease-default"
   aria-label="Site"
 >
   <div class="mx-auto flex h-full max-w-content items-center px-margin">
@@ -75,7 +81,7 @@ const navItems = [
         opacity-crossfades between the white & dark cuts. Sizes are
         driven by .nav-logo-* CSS rules below so the compact state can
         shrink them on scroll. */}
-    <a href="/" class="nav-logo flex items-center gap-2 md:gap-3" aria-label="Sustained Outcomes home">
+    <a href="/" class="nav-logo flex items-center gap-2 nav:gap-3" aria-label="Sustained Outcomes home">
       <span class="nav-logo-circle flex shrink-0 items-center justify-center rounded-full bg-cream">
         <Image
           src={iconSrc}
@@ -100,8 +106,8 @@ const navItems = [
       </span>
     </a>
 
-    {/* Desktop links + CTA */}
-    <ul class="ml-auto hidden items-center gap-8 md:flex">
+    {/* Desktop links + CTA — only shown ≥ 1100px (see --breakpoint-nav) */}
+    <ul class="ml-auto hidden items-center gap-8 nav:flex">
       {navItems.map((item) => (
         <li>
           <a
@@ -128,10 +134,11 @@ const navItems = [
 
     {/* Mobile hamburger — flush right at the 20px gutter, sized to the
         56px nav. Right-margin uses negative -mr-1 trick removed in
-        favour of relying solely on `px-margin` from the parent. */}
+        favour of relying solely on `px-margin` from the parent.
+        Visible until the `nav:` breakpoint (1100px). */}
     <button
       type="button"
-      class="nav-hamburger ml-auto flex h-9 w-9 items-center justify-center md:hidden"
+      class="nav-hamburger ml-auto flex h-9 w-9 items-center justify-center nav:hidden"
       data-nav-toggle
       aria-label="Open menu"
       aria-controls="mobile-nav"
@@ -150,7 +157,7 @@ const navItems = [
 <div
   id="mobile-nav"
   data-nav-overlay-open="false"
-  class="mobile-nav-overlay fixed inset-0 z-[60] flex flex-col bg-amber md:hidden"
+  class="mobile-nav-overlay fixed inset-0 z-[60] flex flex-col bg-amber nav:hidden"
   aria-hidden="true"
 >
   <div class="flex h-14 items-center justify-between px-margin">
@@ -247,8 +254,10 @@ const navItems = [
   .nav-logo-icon                                       { height: 28px; width: 28px; }
   .nav-logo-wordmark                                   { height: 18px; }
 
-  /* Desktop rest — 40px circle, 36px tree, 28px wordmark */
-  @media (min-width: 768px) {
+  /* Desktop rest — 40px circle, 36px tree, 28px wordmark.
+     Tied to --breakpoint-nav (1100px) so the chrome layout swap and
+     the logo size swap happen at the same width. */
+  @media (min-width: 1100px) {
     .site-nav[data-nav-compact='false'] .nav-logo            { height: 40px; }
     .site-nav[data-nav-compact='false'] .nav-logo-circle     { height: 40px; width: 40px; }
     .site-nav[data-nav-compact='false'] .nav-logo-icon       { height: 36px; width: 36px; }

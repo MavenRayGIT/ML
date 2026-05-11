@@ -170,6 +170,16 @@
   --container-page:    1440px;
   --container-content: 1312px;
 
+  /* Custom breakpoint -----------------------------------------
+     `nav:` — viewport width at which the full desktop nav
+     comfortably fits the logo + 5 links + 64px gutters + CTA
+     without wrapping. Below this we collapse to the mobile
+     hamburger. Measured 2026-05-11: total inline width of the
+     resting desktop nav row ≈ 905px, plus 128px gutters → 1033px
+     minimum. Rounded up to 1100px for breathing room and to
+     avoid breaking exactly on standard 1024px laptops. */
+  --breakpoint-nav: 1100px;
+
   /* Motion tokens (Corporate_Elegant — ANIMATION.md) -------- */
   --ease-default:  cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
