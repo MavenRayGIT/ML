@@ -13,10 +13,13 @@ Astro components for this project. Specs and props: [`HANDOFF.md`](HANDOFF.md). 
 
 | Component | Status | Notes |
 | --- | --- | --- |
-| `Button.astro` | planned | Variants per HANDOFF.md |
-| `TextLink.astro` | planned | Amber + chevron |
-| `SectionEyebrow.astro` | planned | ALL CAPS, +3% tracking |
-| `Rule.astro` | planned | 1px rule, color prop |
+| `Button.astro` | done | 5 variants (amber-fill, green-fill, amber-outline, green-outline, amber-ghost). Polymorphic `<a>` / `<button>`. `modal` prop for ContactModal trigger. |
+| `TextLink.astro` | done | Amber `>` chevron + 250ms nudge-right hover. |
+| `InlineLink.astro` | done | Amber underline default → amber background highlight on hover. Component form of the global `.prose a` rule. |
+| `SectionEyebrow.astro` | done | Mona Sans SemiBold 11px, +3% tracking, ALL CAPS. Colours: black / amber / white / cream. Optional 32px lead rule. |
+| `Rule.astro` | done | Semantic `<hr>`, 1px line via background-color. 6 colour options. |
+
+Visual review page: [`/dev/primitives`](site/src/pages/dev/primitives.astro) (noindex, every variant on every relevant background + full type-scale sampler).
 
 ## Layout (`src/components/layout/`)
 
