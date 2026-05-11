@@ -17,33 +17,42 @@
  *
  * Mobile: stacks to 1-col with the image above the text.
  *
- * Angled treatment (per ANIMATION.md → Angle-shift) — v2 shipped 2026-05-11:
- *   - Clip-path is driven by a single CSS custom property
- *     `--angle-shift` that runs 24px → 0px as the section moves
- *     through the viewport.
- *   - At progress 0 (just entered from below the fold),
- *     `--angle-shift = 24px` and the polygon is INSET from the box
- *     edges by 24px on each side (top edge slightly lower, bottom
- *     edge slightly higher). Polygon: ~(0% 14%, 100% 4%, 100% 86%,
- *     0% 96%) on a 622px section.
- *   - At progress 1 (just exiting the top of the viewport),
- *     `--angle-shift = 0px` and the polygon sits at the natural
- *     edge: polygon(0% 10%, 100% 0%, 100% 90%, 0% 100%) — exactly
- *     the v1 resting design.
- *   - Both endpoints of each angled line shift by the same number of
- *     pixels (24 → 0), so the diagonal **translates** as one
- *     continuous line instead of one corner running into a box edge
- *     and flattening (which is what the early v2 implementation did
- *     before this fix). Slope stays 10% throughout. The panel reads
- *     as opening up ~48px vertically while content stays anchored.
- *   - The v1 one-shot entry reveal (data-reveal="angle-shift") was
- *     intentionally dropped — the scroll-tied motion now serves as
- *     both the entry effect and the through-scroll effect. One
- *     coherent motion, no fighting transitions.
+ * Angled treatment (per ANIMATION.md → Angle-grow) — v3 shipped 2026-05-11:
  *
- *   Progress is tracked by a small inline script lower in this file
- *   (rAF-throttled scroll + IntersectionObserver). `prefers-reduced-
- *   motion` locks `--angle-shift` to 0 (= the v1 resting design).
+ *   The angled silhouette is not a static decoration — it **develops**
+ *   on scroll. The section enters the viewport as a plain rectangle
+ *   and carves out its angled wedges as the user scrolls through it.
+ *
+ *   Mechanics:
+ *   - Two polygon vertices are **anchored** at the section's corners
+ *     and never move:
+ *         top-right  (100%, 0%)
+ *         bot-left   (0%,   100%)
+ *   - Two polygon vertices are **driven** by the CSS custom property
+ *     `--angle-grow` and slide inward as the user scrolls:
+ *         top-left   (0%,   var(--angle-grow))               — slides DOWN from y=0
+ *         bot-right  (100%, calc(100% - var(--angle-grow)))  — slides UP   from y=100%
+ *
+ *   Progress mapping (rAF script lower in this file):
+ *         p = 0  (just entered viewport)  →  --angle-grow: 0px   →  polygon == full rectangle
+ *         p = 1  (just exited the top)    →  --angle-grow: 48px  →  polygon == angled silhouette
+ *
+ *   Because the moving vertices stay strictly inside `0..100%` and
+ *   each diagonal pivots around an anchored corner, the lines develop
+ *   as continuous straight diagonals — no corner-flatten artefact
+ *   (which was the early v2 bug; see git history).
+ *
+ *   `prefers-reduced-motion: reduce` locks `--angle-grow` to MAX so
+ *   the section reads in its fully-angled silhouette without
+ *   animating. Reduced-motion users still see the intended design,
+ *   just statically.
+ *
+ *   The v1 one-shot entry reveal (`data-reveal="angle-shift"`) was
+ *   intentionally dropped — the scroll-tied motion below now serves
+ *   as both the entry effect and the through-scroll effect, so there
+ *   is exactly one animation reading at a time. Plain (non-angled)
+ *   FeatureSplits still get the standard `data-reveal="header"` block
+ *   reveal.
  *
  * Copy & content come from props only.
  */
@@ -235,46 +244,44 @@ const reveal = angled ? undefined : 'header';
 </div>
 
 <style>
-  /* Angled silhouette — clip-path is driven by a single CSS custom
-     property (`--angle-shift`) that the inline script tweens off
-     scroll progress. The default (24px) is the "tight" entry state;
-     the script writes it down to 0px as the section moves through
-     the viewport.
+  /* Angled silhouette — clip-path "grows" the angle on scroll.
+     A single CSS custom property (`--angle-grow`) drives the two
+     non-anchored polygon vertices. The inline script writes this
+     value per frame off scroll progress.
 
-     Design intent: BOTH endpoints of each angled line shift by the
-     same number of pixels, so the diagonal **translates** as one
-     continuous straight line. The polygon's vertices stay strictly
-     INSIDE the section box at all times — otherwise the clipping
-     engine kinks the line against the box edge, flattening the
-     corner instead of moving the line.
+       --angle-grow: 0px    → polygon == (0% 0%, 100% 0%, 100% 100%, 0% 100%)
+                              i.e. a full rectangle, no angle. This is the
+                              section's state when it first enters the
+                              viewport from below.
+       --angle-grow: 48px   → polygon == (0% 48px, 100% 0%, 100% calc(100% - 48px), 0% 100%)
+                              i.e. the angled silhouette. This is the
+                              section's state when it has just scrolled
+                              past the top of the viewport.
 
-       progress 0 (entry, just scrolled into view from below):
-         --angle-shift = 24px  →  polygon ~(14%, 4%, 86%, 96%) on a 622px section
-       progress 1 (exit, just scrolled past the top of the viewport):
-         --angle-shift = 0px   →  polygon (10%, 0%, 90%, 100%)   [v1 resting]
-
-     Slope is constant at 10%/100%-of-section-width on both edges.
-     Top line lifts 24px; bottom line drops 24px; the panel reads as
-     opening up ~48px while content stays anchored. */
+     Top-right (100%, 0%) and bottom-left (0%, 100%) are anchored at
+     the section's corners and never move. The diagonals pivot around
+     those anchors as the moving vertices slide inward. Because all
+     four vertices stay strictly inside `0%..100%` for the full motion
+     range, the diagonals never get kinked against a box edge (= no
+     corner-flatten artefact). */
   .feature-split-angled {
-    --angle-shift: 24px;
+    --angle-grow: 0px;
     clip-path: polygon(
-      0%   calc(10%   + var(--angle-shift)),
-      100% calc(0%    + var(--angle-shift)),
-      100% calc(90%   - var(--angle-shift)),
-      0%   calc(100%  - var(--angle-shift))
+      0%   var(--angle-grow),
+      100% 0%,
+      100% calc(100% - var(--angle-grow)),
+      0%   100%
     );
   }
 
-  /* prefers-reduced-motion: lock to the v1 resting design (0px
-     shift = polygon(0% 10%, 100% 0%, 100% 90%, 0% 100%)). This is
-     the static state that everything else was tuned against, so
-     reduced-motion users see the section exactly as the rest of
-     the design system expects. `!important` because the script
-     writes inline styles. */
+  /* prefers-reduced-motion: lock to the FULLY-ANGLED silhouette
+     (--angle-grow == MAX). Reduced-motion users see the section in
+     its intended design state — angled — just statically, without
+     the entry-flat-to-angle animation. `!important` because the
+     script writes inline styles. */
   @media (prefers-reduced-motion: reduce) {
     .feature-split-angled {
-      --angle-shift: 0px !important;
+      --angle-grow: 48px !important;
     }
   }
 
@@ -309,10 +316,10 @@ const reveal = angled ? undefined : 'header';
 </style>
 
 <script>
-  /* Angled FeatureSplit — scroll-tied edge motion.
+  /* Angled FeatureSplit — scroll-tied "angle-grow" motion.
    *
    * Maps each `.feature-split-angled` element's viewport progress to
-   * the `--angle-shift` CSS custom property that drives the clip-path
+   * the `--angle-grow` CSS custom property that drives the clip-path
    * polygon defined in <style> above.
    *
    * Progress definition matches the CSS `animation-timeline: view()`
@@ -324,11 +331,15 @@ const reveal = angled ? undefined : 'header';
    *   p = 1  →  section's bottom edge is at the viewport top  (just exited)
    *   p = 0.5  →  section is roughly centred in the viewport
    *
-   * Mapping: var runs 24px (tight, inset) at p=0  → 0px (open, at-edge)
-   * at p=1. Both endpoints of each angled line translate together, so
-   * the diagonal stays a single continuous straight line throughout
-   * (see <style> block above for the geometry rationale). Linear map —
-   * structural motion reads more honestly without easing.
+   * Mapping: var runs 0px (flat, rectangle) at p=0 → 48px (angled) at p=1.
+   * Linear — structural motion reads more honestly without easing; an
+   * easing curve would compete with the user's scroll velocity.
+   *
+   * Magnitude (MAX): 48px. Calibrated by visual inspection on staging
+   * at 622px section height (= ~7.7% slope). Bump this if the angle
+   * needs to read more strongly; also bump the matching `48px` in the
+   * `prefers-reduced-motion` rule in <style> above so reduced-motion
+   * users land at the same final silhouette.
    *
    * Performance contract:
    *   - rAF-throttled: at most one update per frame regardless of how
@@ -343,7 +354,7 @@ const reveal = angled ? undefined : 'header';
    * itself uses `%`/`px` calc that the browser composites cheaply.
    */
   (() => {
-    const MAX = 24;
+    const MAX = 48;
 
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
@@ -380,10 +391,10 @@ const reveal = angled ? undefined : 'header';
         let p = (vh - r.top) / (vh + r.height);
         if (p < 0) p = 0;
         else if (p > 1) p = 1;
-        // Invert: p=0 (entering) → MAX (tight/inset), p=1 (exiting) → 0 (at-edge).
-        // The diagonal lines translate by `MAX - p*MAX` pixels as the user scrolls.
-        const value = ((1 - p) * MAX).toFixed(2) + 'px';
-        el.style.setProperty('--angle-shift', value);
+        // p=0 (entering) → 0px (flat), p=1 (exiting) → MAX (angled).
+        // The angle "grows in" as the user scrolls through the section.
+        const value = (p * MAX).toFixed(2) + 'px';
+        el.style.setProperty('--angle-grow', value);
       }
     };
 
