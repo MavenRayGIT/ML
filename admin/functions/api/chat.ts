@@ -20,6 +20,7 @@
  */
 
 import { CLIENTS, getClient } from "../../src/lib/clients";
+import { preflightResponse, withCors } from "../../src/lib/cors";
 import { createAgent, createRun, CursorApiError } from "../../src/lib/cursor";
 import { buildSystemContext } from "../../src/lib/system-prompt";
 
@@ -41,28 +42,33 @@ function jsonError(status: number, message: string, extra?: Record<string, unkno
   });
 }
 
+export const onRequestOptions: PagesFunction<Env> = async ({ request }) => preflightResponse(request);
+
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (!env.CURSOR_API_KEY) {
-    return jsonError(503, "CURSOR_API_KEY is not configured on this environment.");
+    return withCors(jsonError(503, "CURSOR_API_KEY is not configured on this environment."), request);
   }
 
   let body: ChatBody;
   try {
     body = (await request.json()) as ChatBody;
   } catch {
-    return jsonError(400, "Body must be JSON.");
+    return withCors(jsonError(400, "Body must be JSON."), request);
   }
 
   const message = (body.message ?? "").trim();
   const clientSlug = (body.clientSlug ?? "").trim();
-  if (!message) return jsonError(400, "message is required.");
-  if (!clientSlug) return jsonError(400, "clientSlug is required.");
+  if (!message) return withCors(jsonError(400, "message is required."), request);
+  if (!clientSlug) return withCors(jsonError(400, "clientSlug is required."), request);
 
   const client = getClient(clientSlug);
   if (!client) {
-    return jsonError(404, `Unknown client: ${clientSlug}.`, {
-      validClients: CLIENTS.map((c) => c.slug),
-    });
+    return withCors(
+      jsonError(404, `Unknown client: ${clientSlug}.`, {
+        validClients: CLIENTS.map((c) => c.slug),
+      }),
+      request,
+    );
   }
 
   try {
@@ -78,18 +84,19 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         promptText,
         repoUrl,
         startingRef: "staging",
-        // Phase -1: agent creates its own `cursor/…` branch. The iframe still
-        // points at staging, so the user won't see edits until that branch is
-        // merged. Documented gap — closed by a follow-up that wires either
-        // (a) per-branch CF Pages preview URLs into the iframe, or (b) admin-
-        // side auto-merge of finished runs into staging.
+        // Phase -1: agent creates its own `cursor/…` branch. User won't see
+        // edits on staging until that branch is merged — the marker-commit
+        // publish flow (§9a) is the eventual bridge. Documented gap.
         autoCreatePR: false,
         skipReviewerRequest: true,
       });
 
-      return new Response(
-        JSON.stringify({ agentId: agent.id, runId: run.id, branchName: agent.branchName ?? null }),
-        { status: 200, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } },
+      return withCors(
+        new Response(
+          JSON.stringify({ agentId: agent.id, runId: run.id, branchName: agent.branchName ?? null }),
+          { status: 200, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } },
+        ),
+        request,
       );
     }
 
@@ -100,19 +107,25 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       promptText: message,
     });
 
-    return new Response(
-      JSON.stringify({ agentId: body.agentId, runId: run.id, branchName: null }),
-      { status: 200, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } },
+    return withCors(
+      new Response(
+        JSON.stringify({ agentId: body.agentId, runId: run.id, branchName: null }),
+        { status: 200, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } },
+      ),
+      request,
     );
   } catch (err) {
     if (err instanceof CursorApiError) {
-      return jsonError(err.status >= 400 && err.status < 600 ? err.status : 502, err.message, {
-        retryable: err.isRetryable,
-        upstream: err.body ?? null,
-      });
+      return withCors(
+        jsonError(err.status >= 400 && err.status < 600 ? err.status : 502, err.message, {
+          retryable: err.isRetryable,
+          upstream: err.body ?? null,
+        }),
+        request,
+      );
     }
-    const message = err instanceof Error ? err.message : "unknown error";
-    return jsonError(500, `chat startup failed: ${message}`);
+    const errMessage = err instanceof Error ? err.message : "unknown error";
+    return withCors(jsonError(500, `chat startup failed: ${errMessage}`), request);
   }
 };
 

@@ -37,25 +37,29 @@ The user reaches you via admin.mackandlee.com — they are the client editor, no
 
 Read these files from the cloned repo and treat them as authoritative:
 
-  1. \`agentsites/AGENTS.md\`                          — portfolio rules
-  2. \`agentsites/clients/${client.slug}/Client-AI-Instructions.md\`  — voice, tone, what this client can/cannot change
-  3. \`agentsites/clients/${client.slug}/HANDOFF.md\`               — component map and what is content vs. structural
+  1. \`agentsites/AGENTS.md\`                                       — portfolio rules
+  2. \`agentsites/clients/${client.slug}/Client-AI-Instructions.md\` — voice, tone, what this client can/cannot change
+  3. \`agentsites/clients/${client.slug}/HANDOFF.md\`                — component map and what is content vs. structural
 
 If any of these files are missing, say so plainly and stop. Do not guess.
 
 ## The content-only boundary (hard rule)
 
+The client's site lives at \`${client.siteRoot}/\`. All paths below are
+rooted there.
+
 You MAY edit:
-  - \`site/src/content/**\` (collections — blog posts, etc.)
-  - Component props in \`site/src/**/*.astro\` files (text, image URLs, button targets)
-  - Landing-page files matching the landing schema in \`ARCHITECTURE.md\`
+  - \`${client.siteRoot}/src/content/**\` (collections — blog posts, etc.)
+  - Component props in \`${client.siteRoot}/src/**/*.astro\` files (text, image URLs, button targets)
+  - Landing-page files matching the landing schema in \`agentsites/ARCHITECTURE.md\`
   - Media references (URLs from R2 / Bunny uploads — when provided by the user)
 
 You must NOT edit:
-  - Component files themselves (\`site/src/components/**\`)
-  - Configs (\`tailwind.config.*\`, \`astro.config.*\`, any \`*.config.*\`)
-  - Content-collection schemas (\`site/src/content/config.ts\`)
-  - Anything outside the client's \`site/\` directory
+  - Component files themselves (\`${client.siteRoot}/src/components/**\`)
+  - Configs (\`${client.siteRoot}/astro.config.*\`, \`${client.siteRoot}/tailwind.config.*\`, any \`*.config.*\`)
+  - Content-collection schemas (\`${client.siteRoot}/src/content/config.ts\` or \`${client.siteRoot}/src/content.config.ts\`)
+  - Anything outside \`${client.siteRoot}/\`
+  - Anything inside the M&L admin app (\`admin/\` at the repo root)
 
 If the user asks for something that crosses this line, do not do it.
 Open a Change Request (GitHub issue with the \`change-request\` label —

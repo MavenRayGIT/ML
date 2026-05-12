@@ -15,25 +15,31 @@
  * the server; the browser only ever sees the relayed SSE.
  */
 
+import { corsHeaders, preflightResponse, withCors } from "../../../src/lib/cors";
 import { streamRun } from "../../../src/lib/cursor";
 
 interface Env {
   CURSOR_API_KEY?: string;
 }
 
+export const onRequestOptions: PagesFunction<Env> = async ({ request }) => preflightResponse(request);
+
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   if (!env.CURSOR_API_KEY) {
-    return new Response("CURSOR_API_KEY is not configured.", {
-      status: 503,
-      headers: { "Cache-Control": "no-store" },
-    });
+    return withCors(
+      new Response("CURSOR_API_KEY is not configured.", {
+        status: 503,
+        headers: { "Cache-Control": "no-store" },
+      }),
+      request,
+    );
   }
 
   const url = new URL(request.url);
   const agentId = url.searchParams.get("agentId");
   const runId = url.searchParams.get("runId");
   if (!agentId || !runId) {
-    return new Response("agentId and runId are required.", { status: 400 });
+    return withCors(new Response("agentId and runId are required.", { status: 400 }), request);
   }
 
   const upstream = await streamRun({
@@ -45,10 +51,13 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
   if (!upstream.ok || !upstream.body) {
     const text = await upstream.text().catch(() => "");
-    return new Response(text || `upstream stream returned ${upstream.status}`, {
-      status: upstream.status,
-      headers: { "Content-Type": "text/plain", "Cache-Control": "no-store" },
-    });
+    return withCors(
+      new Response(text || `upstream stream returned ${upstream.status}`, {
+        status: upstream.status,
+        headers: { "Content-Type": "text/plain", "Cache-Control": "no-store" },
+      }),
+      request,
+    );
   }
 
   // Forward the stream body as-is. Headers reduced to what SSE clients care
@@ -58,6 +67,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache, no-transform",
     "X-Accel-Buffering": "no",
+    ...corsHeaders(request.headers.get("Origin")),
   };
   const retention = upstream.headers.get("X-Cursor-Stream-Retention-Seconds");
   if (retention) headers["X-Cursor-Stream-Retention-Seconds"] = retention;

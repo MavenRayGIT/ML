@@ -37,12 +37,22 @@ import { CLIENTS } from "../lib/clients";
                     {client.stagingUrl}
                   </a>
                 </div>
-                <a
-                  href={`/edit/${client.slug}`}
-                  class="shrink-0 inline-flex items-center px-3 py-1.5 text-sm font-medium bg-[var(--color-ink)] text-[var(--color-paper)] rounded-md hover:bg-[var(--color-ink-soft)]"
-                >
-                  Open editor
-                </a>
+                <div class="flex items-center gap-2 shrink-0">
+                  <a
+                    href={`/upload?site=${client.slug}`}
+                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-[var(--color-line)] rounded-md hover:bg-[var(--color-mute)]"
+                  >
+                    Upload
+                  </a>
+                  <a
+                    href={client.stagingUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium bg-[var(--color-ink)] text-[var(--color-paper)] rounded-md hover:bg-[var(--color-ink-soft)]"
+                  >
+                    Open staging ↗
+                  </a>
+                </div>
               </div>
 
               <div class="border-t border-[var(--color-line)] divide-y divide-[var(--color-line)] text-sm">
@@ -87,12 +97,14 @@ import { CLIENTS } from "../lib/clients";
     <aside
       class="mt-10 border border-dashed border-[var(--color-line)] rounded-lg px-5 py-4 text-xs text-[var(--color-text-soft)] leading-relaxed"
     >
-      <p class="font-medium text-[var(--color-text)] mb-1">Phase -1 shell</p>
+      <p class="font-medium text-[var(--color-text)] mb-1">Phase -1 — compressed</p>
       <p>
-        Site cards, Ready-to-publish pills, and New-page-requests counts are
-        wired to a static registry in <code>src/lib/clients.ts</code>. Phase 0
-        replaces this with D1-backed reads. Cursor SDK chat lands once this
-        shell is reviewed.
+        Editing happens <em>on staging itself</em> via <code>embed.js</code>
+        (right-side chat drawer + element overlay), not inside this admin app.
+        Open Staging on any site card to land in the editing surface. Site
+        cards, Ready-to-publish pills, and New-page-requests counts are wired
+        to a static registry in <code>src/lib/clients.ts</code>; Phase 0
+        swaps these to D1.
       </p>
     </aside>
   </section>

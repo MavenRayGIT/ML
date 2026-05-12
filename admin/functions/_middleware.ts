@@ -67,20 +67,33 @@ async function safeEqual(a: string, b: string): Promise<boolean> {
 
 /**
  * Public path prefixes — auth is skipped here so the URLs can be embedded in
- * client `<img src>` tags, MDX content, share links, etc.
+ * client `<img src>`, `<script src>`, MDX content, share links, etc.
  *
- *   /m/*  — R2 media reads via functions/m/[[path]].ts. The keys themselves
- *           are content-hashed and effectively unguessable, so the bucket
- *           stays protected from enumeration without an auth gate in front.
+ *   /m/*       — R2 media reads via functions/m/[[path]].ts. The keys are
+ *                content-hashed (SHA-256, see src/lib/media.ts) so the bucket
+ *                stays protected from enumeration without an auth gate.
+ *
+ *   /embed.js  — the client toolbar bundle. Loaded as a cross-origin script
+ *                tag on `*.mackandlee.com` staging sites; `<script>` requests
+ *                cannot carry Basic-Auth credentials, so this MUST be open.
+ *                The script itself is harmless without the API behind it,
+ *                which is still gated.
  */
 const PUBLIC_PREFIXES = ["/m/"] as const;
+const PUBLIC_EXACT = new Set<string>(["/embed.js", "/embed.js.map"]);
 
 function isPublicPath(pathname: string): boolean {
+  if (PUBLIC_EXACT.has(pathname)) return true;
   return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { request, env, next } = context;
+
+  // CORS preflights never carry credentials and must pass the gate. The
+  // /api/* endpoints themselves still re-validate the origin and apply
+  // their own CORS headers (src/lib/cors.ts).
+  if (request.method === "OPTIONS") return next();
 
   if (isPublicPath(new URL(request.url).pathname)) return next();
 
