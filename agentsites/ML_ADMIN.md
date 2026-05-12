@@ -12,7 +12,7 @@ Items noted in passing. Pick up when there's spare time; none of these block cli
 | Item | Noted | Notes |
 |---|---|---|
 | `www.mackandlee.com` returns Cloudflare 522 (origin timeout from WPX) | 2026-05-11 | Apex `https://mackandlee.com` works fine; only the `www` variant fails. Pre-existing — WPX vhost likely not configured for `www`. Fix options: (a) Cloudflare Page Rule / Bulk Redirect `www.mackandlee.com/*` → `https://mackandlee.com/$1` (5 min, recommended), or (b) ask WPX to add `www` to the vhost. Low priority because canonical apex works and search engines respect it. |
-| **Staging banner → client toolbar (v2 concept)** | 2026-05-11 | Right now `<client>.mackandlee.com` shows a plain black banner identifying the env. Concept for v2: turn that bar into an interactive **client toolbar** with quick actions — "Chat with M&L," "Talk to Claude," "View analytics," "Request a change," "Push to prod." Belongs in the M&L-wide multi-tenant admin app (`admin.mackandlee.com`), injected into staging sites via a small embed script — **not** baked into each client repo. Keeps client codebases clean and lets us ship the toolbar once for all clients. Worth doing once we have 2+ Track A clients live. |
+| **Staging banner → client toolbar (v2 concept)** | 2026-05-11 → scoped 2026-05-12 v1.1 → **paused 2026-05-12 evening** | ~~Right now `<client>.mackandlee.com` shows a plain black banner identifying the env. Concept for v2: turn that bar into an interactive **client toolbar** with quick actions...~~ **Scoped in [`SYSTEM_ADMIN.md`](SYSTEM_ADMIN.md) v1.1–1.2; Phase -1 built and parked 2026-05-12 evening.** See [`SYSTEM_ADMIN_V1.md`](SYSTEM_ADMIN_V1.md) for the active near-term plan (Cursor IDE locally + thin staging control panel). The full SDK-driven toolbar remains the Phase 1+ target. Revisit when we onboard client #2. |
 
 ---
 
@@ -110,6 +110,27 @@ Complete in this order when onboarding a new client:
 - [ ] CLIENT_ADMIN.md delivered to client
 - [ ] Claude project set up for client with SITE.md loaded
 - [ ] Test: client makes a blog post request, verify full pipeline
+
+### 7. System Admin onboarding (once System Admin v1 is live)
+
+Per `SYSTEM_ADMIN.md`. Roughly 30-45 min per client.
+
+- [ ] Create Bunny Stream library for the client; capture API key
+- [ ] Create R2 bucket: `ml-media-<client>`; configure CORS for `<client>.mackandlee.com`
+- [ ] Configure Cloudflare Images for this CF account if not already done (one-time, portfolio-wide)
+- [ ] Store per-client secrets in Workers secrets:
+  - `MEDIA_<CLIENT>_BUNNY_API_KEY`
+  - `MEDIA_<CLIENT>_BUNNY_LIBRARY_ID`
+  - `MEDIA_<CLIENT>_R2_BUCKET`
+- [ ] Add row to D1 `client_media_config` (quota overrides, secret names)
+- [ ] Add row to D1 `identity_map` for each client user (email, role, clients)
+- [ ] Add `data-ml-block` attributes to client's section components (one-time pass)
+- [ ] Add manifest emitter integration to client's Astro build
+- [ ] Add `PUBLIC_ML_CLIENT_SLUG` and `PUBLIC_ML_TOOLBAR_ENABLED=false` to client's env
+- [ ] Load embed script in `src/layouts/Page.astro` per §12a
+- [ ] Verify embed script loads cleanly on staging
+- [ ] When ready: flip `PUBLIC_ML_TOOLBAR_ENABLED` to `true`
+- [ ] Test end-to-end: client logs in, edits a block, promotes the page, change goes live
 
 ---
 
@@ -325,13 +346,20 @@ When ANALYTICS.md, HANDOFF.md, or ARCHITECTURE.md is updated:
 
 ## Sustained Outcomes Specifics
 
-- **Repo:** `ml-sustainedoutcomes-site`
-- **Cloudflare project:** `sustained-outcomes`
+- **Repo:** `MavenRayGIT/ML` (monorepo) — app root `agentsites/clients/sustainedoutcomes/site/`
+- **Cloudflare projects:**
+  - `ml-sustainedoutcomes` (Workers, SSR) — staging at `sustainedoutcomes.mackandlee.com` (Workers Builds "Production branch" = `staging`)
+  - `sustainedoutcomes-prod` (Pages, static placeholder) — to be deleted when SO launches with own domain
+- **Branches:** `staging` (active client work) → `main` (production, currently placeholder)
 - **Client contact:** Ken Jacobsen
+- **Editing workflow (V1):** Ken edits in Cursor IDE locally; commits to `staging`; views result at `sustainedoutcomes.mackandlee.com`. See [`SYSTEM_ADMIN_V1.md`](SYSTEM_ADMIN_V1.md). No browser-hosted chat editor.
 - **Report email:** [Ken's email]
-- **Claude project:** Sustained Outcomes (Ken's account)
+- **Claude project:** Sustained Outcomes (Ken's account) — currently superseded for site edits by Cursor IDE; retain for blog content workflows
 - **Key events to monitor:** Request a Meeting clicks, Fund This Work clicks
 - **Green hosting:** verify at thegreenwebfoundation.org post-launch
 - **Blog cadence:** irregular, client-driven
 - **Priority landing page:** Oakland Outdoors registration
+
+For Cloudflare project setup detail (env vars, custom domains,
+gotchas), see [`ops/CLOUDFLARE_SETUP.md`](ops/CLOUDFLARE_SETUP.md).
 

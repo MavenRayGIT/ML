@@ -1,15 +1,42 @@
 # SYSTEM ADMIN — Mack & Lee
 > Specification for the M&L multi-tenant admin app (`admin.mackandlee.com`)
 > and the in-page client toolbar.
-> Version: 1.2 — admin app moved into the `MavenRayGIT/ML` monorepo at `/admin/`; rest of v1.1 unchanged.
-> Read alongside `ARCHITECTURE.md`, `CHANGE_REQUEST.md`, `ML_ADMIN.md`,
-> and `CLIENT_ADMIN.md`.
+> Version: 1.3 — Phase -1 spike completed; SDK-admin model superseded
+> for the near term by `SYSTEM_ADMIN_V1.md` (2026-05-12 pivot).
+> Read alongside `SYSTEM_ADMIN_V1.md` (what we're actually building
+> now), `ops/CLOUDFLARE_SETUP.md` (operational runbook),
+> `ARCHITECTURE.md`, `CHANGE_REQUEST.md`, `ML_ADMIN.md`, and
+> `CLIENT_ADMIN.md`.
+
+---
+
+> ## ⚠️ Active near-term plan: `SYSTEM_ADMIN_V1.md`
+>
+> The Phase -1 spike (built end of 2026-05-12) implemented the chat
+> pill + Cursor cloud agent + auto-merge action against the real SO
+> site. It works. The end-to-end latency (~50–100s from "do this" to
+> "see it on staging") makes it unworkable for live editing of a
+> one-client marketing site.
+>
+> **What's active right now:** see `SYSTEM_ADMIN_V1.md`. Clients edit
+> locally in Cursor IDE (live HMR); staging is preview + control
+> panel only; M&L doesn't run an in-browser chat editor.
+>
+> **What this doc remains:** the target architecture for Phase 1+
+> (multi-client, centralized AI ops). The Phase -1 → Phase 5 plan
+> below is paused, not deleted — the work compounds when we revisit.
+>
+> When to come back to this doc: when V1's economics break (client
+> #2, or operational drag of asking every client to bring Cursor
+> Pro). See `SYSTEM_ADMIN_V1.md` §8 for revisit triggers.
 
 ---
 
 ## Status
 
-Specification only. Nothing in this document is built yet.
+Specification only. Phase -1 was built and is now parked (see
+`SYSTEM_ADMIN_V1.md` for what's active). Phases 0–5 below are still
+target architecture, not built.
 Implementation sequencing in §16.
 
 **Pilot client:** Sustained Outcomes (Ken). Treated as the pilot for
@@ -1456,10 +1483,20 @@ remain open before Phase 0 can start.
 | # | Question | Decision |
 |---|---|---|
 | 1 | Repo location | **Monorepo: `MavenRayGIT/ML/admin/`** (revised 2026-05-12 PM; was: "`ml-admin` — new GitHub repo"). Reversed after weighing the operational cost of fetching `agentsites/AGENTS.md` + `clients/<client>/HANDOFF.md` from GitHub API per chat turn (for system-prompt assembly, §6) against the lifecycle-separation benefit of a sibling repo. Monorepo wins: local file reads, no API surface, no rate-limit concerns. Client-extraction promises in `DEVHANDOFF.md` are unaffected — they were already a per-client surgical step regardless of admin location. |
-| — | Phase -1 AI surface for Ken | **Cursor SDK from day 1.** Skip Cursor IDE for client. Tests production stack from pilot start. |
-| — | Phase -1 ↔ Phase 2 publish mechanism | **Marker-commit + bundled M&L gate** (§9a). No Promote button until Phase 3. |
+| — | Phase -1 AI surface for Ken | **Cursor SDK from day 1.** Skip Cursor IDE for client. Tests production stack from pilot start. **(Reversed 2026-05-12 PM after Phase -1 spike measured ~50–100s end-to-end latency; see `SYSTEM_ADMIN_V1.md`.)** |
+| — | Phase -1 ↔ Phase 2 publish mechanism | **Marker-commit + bundled M&L gate** (§9a). No Promote button until Phase 3. **(Parked under V1; see `SYSTEM_ADMIN_V1.md` §5 Layer 3 — Push Live button replaces marker-commits at one-client scale.)** |
 | — | New page handling pre-Phase-4 | **Routes to M&L via structured intake** (§7g). M&L builds in Cursor IDE. |
-| — | Ken's pilot pricing | **At-cost during build phase.** Formal tier post-launch. |
+| — | Ken's pilot pricing | **At-cost during build phase.** Formal tier post-launch. **(Revised under V1: Ken pays for Cursor Pro $20/mo directly; M&L only absorbs admin hosting cost. See `SYSTEM_ADMIN_V1.md`.)** |
+
+### Newly resolved (2026-05-12 evening, post Phase -1 spike → V1 pivot)
+
+| # | Question | Decision |
+|---|---|---|
+| V1-1 | Near-term editing surface (1–4 clients) | **Cursor IDE on client machine.** Astro dev server HMR gives <1s feedback for free. Browser-hosted SDK chat reserved for Phase 1+. Documented in `SYSTEM_ADMIN_V1.md`. |
+| V1-2 | Build platform for SO | **Cloudflare Workers SSR (kept).** Static Pages was the alternative; SSR's ~30s build/deploy beats Pages' ~90s for the staging Sync button UX, and we already paid the migration cost. |
+| V1-3 | What to do with all the Phase -1 code | **Park in repo, don't delete.** Auto-merge action renamed `.disabled`; embed pill gated by `PUBLIC_ML_EDIT_ENABLED` env var; chat endpoints respond 503 with `CURSOR_API_KEY` removed. Revival is a config flip, not a rebuild. Full inventory in `SYSTEM_ADMIN_V1.md` §4. |
+| V1-4 | Sync button mechanic | **Option A: status display + manual refresh, no active build trigger.** Workers Builds auto-deploys reliably; manual trigger adds complexity for marginal gain. |
+| V1-5 | Push Live mechanic | **Whole-site `staging → main` merge via GitHub API.** No per-page promote in V1. |
 
 ### Still open
 
@@ -1530,3 +1567,4 @@ Build order inside Phase 0:
 | 1.0 | 2026-05-12 (AM) | Initial spec from System Admin v1 design session. Resolves `ML_ADMIN.md` parking-lot v2 toolbar concept. |
 | 1.1 | 2026-05-12 (PM) | Pilot-first restructure. Added Phase -1 (Cursor SDK pilot at `admin.mackandlee.com/edit/<client>`, 3-5 days). Split §9 into marker-commit pattern (§9a, early phases) and per-page pipeline (§9b, Phase 3+). Added §7g (New Page Request flow for pre-Phase-4 phases). Moved pages-as-content-collection refactor from pre-Phase-2 to Phase 4. Added "Ready to publish" and "New page requests" and "Your Plan" cards to Admin Home. Resolved repo decision (`ml-admin` new repo). Documented Ken's at-cost pilot pricing. |
 | 1.2 | 2026-05-12 (later PM) | Reversed the §17 "ml-admin as separate repo" decision. Admin app now lives inside the `MavenRayGIT/ML` monorepo at `admin/`. Driver: SDK system-prompt assembly (§6) reads `agentsites/AGENTS.md` + `clients/<client>/HANDOFF.md` per turn — local file reads are dramatically simpler than per-turn GitHub API fetches. No code changes elsewhere in the spec. |
+| 1.3 | 2026-05-12 (evening) | Added V1 pivot banner pointing to `SYSTEM_ADMIN_V1.md`. Phase -1 spike was built end-to-end (admin shell + chat pill + Cursor agent + auto-merge + SSR migration of SO site) and proved that the model works but is too slow (~50–100s e2e) for live editing at one-client scale. Phase -1 → Phase 5 plan parked; near-term work shifts to "Cursor IDE locally + staging control panel" per the new doc. The long-term spec (Phase 1+ multi-client) remains the target. No content removed from this doc — Phase -1 code parked in repo, revivable with config flips. New decisions logged in §17. |

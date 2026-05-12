@@ -145,6 +145,7 @@ Standard labels applied to every repo:
 | Label | Color | Meaning |
 |-------|-------|---------|
 | `change-request` | Blue | All CRs — applied automatically |
+| `help-request` | Light blue | Question or support need, not a code change. Routed to M&L for direct response; does not enter the CR pipeline. Created by the System Admin "send a message" form (see `SYSTEM_ADMIN.md` §11). |
 | `approved` | Green | M&L approved, Claude can implement |
 | `deferred` | Yellow | Bundled to next sprint |
 | `needs-info` | Orange | M&L needs clarification before deciding |
@@ -307,6 +308,10 @@ Never say "the Issue was labeled" — say:
 ### Trigger: New Issue with label `change-request`
 → Email client: confirmation of submission
 → Email M&L: review notification with Issue link
+
+### Trigger: New Issue with label `help-request`
+→ Email M&L only: support request with Issue link + client + message body
+→ No client email — M&L responds directly via Chatwoot or reply-to email
 
 ### Trigger: Issue labeled `staging-ready` (and NOT `ml-review`)
 → Email client: staging preview link

@@ -23,19 +23,46 @@ You build the structure. Claude maintains it.
 Read this before reading anything else — it tells you what already exists.
 
 - **Repo:** `MavenRayGIT/ML`, cloned to `/Users/jpielak/Documents/PROJECTS/ML_System/ML`.
-- **Astro app location:** `agentsites/clients/sustainedoutcomes/site/` — this is the Cloudflare Pages **build root**, not the repo root.
-- **Stack installed:** Astro 6, **Tailwind CSS v4** (`@tailwindcss/vite`, CSS-based config in `src/styles/global.css`), `@astrojs/mdx`, `@astrojs/partytown`. Local `npm run build` works.
-- **Live URL (staging environment):** <https://sustained-outcomes.mackandlee.com>. Currently serves a **hand-rolled placeholder** (a "Sustained Outcomes" headline with "In development" eyebrow). The real homepage from `HANDOFF.md` is **not** built yet — it's still on Step 1 of the Build Order below.
-- **Cloudflare Pages:** connected to `main`, **Root directory** `agentsites/clients/sustainedoutcomes/site`, **Build** `npm run build`, **Output** `dist`, **`NODE_VERSION=22`**.
+- **Astro app location:** `agentsites/clients/sustainedoutcomes/site/` — this is the Cloudflare Workers **build root**, not the repo root.
+- **Stack installed:** Astro 6, **Tailwind CSS v4** (`@tailwindcss/vite`, CSS-based config in `src/styles/global.css`), `@astrojs/mdx`, `@astrojs/partytown`, **`@astrojs/cloudflare` adapter (SSR)**. Local `npm run build` works.
+- **Hosting:** **Cloudflare Workers (SSR), not Cloudflare Pages.** Migrated 2026-05-12 to enable a faster staging Sync experience. `output: "server"` in `astro.config.mjs`. Cache-control middleware in `src/middleware.ts`. `prerender = true` on `src/pages/blog/[...slug].astro`. The adapter generates `dist/wrangler.json` at build time — do **not** add a hand-written `wrangler.jsonc` at the site root (it fails the `main`-field validation pre-build). Full runbook: [`../../ops/CLOUDFLARE_SETUP.md`](../../ops/CLOUDFLARE_SETUP.md).
+- **Live URL (staging environment):** <https://sustainedoutcomes.mackandlee.com>. Backed by the `ml-sustainedoutcomes` Workers project with Production branch = `staging`. Currently serves the in-development site.
+- **Live URL (production placeholder):** the `sustainedoutcomes-prod` Pages project still exists at a placeholder domain. To be decommissioned when SO launches with the client's real domain — at which point the prod URL moves to the Workers `main` branch deploy.
+- **Workers Builds config:** **Root directory** `agentsites/clients/sustainedoutcomes/site`, **Build** `npm run build`, **Deploy** `npx wrangler deploy`, **Production branch** `staging`, **`NODE_VERSION=22`**.
 - **Image assets already in repo:** 6 photos in `site/src/assets/` (`image 3.jpg`, `image 6.jpg`, `image 9.jpg`, `image 10.jpg`, `image 11.jpg`, `image 12.jpg`). **Spaces in filenames work but should be renamed** (e.g. `hero-erb.jpg`) before referencing in components.
 - **User context:** the M&L partner driving this project is a **designer, not a developer**. Prefer step-by-step instructions when running anything outside Cursor (terminal commands, Cloudflare dashboard clicks, etc.).
 
+## V1 editing workflow
+
+As of 2026-05-12, the in-browser AI editor described in
+`SYSTEM_ADMIN.md` is **parked**. Active near-term plan:
+[`../../SYSTEM_ADMIN_V1.md`](../../SYSTEM_ADMIN_V1.md).
+
+Ken (and any agent acting on his behalf) edits this site locally:
+
+```
+clone MavenRayGIT/ML
+cd agentsites/clients/sustainedoutcomes/site
+npm install
+npm run dev          # Astro dev server, HMR <1s
+```
+
+Commits go to the **`staging` branch directly**. No PRs from
+`cursor/**` branches; no `staging-ready` labels; no chat pill. The
+staging Worker auto-deploys on each push. Production cutover happens
+via a "Push Live" button in the staging banner (Layer 3 of V1),
+implemented as a `staging → main` GitHub-API merge.
+
+Files that any agent may edit are constrained by
+`.cursor/rules/*.mdc` (to be added in Layer 1 of V1 — see todo
+list). Defense-in-depth: optional commit hooks under
+`.cursor/hooks/` that reject changes outside the allowlist.
+
 ## Open items / known divergences from the spec
 
-- **Cloudflare Pages root directory needs updating.** After the repo restructure (clients folder), the Cloudflare Pages project root must be changed from `agentsites/sustainedoutcomes/site` to `agentsites/clients/sustainedoutcomes/site`. Until that's done, the next deploy will fail.
-- **`staging` branch does not exist yet.** The brief specifies `staging` → PR → `main`, but everything so far has been pushed directly to `main`. Create the `staging` branch and configure Cloudflare branch deploys *before* starting real page work.
 - **Tailwind v4, not v3.** The `tailwind.config.mjs` snippets in `HANDOFF.md` are written in legacy v3 style (`theme.extend.colors`, etc.). The installed Tailwind is **v4**, which uses **`@theme { … }`** inside `src/styles/global.css`. Translate the token *values* exactly; the *form* will be CSS, not a JS config.
 - **`ContactAmber`, `ContactModal`, and the blog modules** listed in `MODULES.md` and the Amendments section of `HANDOFF.md` are **planned**, not built. Don't assume they exist.
+- **The legacy `sustained-outcomes.mackandlee.com` URL no longer points anywhere useful** after the 2026-05-12 consolidation. The current staging URL is `sustainedoutcomes.mackandlee.com` (no hyphen). Any internal links or test scripts referencing the hyphenated form need updating.
 
 ---
 
@@ -395,14 +422,19 @@ optimization. `/public/` stays reserved for files that must be served as-is
 
 ## Deployment Environment
 
-| Branch | URL | Purpose |
-|--------|-----|---------|
-| `staging` | `sustained-outcomes.mackandlee.com` | All development work lands here |
-| `main` | `sustainedoutcomes.com` (when DNS is moved) | Production — merge only, never push direct |
+| Branch | URL | Hosting | Purpose |
+|--------|-----|---------|---------|
+| `staging` | `sustainedoutcomes.mackandlee.com` | Cloudflare Workers (SSR) — `ml-sustainedoutcomes` | All development work lands here. Auto-deploys on every push. |
+| `main` | (placeholder; will be the client's real domain at launch) | Currently `sustainedoutcomes-prod` (Pages, static); future: `ml-sustainedoutcomes` Workers `main` branch deploy | Production — promoted from `staging` via the "Push Live" button on the staging banner (Layer 3 of V1) |
 
 **All Cursor work goes to the `staging` branch.** Never commit to `main`
-directly. Production deploys via PR: `staging` → `main` only.
+directly. Production deploys via `staging → main` GitHub merge,
+triggered by the Push Live button — no PR review intermediate step
+under V1 since the M&L partner is the sole reviewer.
 
-Ken reviews everything at `sustained-outcomes.mackandlee.com` before
-anything goes live at `sustainedoutcomes.com`.
+Ken reviews everything at `sustainedoutcomes.mackandlee.com` before
+clicking Push Live to send it to the client's real domain.
+
+For Cloudflare project setup and gotchas, see
+[`../../ops/CLOUDFLARE_SETUP.md`](../../ops/CLOUDFLARE_SETUP.md).
 
