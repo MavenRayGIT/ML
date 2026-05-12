@@ -339,6 +339,33 @@ const heroMinHeight =
       };
     }
 
+    /**
+     * Build an SVG <rect> from viewport-space edges. Snaps each edge to
+     * an integer viewport pixel BEFORE deriving the svg-space x/y/w/h,
+     * so the rect's rendered position lands on the same pixel grid
+     * regardless of the host element's fractional position. This is
+     * the key trick that lets two rects in separate SVGs (headline +
+     * body) meet on the same integer row without a sub-pixel gap or
+     * an overlap that would compound the group alpha.
+     *
+     * `shape-rendering="crispEdges"` tells the rasterizer not to
+     * anti-alias the rect's axis-aligned edges — paired with integer
+     * snapping above, this gives a hard pixel-perfect boundary.
+     */
+    function makeSnappedRect(hostBox, leftV, topV, rightV, bottomV) {
+      const left   = Math.round(leftV);
+      const top    = Math.round(topV);
+      const right  = Math.round(rightV);
+      const bottom = Math.round(bottomV);
+      const rect = document.createElementNS(SVG_NS, 'rect');
+      rect.setAttribute('x',      String(left   - hostBox.left));
+      rect.setAttribute('y',      String(top    - hostBox.top));
+      rect.setAttribute('width',  String(right  - left));
+      rect.setAttribute('height', String(bottom - top));
+      rect.setAttribute('shape-rendering', 'crispEdges');
+      return rect;
+    }
+
     function paintBlock(svg) {
       const host = svg.parentElement;
       if (!host) return;
@@ -391,37 +418,31 @@ const heroMinHeight =
              LEFT  → continuous left rail with the headline block.
              TOP   → seam with the headline block's bottom (no gap,
                      no overlap).
-           If no previous block exists, the base pads above apply. */
+           Because the previous block's rects were also pixel-snapped
+           on paint, prevEdges.bottom is already an integer viewport
+           pixel — `makeSnappedRect` below sees an already-integer
+           value and rounds it back to itself, so the seam is exact. */
         const prevEdges = findPrevBlockEdges(svg);
         if (prevEdges) {
           if (prevEdges.left   !== null) rectLeftViewport = prevEdges.left;
           if (prevEdges.bottom !== null) rectTopViewport  = prevEdges.bottom;
         }
 
-        const x  = rectLeftViewport   - hostBox.left;
-        const y  = rectTopViewport    - hostBox.top;
-        const rw = rectRightViewport  - rectLeftViewport;
-        const rh = rectBottomViewport - rectTopViewport;
-
-        const rect = document.createElementNS(SVG_NS, 'rect');
-        rect.setAttribute('x', String(x));
-        rect.setAttribute('y', String(y));
-        rect.setAttribute('width', String(rw));
-        rect.setAttribute('height', String(rh));
-        group.appendChild(rect);
+        group.appendChild(
+          makeSnappedRect(hostBox, rectLeftViewport, rectTopViewport, rectRightViewport, rectBottomViewport),
+        );
       } else {
         /* line mode — one rect per visual line of text. */
         for (const line of lines) {
-          const x  = line.left - hostBox.left - padX;
-          const y  = line.top  - hostBox.top  - padY;
-          const rw = line.width  + 2 * padX;
-          const rh = line.height + 2 * padY;
-          const rect = document.createElementNS(SVG_NS, 'rect');
-          rect.setAttribute('x', String(x));
-          rect.setAttribute('y', String(y));
-          rect.setAttribute('width', String(rw));
-          rect.setAttribute('height', String(rh));
-          group.appendChild(rect);
+          group.appendChild(
+            makeSnappedRect(
+              hostBox,
+              line.left  - padX,
+              line.top   - padY,
+              line.right + padX,
+              line.bottom + padY,
+            ),
+          );
         }
       }
       svg.appendChild(group);
