@@ -52,6 +52,17 @@ const {
 
 // Default: render. Production deploys can suppress with the env var.
 const showStagingBanner = import.meta.env.PUBLIC_HIDE_STAGING_BANNER !== 'true';
+
+// M&L edit drawer (embed.js) — opt-in via env var so production never
+// loads it. Staging CF Pages env should set:
+//   PUBLIC_ML_EDIT_ENABLED=true
+//   PUBLIC_ML_ADMIN_ORIGIN=https://admin.mackandlee.com  (optional override)
+// The embed mounts a Shadow-DOM drawer + launcher; styles are isolated
+// and the script is loaded `defer` so it can't block page paint.
+const enableMlEdit = import.meta.env.PUBLIC_ML_EDIT_ENABLED === 'true';
+const mlAdminOrigin =
+  import.meta.env.PUBLIC_ML_ADMIN_ORIGIN ?? 'https://admin.mackandlee.com';
+const mlEditSrc = enableMlEdit ? `${mlAdminOrigin}/embed.js` : null;
 ---
 
 <Base {...baseProps}>
@@ -69,4 +80,8 @@ const showStagingBanner = import.meta.env.PUBLIC_HIDE_STAGING_BANNER !== 'true';
   </main>
 
   {!hideFooter && <Footer />}
+
+  {mlEditSrc && (
+    <script src={mlEditSrc} data-ml-edit="sustainedoutcomes" defer></script>
+  )}
 </Base>
