@@ -1,0 +1,99 @@
+---
+import Base from "../layouts/Base.astro";
+import { CLIENTS } from "../lib/clients";
+
+// Phase -1 admin home: site card + Ready-to-publish + New-page-requests for
+// each client. Per SYSTEM_ADMIN.md §4a and §16. Data is read from the static
+// registry today; Phase 0 swaps it for D1 reads in a server endpoint.
+---
+
+<Base title="Admin" description="Mack & Lee internal admin dashboard.">
+  <section class="max-w-6xl mx-auto px-6 py-10">
+    <header class="mb-8">
+      <h1 class="text-2xl font-semibold tracking-tight">Clients</h1>
+      <p class="text-sm text-[var(--color-text-soft)] mt-1">
+        Pilot phase. One card per Track A client.
+      </p>
+    </header>
+
+    <div class="grid gap-5 md:grid-cols-2">
+      {
+        CLIENTS.map((client) => {
+          const hasPending = (client.pendingPublishCount ?? 0) > 0;
+          const hasPageReq = (client.newPageRequests ?? 0) > 0;
+          return (
+            <article
+              class="border border-[var(--color-line)] rounded-lg bg-[var(--color-paper)] overflow-hidden"
+            >
+              <div class="px-5 py-4 flex items-start justify-between gap-4">
+                <div>
+                  <h2 class="text-base font-semibold">{client.name}</h2>
+                  <a
+                    href={client.stagingUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    class="text-xs text-[var(--color-text-soft)] hover:text-[var(--color-text)] underline-offset-2 hover:underline break-all"
+                  >
+                    {client.stagingUrl}
+                  </a>
+                </div>
+                <a
+                  href={`/edit/${client.slug}`}
+                  class="shrink-0 inline-flex items-center px-3 py-1.5 text-sm font-medium bg-[var(--color-ink)] text-[var(--color-paper)] rounded-md hover:bg-[var(--color-ink-soft)]"
+                >
+                  Open editor
+                </a>
+              </div>
+
+              <div class="border-t border-[var(--color-line)] divide-y divide-[var(--color-line)] text-sm">
+                <div class="px-5 py-3 flex items-center justify-between">
+                  <span class="text-[var(--color-text-soft)]">Ready to publish</span>
+                  {hasPending ? (
+                    <span class="inline-flex items-center gap-2">
+                      <span class="inline-block w-2 h-2 rounded-full bg-[var(--color-accent)]" />
+                      <span>
+                        {client.pendingPublishCount} change
+                        {(client.pendingPublishCount ?? 0) === 1 ? "" : "s"} since{" "}
+                        {client.pendingPublishSince ?? "—"}
+                      </span>
+                    </span>
+                  ) : (
+                    <span class="text-[var(--color-text-soft)]">Nothing pending</span>
+                  )}
+                </div>
+
+                <div class="px-5 py-3 flex items-center justify-between">
+                  <span class="text-[var(--color-text-soft)]">New page requests</span>
+                  {hasPageReq ? (
+                    <span>
+                      {client.newPageRequests} open
+                    </span>
+                  ) : (
+                    <span class="text-[var(--color-text-soft)]">None</span>
+                  )}
+                </div>
+
+                <div class="px-5 py-3 flex items-center justify-between">
+                  <span class="text-[var(--color-text-soft)]">Repo</span>
+                  <span class="font-mono text-xs">{client.repo}</span>
+                </div>
+              </div>
+            </article>
+          );
+        })
+      }
+    </div>
+
+    <aside
+      class="mt-10 border border-dashed border-[var(--color-line)] rounded-lg px-5 py-4 text-xs text-[var(--color-text-soft)] leading-relaxed"
+    >
+      <p class="font-medium text-[var(--color-text)] mb-1">Phase -1 shell</p>
+      <p>
+        Site cards, Ready-to-publish pills, and New-page-requests counts are
+        wired to a static registry in <code>src/lib/clients.ts</code>. Phase 0
+        replaces this with D1-backed reads. Cursor SDK chat lands once this
+        shell is reviewed.
+      </p>
+    </aside>
+  </section>
+</Base>

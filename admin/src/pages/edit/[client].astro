@@ -1,0 +1,63 @@
+---
+import Base from "../../layouts/Base.astro";
+import ChatPanel from "../../components/ChatPanel.astro";
+import StagingIframe from "../../components/StagingIframe.astro";
+import { CLIENTS, getClient } from "../../lib/clients";
+
+export function getStaticPaths() {
+  return CLIENTS.map((c) => ({ params: { client: c.slug } }));
+}
+
+const { client: clientSlug } = Astro.params;
+const client = clientSlug ? getClient(clientSlug) : undefined;
+
+if (!client) {
+  // getStaticPaths gates this, but the type system doesn't know that.
+  throw new Error(`Unknown client: ${clientSlug}`);
+}
+---
+
+<Base
+  title={`Edit · ${client.name}`}
+  description={`Edit ${client.name} via chat + staging preview.`}
+  bare={true}
+>
+  <div class="flex-1 flex flex-col">
+    <div class="border-b border-[var(--color-line)] bg-[var(--color-paper)]">
+      <div class="px-4 h-12 flex items-center justify-between text-sm">
+        <div class="flex items-center gap-3">
+          <a
+            href="/"
+            class="inline-flex items-center gap-2 text-[var(--color-text-soft)] hover:text-[var(--color-text)]"
+          >
+            <span
+              class="inline-block w-5 h-5 rounded-sm bg-[var(--color-ink)] text-[var(--color-paper)] grid place-items-center text-[9px] font-bold"
+            >
+              M&L
+            </span>
+            <span>Admin</span>
+          </a>
+          <span class="text-[var(--color-line)]">›</span>
+          <span class="font-medium">{client.name}</span>
+          <span class="text-[var(--color-line)]">›</span>
+          <span class="text-[var(--color-text-soft)]">Edit</span>
+        </div>
+        <a
+          href={`/upload?site=${client.slug}`}
+          class="px-3 py-1.5 text-xs rounded border border-[var(--color-line)] hover:bg-[var(--color-mute)]"
+        >
+          Upload media
+        </a>
+      </div>
+    </div>
+
+    <div class="flex-1 grid grid-cols-[minmax(320px,_420px)_1fr] min-h-0">
+      <aside class="border-r border-[var(--color-line)] min-h-0 min-w-0">
+        <ChatPanel clientSlug={client.slug} clientName={client.name} />
+      </aside>
+      <section class="min-h-0 min-w-0">
+        <StagingIframe stagingUrl={client.stagingUrl} clientName={client.name} />
+      </section>
+    </div>
+  </div>
+</Base>

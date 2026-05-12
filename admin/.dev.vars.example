@@ -1,0 +1,14 @@
+# Local secrets for `wrangler pages dev`. Copy to `.dev.vars` (gitignored).
+#
+# Basic-auth credentials for the Pages Functions middleware. In production,
+# set these as Pages env vars on the `ml-admin` project (Settings → Env vars).
+BASIC_AUTH_USER=admin
+BASIC_AUTH_PASS=change-me-locally
+
+# Cursor cloud-agents API key. Generate at:
+#   https://cursor.com/dashboard/integrations  (user API key)
+#   or Team Settings → Service Accounts        (service-account key)
+# Used for HTTP Basic against api.cursor.com (passed as "<key>:" — note the
+# trailing colon). See https://cursor.com/docs/cloud-agent/api/endpoints.
+CURSOR_API_KEY=
+

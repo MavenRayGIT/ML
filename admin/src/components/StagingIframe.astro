@@ -1,0 +1,71 @@
+---
+interface Props {
+  stagingUrl: string;
+  clientName: string;
+}
+
+const { stagingUrl, clientName } = Astro.props;
+---
+
+<section class="flex flex-col h-full bg-[var(--color-paper)]" aria-label="Staging preview">
+  <header
+    class="px-4 py-2 border-b border-[var(--color-line)] flex items-center gap-3 text-xs"
+  >
+    <span
+      class="inline-block w-2 h-2 rounded-full bg-[var(--color-ink)]"
+      aria-hidden="true"
+    ></span>
+    <span class="text-[var(--color-text-soft)]">Staging</span>
+    <span class="text-[var(--color-text)]">{clientName}</span>
+    <span class="mx-1 text-[var(--color-line)]">/</span>
+    <a
+      id="staging-url"
+      href={stagingUrl}
+      target="_blank"
+      rel="noreferrer"
+      class="font-mono text-[var(--color-text-soft)] hover:text-[var(--color-text)] truncate"
+      title={stagingUrl}
+    >
+      {stagingUrl}
+    </a>
+    <span class="ml-auto flex items-center gap-2">
+      <button
+        id="staging-reload"
+        type="button"
+        class="px-2 py-1 text-xs rounded border border-[var(--color-line)] hover:bg-[var(--color-mute)]"
+        aria-label="Reload preview"
+      >
+        Reload
+      </button>
+      <a
+        href={stagingUrl}
+        target="_blank"
+        rel="noreferrer"
+        class="px-2 py-1 text-xs rounded border border-[var(--color-line)] hover:bg-[var(--color-mute)]"
+      >
+        Open ↗
+      </a>
+    </span>
+  </header>
+  <div class="flex-1 bg-[var(--color-mute)]">
+    <iframe
+      id="staging-frame"
+      src={stagingUrl}
+      title={`${clientName} staging`}
+      class="w-full h-full border-0 bg-[var(--color-paper)]"
+      loading="lazy"
+      referrerpolicy="no-referrer"
+    ></iframe>
+  </div>
+</section>
+
+<script>
+  const btn = document.getElementById("staging-reload") as HTMLButtonElement | null;
+  const frame = document.getElementById("staging-frame") as HTMLIFrameElement | null;
+  if (btn && frame) {
+    btn.addEventListener("click", () => {
+      // Re-assigning src avoids cross-origin reload issues.
+      frame.src = frame.src;
+    });
+  }
+</script>

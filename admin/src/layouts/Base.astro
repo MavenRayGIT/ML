@@ -1,0 +1,60 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description?: string;
+  /** When true, removes the global chrome (header/footer) — used by /edit. */
+  bare?: boolean;
+}
+
+const { title, description, bare = false } = Astro.props;
+const fullTitle = title === "Admin" ? "M&L Admin" : `${title} — M&L Admin`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>{fullTitle}</title>
+    {description && <meta name="description" content={description} />}
+  </head>
+  <body class="min-h-screen flex flex-col">
+    {
+      !bare && (
+        <header class="border-b border-[var(--color-line)] bg-[var(--color-paper)]">
+          <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-3 text-sm font-medium">
+              <span
+                class="inline-block w-6 h-6 rounded-sm bg-[var(--color-ink)] text-[var(--color-paper)] grid place-items-center text-[10px] font-bold tracking-wider"
+              >
+                M&L
+              </span>
+              <span>System Admin</span>
+            </a>
+            <nav class="text-sm text-[var(--color-text-soft)] flex items-center gap-5">
+              <a href="/" class="hover:text-[var(--color-text)]">Dashboard</a>
+              <a href="/upload" class="hover:text-[var(--color-text)]">Upload</a>
+            </nav>
+          </div>
+        </header>
+      )
+    }
+    <main class={bare ? "flex-1 flex flex-col" : "flex-1"}>
+      <slot />
+    </main>
+    {
+      !bare && (
+        <footer class="border-t border-[var(--color-line)] py-4">
+          <div class="max-w-6xl mx-auto px-6 flex items-center justify-between text-xs text-[var(--color-text-soft)]">
+            <span>admin.mackandlee.com</span>
+            <span>Phase -1 · pilot shell</span>
+          </div>
+        </footer>
+      )
+    }
+  </body>
+</html>

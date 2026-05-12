@@ -1,0 +1,31 @@
+{
+  // Cloudflare Pages project config. Wrangler v4 reads this for `pages dev`
+  // and `pages deploy`. Bindings added here (R2, D1, Cursor SDK secrets) will
+  // be available to anything under `functions/`. None needed in Phase -1.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ml-admin",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-05-12",
+  // `nodejs_compat` lets functions/* use `Buffer`, `crypto`, and similar shims
+  // if needed. The chat function does not require Node APIs today; flag stays
+  // on so future helpers (e.g. JSON-schema validators that pull in Node) work
+  // without a config change.
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  // R2 — single shared bucket, per-client path prefix (SYSTEM_ADMIN.md §10
+  // storage layout). Phase 0 will introduce per-client buckets keyed by
+  // client_media_config. Create the bucket once before first deploy:
+  //   npx wrangler r2 bucket create ml-media
+  "r2_buckets": [
+    { "binding": "MEDIA", "bucket_name": "ml-media" }
+  ]
+  // Secrets (managed via the Pages dashboard or `.dev.vars` locally):
+  //   BASIC_AUTH_USER, BASIC_AUTH_PASS  — gate in functions/_middleware.ts
+  //   CURSOR_API_KEY                    — used by functions/api/chat/*
+  //
+  // Phase 0+ will add bindings such as:
+  //   "d1_databases": [{ "binding": "DB", "database_name": "ml-admin", "database_id": "..." }]
+}

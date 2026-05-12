@@ -1,0 +1,299 @@
+---
+import Base from "../layouts/Base.astro";
+import { CLIENTS, getClient } from "../lib/clients";
+
+// Phase -1 uploader — wired to POST /api/upload. Returns content-addressed
+// URLs at /m/<key>. See SYSTEM_ADMIN.md §10 and functions/api/upload.ts.
+//
+// Scoping (per SYSTEM_ADMIN.md §5 roles):
+//   - One site in scope (Phase -1 reality) → no picker, just a "Uploading to"
+//     label so the destination is unambiguous.
+//   - Multiple sites in scope (Phase 0 + onward, after identity_map lands) →
+//     dropdown labeled "Site". Client-editor sees their site(s); ml-admin
+//     sees all sites portfolio-wide. Phase 0 wires the role gate.
+//
+// `?site=<slug>` in the URL forces a specific destination — used by the
+// editor's "Upload media" button so uploads in-flow auto-scope to the site
+// the editor is on.
+
+const requested = Astro.url.searchParams.get("site")?.trim();
+const requestedSite = requested ? getClient(requested) : undefined;
+
+// What's selectable on this load:
+//   - `?site=<slug>` matches a record → lock to that site
+//   - Otherwise the full registry (Phase 0 will intersect with the caller's
+//     identity_map.clients[] entry)
+const scopedSites = requestedSite ? [requestedSite] : CLIENTS;
+const defaultSite = scopedSites[0]!;
+const lockedToOne = scopedSites.length === 1;
+---
+
+<Base title="Upload" description="Upload images and docs to client storage.">
+  <section class="max-w-3xl mx-auto px-6 py-10">
+    <header class="mb-6">
+      <h1 class="text-2xl font-semibold tracking-tight">Upload media</h1>
+      <p class="text-sm text-[var(--color-text-soft)] mt-1">
+        Phase -1 stand-in for the toolbar's
+        <code>📁 Add Media</code> modal. Drag in images or docs and copy the
+        returned URL.
+      </p>
+    </header>
+
+    <form id="upload-form" class="space-y-4">
+      <label
+        for="upload-input"
+        id="dropzone"
+        class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-[var(--color-line)] rounded-lg px-6 py-12 text-center cursor-pointer hover:border-[var(--color-ink)]/40 hover:bg-[var(--color-mute)]/40 transition-colors"
+      >
+        <span class="text-base font-medium">Drop files here</span>
+        <span class="text-xs text-[var(--color-text-soft)]">
+          or click to choose · images (JPG, PNG, WebP, AVIF, SVG, HEIC) and docs (PDF, DOC, DOCX, XLSX, MD, TXT, CSV)
+        </span>
+        <span class="text-[10px] text-[var(--color-text-soft)]">
+          Video routes to Bunny Stream — not wired in Phase -1
+        </span>
+        <input
+          id="upload-input"
+          type="file"
+          multiple
+          class="sr-only"
+          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.md,.heic,.heif"
+        />
+      </label>
+
+      <fieldset class="flex items-center gap-3 text-sm">
+        {
+          lockedToOne ? (
+            <>
+              <span class="text-[var(--color-text-soft)]">Uploading to</span>
+              <span class="font-medium">{defaultSite.name}</span>
+              <input
+                type="hidden"
+                id="site-select"
+                name="site"
+                value={defaultSite.slug}
+              />
+            </>
+          ) : (
+            <>
+              <label for="site-select" class="text-[var(--color-text-soft)]">
+                Site
+              </label>
+              <select
+                id="site-select"
+                name="site"
+                class="rounded-md border border-[var(--color-line)] px-3 py-1.5 bg-[var(--color-paper)] text-sm"
+              >
+                {scopedSites.map((s) => (
+                  <option value={s.slug} selected={s.slug === defaultSite.slug}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </>
+          )
+        }
+      </fieldset>
+    </form>
+
+    <ol id="upload-queue" class="mt-6 space-y-2"></ol>
+  </section>
+</Base>
+
+<script is:inline>
+  const form = /** @type {HTMLFormElement} */ (document.getElementById("upload-form"));
+  const input = /** @type {HTMLInputElement} */ (document.getElementById("upload-input"));
+  const dropzone = /** @type {HTMLLabelElement} */ (document.getElementById("dropzone"));
+  const queue = /** @type {HTMLOListElement} */ (document.getElementById("upload-queue"));
+  // The site control is either a <select> (multi-site) or a hidden <input>
+  // (locked). Both expose `.value`, so we read it via the shared `value` API.
+  const siteControl = /** @type {HTMLSelectElement | HTMLInputElement | null} */ (document.getElementById("site-select"));
+
+  if (!form || !input || !dropzone || !queue || !siteControl) {
+    console.warn("[upload] expected DOM elements missing");
+  } else {
+    function fmtSize(bytes) {
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    }
+
+    /**
+     * @param {File} file
+     * @returns {{ row: HTMLLIElement, status: HTMLSpanElement, actions: HTMLDivElement }}
+     */
+    function startRow(file) {
+      const row = document.createElement("li");
+      row.className =
+        "border border-[var(--color-line)] rounded-md px-3 py-2 text-sm flex flex-col gap-2";
+
+      const top = document.createElement("div");
+      top.className = "flex items-center justify-between gap-3";
+
+      const left = document.createElement("div");
+      left.className = "min-w-0 flex-1";
+      const name = document.createElement("div");
+      name.className = "font-medium truncate";
+      name.textContent = file.name;
+      const meta = document.createElement("div");
+      meta.className = "text-xs text-[var(--color-text-soft)]";
+      meta.textContent = `${fmtSize(file.size)} · ${file.type || "unknown"}`;
+      left.appendChild(name);
+      left.appendChild(meta);
+
+      const status = document.createElement("span");
+      status.className =
+        "text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--color-mute)] text-[var(--color-text-soft)] whitespace-nowrap";
+      status.textContent = "UPLOADING";
+
+      top.appendChild(left);
+      top.appendChild(status);
+
+      const actions = document.createElement("div");
+      actions.className = "hidden gap-2 items-center";
+
+      row.appendChild(top);
+      row.appendChild(actions);
+      queue.appendChild(row);
+
+      return { row, status, actions };
+    }
+
+    /**
+     * @param {{ status: HTMLSpanElement, actions: HTMLDivElement }} ui
+     * @param {{ url: string, key: string, contentType: string, deduped: boolean }} payload
+     * @param {File} file
+     */
+    function finishRow(ui, payload, file) {
+      ui.status.textContent = payload.deduped ? "DEDUPED" : "UPLOADED";
+      ui.status.className =
+        "text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--color-ink)] text-[var(--color-paper)] whitespace-nowrap";
+
+      ui.actions.className = "flex gap-2 items-center mt-1";
+
+      // URL display + copy
+      const urlBox = document.createElement("input");
+      urlBox.type = "text";
+      urlBox.readOnly = true;
+      urlBox.value = payload.url;
+      urlBox.className =
+        "flex-1 min-w-0 text-xs font-mono px-2 py-1 rounded border border-[var(--color-line)] bg-[var(--color-mute)]";
+
+      const copyBtn = document.createElement("button");
+      copyBtn.type = "button";
+      copyBtn.textContent = "Copy URL";
+      copyBtn.className =
+        "shrink-0 text-xs px-2 py-1 rounded border border-[var(--color-line)] hover:bg-[var(--color-mute)]";
+      copyBtn.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(payload.url);
+          const prev = copyBtn.textContent;
+          copyBtn.textContent = "Copied";
+          setTimeout(() => { copyBtn.textContent = prev; }, 1200);
+        } catch {
+          urlBox.select();
+        }
+      });
+
+      ui.actions.appendChild(urlBox);
+      ui.actions.appendChild(copyBtn);
+
+      // Thumbnail for images
+      if (payload.contentType.startsWith("image/") && file.type !== "image/svg+xml") {
+        const thumb = document.createElement("img");
+        thumb.src = payload.url;
+        thumb.alt = file.name;
+        thumb.loading = "lazy";
+        thumb.className =
+          "mt-2 max-h-32 rounded border border-[var(--color-line)] object-contain bg-[var(--color-mute)]";
+        ui.actions.parentElement?.appendChild(thumb);
+      }
+    }
+
+    /**
+     * @param {{ status: HTMLSpanElement }} ui
+     * @param {string} message
+     */
+    function failRow(ui, message) {
+      ui.status.textContent = "FAILED";
+      ui.status.className =
+        "text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--color-accent)] text-white whitespace-nowrap";
+      const detail = document.createElement("p");
+      detail.className = "text-xs text-[var(--color-accent)] mt-1";
+      detail.textContent = message;
+      ui.status.parentElement?.parentElement?.appendChild(detail);
+    }
+
+    /** @param {File} file */
+    async function upload(file) {
+      const ui = startRow(file);
+      const body = new FormData();
+      body.append("site", siteControl.value);
+      body.append("file", file, file.name);
+
+      let response;
+      try {
+        response = await fetch("/api/upload", {
+          method: "POST",
+          credentials: "include",
+          body,
+        });
+      } catch (err) {
+        failRow(ui, `network error: ${err instanceof Error ? err.message : String(err)}`);
+        return;
+      }
+
+      if (!response.ok) {
+        let detail = `${response.status} ${response.statusText}`;
+        try { detail = (await response.json()).error ?? detail; } catch {}
+        failRow(ui, detail);
+        return;
+      }
+
+      let payload;
+      try {
+        payload = await response.json();
+      } catch {
+        failRow(ui, "server returned a non-JSON response");
+        return;
+      }
+      finishRow(ui, payload, file);
+    }
+
+    /** @param {FileList | File[] | null | undefined} files */
+    function uploadAll(files) {
+      if (!files) return;
+      // Sequential to keep memory pressure low — Workers caps body at 100MiB
+      // per request and parallel large uploads can OOM the browser too.
+      Array.from(files).reduce(
+        (chain, file) => chain.then(() => upload(file)),
+        Promise.resolve(),
+      );
+    }
+
+    input.addEventListener("change", () => {
+      uploadAll(input.files);
+      input.value = "";
+    });
+
+    ["dragenter", "dragover"].forEach((evt) =>
+      dropzone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        dropzone.classList.add("border-[var(--color-ink)]/60", "bg-[var(--color-mute)]/60");
+      }),
+    );
+    ["dragleave", "drop"].forEach((evt) =>
+      dropzone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        dropzone.classList.remove("border-[var(--color-ink)]/60", "bg-[var(--color-mute)]/60");
+      }),
+    );
+
+    dropzone.addEventListener("drop", (event) => {
+      const e = /** @type {DragEvent} */ (event);
+      if (e.dataTransfer?.files) uploadAll(e.dataTransfer.files);
+    });
+
+    form.addEventListener("submit", (event) => event.preventDefault());
+  }
+</script>
