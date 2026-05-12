@@ -35,24 +35,30 @@
  *
  *   v4 introduces a **staggered active window** for each edge. Each
  *   edge holds flat (0px) until its scroll-progress window starts,
- *   animates linearly to fully-angled across the window, then holds
- *   fully-angled (SLOPE × width) until the section exits the
+ *   animates (softly eased) to fully-angled across the window, then
+ *   holds fully-angled (SLOPE × width) until the section exits the
  *   viewport:
  *
- *     TOP edge:   p < 0.25  →  flat                  (held flat at entry)
- *                 0.25 → 0.50  →  animating          (develops first)
+ *     TOP edge:   p < 0.10  →  flat                  (brief hold at entry)
+ *                 0.10 → 0.30  →  animating          (develops first)
+ *                 p > 0.30  →  fully angled
+ *
+ *     BOT edge:   p < 0.30  →  flat                  (waits for top to finish)
+ *                 0.30 → 0.50  →  animating          (develops second)
  *                 p > 0.50  →  fully angled
  *
- *     BOT edge:   p < 0.50  →  flat                  (waits for top to finish)
- *                 0.50 → 0.80  →  animating          (develops second)
- *                 p > 0.80  →  fully angled
+ *   Both edges fully developed by p = 0.50 — i.e. by the time the
+ *   section is roughly centred in the viewport, the angled
+ *   silhouette is complete. After that the section holds at full
+ *   angle as it scrolls up and out.
  *
- *   Net feel: section enters flat, holds flat through ~25% of its
- *   scroll-through, top edge then develops as the section
- *   approaches the middle of the viewport, bottom edge follows on
- *   a slow stagger, both then sit fully-angled before the section
- *   exits. The hold-then-move-then-hold pattern makes the motion
- *   read as deliberate rather than continuous-and-imperceptible.
+ *   Net feel: section enters mostly flat, top edge commits to motion
+ *   almost immediately, bottom edge follows on a slow stagger, both
+ *   are fully angled by the time the section is centre-screen, and
+ *   the section then exits fully formed. The brief hold-then-move
+ *   pattern still gives a deliberate "this is moving now" beat
+ *   without making the user wait through too much flat-rectangle
+ *   state.
  *
  *   Depth at fully-angled = `SLOPE × section.width` where
  *   `SLOPE = tan(7°) ≈ 0.1228`. Width-relative so the apparent
@@ -388,9 +394,10 @@ const reveal = angled ? undefined : 'header';
    * `SLOPE × width` with a smoothstep ease so the transition into
    * and out of motion is gentle, not abrupt.
    *
-   *   TOP_WINDOW = [0.25, 0.50]   — top develops first, around mid-view
-   *   BOT_WINDOW = [0.50, 0.80]   — bot follows on a slow stagger
-   *   easing      = smoothstep    — t² × (3 - 2t), eases in and out
+   *   TOP_WINDOW = [0.10, 0.30]   — top develops first, almost immediately
+   *   BOT_WINDOW = [0.30, 0.50]   — bot follows on a slow stagger, done by mid-view
+   *   easing      = 50% smoothstep — softens window boundaries without
+   *                 over-accelerating through the middle of the window
    *
    * Net feel: section enters flat, holds flat through ~25% of its
    * scroll-through, top edge then commits to motion as the section
@@ -428,10 +435,14 @@ const reveal = angled ? undefined : 'header';
     const SLOPE = 0.1228; // tan(7°) — match the value in the reduced-motion CSS rule above
 
     // Per-edge active windows in scroll progress p ∈ [0, 1].
-    const TOP_START = 0.25;
-    const TOP_END   = 0.50;
-    const BOT_START = 0.50;
-    const BOT_END   = 0.80;
+    // Both windows complete by p=0.5 — by the time the section is
+    // centred in the viewport, the angled silhouette is fully
+    // developed. Bot starts exactly when top ends, no gap, no
+    // overlap — clean sequential.
+    const TOP_START = 0.10;
+    const TOP_END   = 0.30;
+    const BOT_START = 0.30;
+    const BOT_END   = 0.50;
 
     const remap = (p: number, start: number, end: number): number => {
       if (p <= start) return 0;
@@ -439,11 +450,18 @@ const reveal = angled ? undefined : 'header';
       return (p - start) / (end - start);
     };
 
-    // Smoothstep — cubic Hermite ease-in-out. Zero velocity at both
-    // endpoints, no overshoot. Softens the abrupt start/stop you'd
-    // get from a pure linear remap inside the active window. Identity
-    // at 0 and 1, so it composes cleanly with `remap` above.
-    const easeInOut = (t: number): number => t * t * (3 - 2 * t);
+    // Soft ease-in-out — average of smoothstep and linear (factor 0.5).
+    // Smoothstep alone (t²(3-2t)) reads as too much acceleration here;
+    // pure linear has hard start/stop at the window edges. Averaging
+    // them gives a curve that softens the boundaries while keeping
+    // most of the motion's mid-window velocity feeling linear.
+    // Identity at 0 and 1, so it composes cleanly with `remap` above.
+    // Tune EASE_STRENGTH 0 (linear) → 1 (full smoothstep) to taste.
+    const EASE_STRENGTH = 0.5;
+    const easeInOut = (t: number): number => {
+      const s = t * t * (3 - 2 * t); // smoothstep
+      return t + EASE_STRENGTH * (s - t);
+    };
 
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 

@@ -103,34 +103,35 @@ Net effect: card "trades vertical real estate" on hover — image compresses, mo
 > fighting transitions.
 
 **Staggered motion — top and bottom edges develop on separate scroll
-windows.** The section enters the viewport as a **plain rectangle**
-(no angle) and holds flat for the first ~25% of its scroll-through.
-The **top edge** then develops as the section approaches mid-viewport
-(p=0.25 → p=0.50). After top finishes, the **bottom edge** follows on
-a slow stagger (p=0.50 → p=0.80). Top-right (0% from top, at the right
-edge) and bottom-left (100% from top, at the left edge) are
+windows, both complete by mid-viewport.** The section enters the
+viewport as a **plain rectangle** (no angle) and holds flat briefly.
+The **top edge** then develops almost immediately (p=0.10 → p=0.30).
+After top finishes, the **bottom edge** follows on a stagger
+(p=0.30 → p=0.50). By the time the section is centred in the viewport
+(p=0.5), both edges are fully developed and the section then holds at
+full angle as it scrolls up and out. Top-right (0% from top, at the
+right edge) and bottom-left (100% from top, at the left edge) are
 **anchored** at the section's corners and never move — each diagonal
 pivots around its anchor.
 
 Visually:
 
 - At viewport entry, the panel looks like a normal full-bleed
-  rectangle. No drama. Holds flat for the first quarter of its scroll.
-- As the section approaches the middle of the viewport, the top edge
-  commits to motion — tilts down on the left, develops the angled
-  cut.
-- Once the top edge has finished developing, the bottom edge starts
-  its own motion — tilts up on the right.
-- Both then hold at full angle until the section exits the top of the
-  viewport.
+  rectangle. Brief hold-flat.
+- Top edge commits to motion almost immediately — tilts down on the
+  left, develops the angled cut.
+- As soon as top finishes, the bottom edge starts its own motion —
+  tilts up on the right.
+- By the time the section is roughly centred in the viewport, both
+  edges are fully developed. The section holds at full angle for the
+  rest of its scroll-through.
 - Content inside (image, text, eyebrow, headline, body, CTA) stays
   anchored. Only the clip-path moves.
 
-The hold-then-move-then-hold pattern is the point: it reads as a
-deliberate "this is moving now" beat rather than a
-continuous-but-imperceptible drift. The stagger between edges
-reinforces that beat — top finishes, then bot starts. Sequential,
-not synchronized.
+The brief hold-then-move pattern gives a deliberate "this is moving
+now" beat without making the user wait through a long flat-rectangle
+phase. The stagger between edges reads as sequential rather than
+synchronized — top finishes, then bot starts.
 
 > **Geometry note — why the moving vertices stay inside the box.**
 > Earlier attempts moved polygon vertices past the section's box edges
@@ -148,10 +149,10 @@ model — `cover 0% → cover 100%`:
 p = (viewport.height - rect.top) / (viewport.height + rect.height)
 ```
 
-- `p ∈ [0, 0.25]` — section is entering; both edges held flat (`--angle-grow-top: 0; --angle-grow-bot: 0`).
-- `p ∈ [0.25, 0.50]` — **top edge active window**. `--angle-grow-top` animates linearly from `0` → `SLOPE × width`. Bot still flat.
-- `p ∈ [0.50, 0.80]` — **bot edge active window**. `--angle-grow-bot` animates linearly from `0` → `SLOPE × width`. Top now held at full angle.
-- `p ∈ [0.80, 1]` — section exiting; both edges held fully angled.
+- `p ∈ [0, 0.10]` — section is entering; both edges held flat (`--angle-grow-top: 0; --angle-grow-bot: 0`).
+- `p ∈ [0.10, 0.30]` — **top edge active window**. `--angle-grow-top` animates (softly eased) from `0` → `SLOPE × width`. Bot still flat.
+- `p ∈ [0.30, 0.50]` — **bot edge active window**. `--angle-grow-bot` animates from `0` → `SLOPE × width`. Top now held at full angle.
+- `p ∈ [0.50, 1]` — section centred and exiting; both edges held fully angled.
 
 SLOPE = `tan(7°) ≈ 0.1228` — the value the JS uses to scale the depth to section width so the angle reads as the same 7° slope across viewport sizes.
 - 1280px section → fully-angled Δ = 157px (calibrated reference)
@@ -189,25 +190,32 @@ Implementation lives in `FeatureSplit.astro`:
 
 A small inline script (rAF-throttled scroll listener gated by
 `IntersectionObserver`) remaps the raw scroll progress through two
-edge-specific active windows, then applies a smoothstep ease so the
-motion eases in and out at the window boundaries instead of
-starting/stopping abruptly. Each variable is written per frame:
+edge-specific active windows, then applies a **half-strength
+smoothstep** ease so the motion eases in and out at the window
+boundaries without over-accelerating through the middle. Each
+variable is written per frame:
 
 ```
-smoothstep(t) = t² × (3 - 2t)   // zero velocity at endpoints, no overshoot
-pTop = smoothstep(remap(p, TOP_START=0.25, TOP_END=0.50))
-pBot = smoothstep(remap(p, BOT_START=0.50, BOT_END=0.80))
+smoothstep(t) = t² × (3 - 2t)
+ease(t)       = t + 0.5 × (smoothstep(t) - t)   // 50% smoothstep, 50% linear
+
+pTop = ease(remap(p, TOP_START=0.10, TOP_END=0.30))
+pBot = ease(remap(p, BOT_START=0.30, BOT_END=0.50))
 --angle-grow-top = pTop × SLOPE × section.width
 --angle-grow-bot = pBot × SLOPE × section.width
 ```
 
-Why ease inside the window? With pure linear remap inside the active
-window, slope jumps from 0 to a constant the instant `p` crosses
-`TOP_START` — that registers as a hard start. Smoothstep softens the
-entry into and exit out of motion so the edge accelerates and
-decelerates gently within its window. The hold-flat / hold-angled
-phases outside the window do the structural pacing work; the ease
-inside the window keeps the motion itself feeling refined.
+Why a partial ease? Pure linear remap inside the active window has
+hard start/stop at the window edges — slope jumps from 0 to constant
+the instant `p` crosses `TOP_START`. Full smoothstep over-corrects in
+the other direction — the motion is so eased that the middle of the
+window feels accelerated and the edges feel mushy. Averaging the two
+softens the window boundaries while keeping the motion's mid-window
+velocity close to linear. Tune `EASE_STRENGTH` 0→1 to taste.
+
+The hold-flat / hold-angled phases outside the window do the
+structural pacing work; the partial ease inside the window keeps the
+motion itself feeling refined without overdoing the curve.
 
 SLOPE = `tan(7°) ≈ 0.1228`. Width-relative so the **7° apparent
 slope** is consistent across viewport sizes — wider sections get more
