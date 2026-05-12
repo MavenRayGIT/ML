@@ -11,10 +11,9 @@
   // on so future helpers (e.g. JSON-schema validators that pull in Node) work
   // without a config change.
   "compatibility_flags": ["nodejs_compat"],
-  "observability": {
-    "enabled": true,
-    "head_sampling_rate": 1
-  },
+  // Note: `observability` is a Workers-only key. CF Pages reads this same file
+  // and rejects unknown blocks, so observability lives in the Pages dashboard
+  // (Settings → Functions → Observability) instead.
   // R2 — single shared bucket, per-client path prefix (SYSTEM_ADMIN.md §10
   // storage layout). Phase 0 will introduce per-client buckets keyed by
   // client_media_config. Create the bucket once before first deploy:
