@@ -84,9 +84,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         promptText,
         repoUrl,
         startingRef: "staging",
-        // Phase -1: agent creates its own `cursor/…` branch. User won't see
-        // edits on staging until that branch is merged — the marker-commit
-        // publish flow (§9a) is the eventual bridge. Documented gap.
+        // Cursor cloud agents always commit to a per-run `cursor/<id>`
+        // branch — not configurable, the platform forces it for safety.
+        // `.github/workflows/auto-merge-cursor-to-staging.yml` watches
+        // those pushes and fast-forwards (or merges) into staging, so the
+        // end-user keeps refreshing the same staging URL and sees their
+        // edits land. autoCreatePR stays off — the action IS the deploy.
         autoCreatePR: false,
         skipReviewerRequest: true,
       });

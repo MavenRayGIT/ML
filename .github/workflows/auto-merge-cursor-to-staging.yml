@@ -1,0 +1,100 @@
+# Auto-merge `cursor/**` agent branches into `staging`.
+#
+# Why this exists
+# ---------------
+# The M&L admin chat drawer (admin.mackandlee.com) drives Cursor cloud agents
+# via the /v1/agents REST API. Every run produces commits on a fresh
+# `cursor/<description>-<id>` branch — that's a platform-level behaviour of
+# Cursor cloud agents and not something the system prompt can override.
+#
+# Ken (the end user) is told "your edit is published" and refreshes the
+# staging URL. Without this action, the staging URL never updates because the
+# commit is sitting on a per-run branch nobody's looking at. This action
+# closes that loop: every cursor/* push fast-forwards (or merges) into
+# `staging`, which is what Cloudflare Workers Builds rebuilds and what the
+# `staging-ml-sustainedoutcomes.jpielak.workers.dev` URL serves.
+#
+# Why fast-forward usually works
+# ------------------------------
+# `admin/functions/api/chat.ts` passes `startingRef: "staging"` when it
+# creates each agent, so the cursor branch is forked from the current
+# staging tip. A clean ff is the common case; the no-ff fallback exists for
+# the race where another commit lands on staging between fork and push.
+#
+# Concurrency
+# -----------
+# Cursor agents can run in parallel (multiple Ken sessions, multiple
+# clients). We serialize merges through a single concurrency group so two
+# cursor branches never try to push to staging at the same time. We do NOT
+# cancel-in-progress — each merge is small and important; queuing is fine.
+#
+# Failure mode
+# ------------
+# If the merge conflicts, the job fails loudly and does NOT push. The
+# cursor branch is preserved as-is; Ken's staging URL stays at the last
+# clean state. We'll see the failed job in the Actions tab and can resolve
+# by hand. No silent overwrites.
+#
+# What this action is NOT
+# -----------------------
+# - It does not delete cursor branches after merge. They're a paper trail
+#   of which agent run produced which commit; cheap to keep around.
+# - It does not run tests or builds. Cloudflare Workers Builds runs the
+#   build on the resulting staging push; that's the gate.
+# - It does not open PRs. The merge is the deploy signal in Phase -1.
+#   Phase 0+ may reintroduce a PR-based review step for production cutover.
+
+name: Auto-merge cursor branches to staging
+
+on:
+  push:
+    branches:
+      - 'cursor/**'
+
+concurrency:
+  group: auto-merge-staging
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    name: Merge ${{ github.ref_name }} → staging
+    runs-on: ubuntu-latest
+    permissions:
+      # actions/checkout writes refs; the final `git push` needs write too.
+      contents: write
+    steps:
+      - name: Checkout staging
+        uses: actions/checkout@v4
+        with:
+          ref: staging
+          # Full history so the merge has every base commit it needs.
+          # cursor/* branches are normally only a few commits ahead of
+          # staging so depth: 0 isn't really expensive here.
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name  "ml-admin-bot"
+          git config user.email "ml-admin-bot@users.noreply.github.com"
+
+      - name: Fetch source branch
+        run: git fetch origin "${{ github.ref_name }}"
+
+      - name: Merge into staging
+        env:
+          SOURCE_REF: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          echo "Attempting fast-forward of staging to ${SOURCE_REF}…"
+          if git merge --ff-only "origin/${SOURCE_REF}"; then
+            echo "::notice title=Fast-forward::staging now at ${SOURCE_REF}"
+          else
+            echo "Fast-forward not possible — staging has diverged. Creating a merge commit."
+            git merge --no-ff "origin/${SOURCE_REF}" \
+              -m "auto-merge: ${SOURCE_REF} → staging"
+            echo "::notice title=Merge commit::staging merged ${SOURCE_REF}"
+          fi
+
+      - name: Push staging
+        run: git push origin staging
