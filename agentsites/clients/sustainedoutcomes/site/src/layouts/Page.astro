@@ -84,5 +84,5 @@ const mlEditSrc = enableMlEdit ? `${mlAdminOrigin}/embed.js` : null;
   {mlEditSrc && (
     <script src={mlEditSrc} data-ml-edit="sustainedoutcomes" defer></script>
   )}
-  <!-- Hello from the M&L agent -->
+  <Fragment set:html="<!-- Hello from the M&L agent -->" />
 </Base>
