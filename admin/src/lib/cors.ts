@@ -40,8 +40,24 @@ const ALLOWED_ORIGINS = new Set<string>([
   "http://127.0.0.1:8788",
 ]);
 
-/** Allow the SO Pages preview branch URLs (`*.ml-sustainedoutcomes.pages.dev`). */
-const ALLOWED_HOST_SUFFIXES = [".pages.dev"] as const;
+/**
+ * Cross-origin hosts allowed via suffix match. These are the *deploy preview
+ * surfaces* the client sites can be served from while we don't yet have
+ * stable custom domains pointed at them:
+ *
+ *   .pages.dev          — Cloudflare Pages branch/commit preview URLs, used
+ *                         for any client still on the static Pages stack.
+ *   .jpielak.workers.dev — Cloudflare Workers per-branch preview URLs for
+ *                         clients on the SSR Workers stack (e.g.
+ *                         `staging-ml-sustainedoutcomes.jpielak.workers.dev`).
+ *                         Account-scoped: another CF account would have a
+ *                         different subdomain and not match this suffix, so
+ *                         this isn't equivalent to allowing `.workers.dev`.
+ *
+ * When we move clients to their real `*.mackandlee.com` domains, those go in
+ * the `ALLOWED_ORIGINS` exact-match list above.
+ */
+const ALLOWED_HOST_SUFFIXES = [".pages.dev", ".jpielak.workers.dev"] as const;
 
 export function isAllowedOrigin(origin: string | null | undefined): boolean {
   if (!origin) return false;
