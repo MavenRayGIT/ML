@@ -39,26 +39,24 @@
  *   holds fully-angled (SLOPE × width) until the section exits the
  *   viewport:
  *
- *     TOP edge:   p < 0.10  →  flat                  (brief hold at entry)
- *                 0.10 → 0.30  →  animating          (develops first)
- *                 p > 0.30  →  fully angled
+ *     TOP edge:   p < 0.10     →  flat               (brief hold at entry)
+ *                 0.10 → 0.30  →  animating          (develops first, 0.20 wide)
+ *                 p > 0.30     →  fully angled
  *
- *     BOT edge:   p < 0.30  →  flat                  (waits for top to finish)
- *                 0.30 → 0.50  →  animating          (develops second)
- *                 p > 0.50  →  fully angled
+ *     BOT edge:   p < 0.35     →  flat               (waits — gives top a beat alone)
+ *                 0.35 → 0.45  →  animating          (catches up fast, 0.10 wide)
+ *                 p > 0.45     →  fully angled
  *
- *   Both edges fully developed by p = 0.50 — i.e. by the time the
- *   section is roughly centred in the viewport, the angled
- *   silhouette is complete. After that the section holds at full
- *   angle as it scrolls up and out.
+ *   The bot window is **half** the width of top's, so bot animates
+ *   at ~2× top's velocity — reads as top pulling bot along behind
+ *   it. The 0.05 gap between TOP_END (0.30) and BOT_START (0.35)
+ *   is the "tug" beat: top is fully angled, bot is still flat,
+ *   you see the section visibly out-of-balance for a moment before
+ *   bot snaps into motion and catches up.
  *
- *   Net feel: section enters mostly flat, top edge commits to motion
- *   almost immediately, bottom edge follows on a slow stagger, both
- *   are fully angled by the time the section is centre-screen, and
- *   the section then exits fully formed. The brief hold-then-move
- *   pattern still gives a deliberate "this is moving now" beat
- *   without making the user wait through too much flat-rectangle
- *   state.
+ *   Both edges fully developed by p ≈ 0.45 — i.e. just before the
+ *   section reaches centre-screen. After that the section holds at
+ *   full angle as it scrolls up and out.
  *
  *   Depth at fully-angled = `SLOPE × section.width` where
  *   `SLOPE = tan(7°) ≈ 0.1228`. Width-relative so the apparent
@@ -394,8 +392,8 @@ const reveal = angled ? undefined : 'header';
    * `SLOPE × width` with a smoothstep ease so the transition into
    * and out of motion is gentle, not abrupt.
    *
-   *   TOP_WINDOW = [0.10, 0.30]   — top develops first, almost immediately
-   *   BOT_WINDOW = [0.30, 0.50]   — bot follows on a slow stagger, done by mid-view
+   *   TOP_WINDOW = [0.10, 0.30]   — top develops first, 0.20 wide
+   *   BOT_WINDOW = [0.35, 0.45]   — bot catches up fast, 0.10 wide (2× top's speed)
    *   easing      = 50% smoothstep — softens window boundaries without
    *                 over-accelerating through the middle of the window
    *
@@ -435,14 +433,19 @@ const reveal = angled ? undefined : 'header';
     const SLOPE = 0.1228; // tan(7°) — match the value in the reduced-motion CSS rule above
 
     // Per-edge active windows in scroll progress p ∈ [0, 1].
-    // Both windows complete by p=0.5 — by the time the section is
+    // Both windows complete by p≈0.5 — by the time the section is
     // centred in the viewport, the angled silhouette is fully
-    // developed. Bot starts exactly when top ends, no gap, no
-    // overlap — clean sequential.
+    // developed.
+    //
+    // The bot window is half as wide as top's and starts 0.05 after
+    // top ends, so there's a brief beat where top is fully angled
+    // and bot is still flat (the "tug"), then bot snaps into motion
+    // and catches up at ~2× top's speed. Reads as top pulling bot
+    // along behind it.
     const TOP_START = 0.10;
     const TOP_END   = 0.30;
-    const BOT_START = 0.30;
-    const BOT_END   = 0.50;
+    const BOT_START = 0.35;
+    const BOT_END   = 0.45;
 
     const remap = (p: number, start: number, end: number): number => {
       if (p <= start) return 0;

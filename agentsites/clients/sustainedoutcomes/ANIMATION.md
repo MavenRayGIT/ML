@@ -102,36 +102,37 @@ Net effect: card "trades vertical real estate" on hover — image compresses, mo
 > entry effect and the through-scroll effect. One coherent motion, no
 > fighting transitions.
 
-**Staggered motion — top and bottom edges develop on separate scroll
-windows, both complete by mid-viewport.** The section enters the
-viewport as a **plain rectangle** (no angle) and holds flat briefly.
-The **top edge** then develops almost immediately (p=0.10 → p=0.30).
-After top finishes, the **bottom edge** follows on a stagger
-(p=0.30 → p=0.50). By the time the section is centred in the viewport
-(p=0.5), both edges are fully developed and the section then holds at
-full angle as it scrolls up and out. Top-right (0% from top, at the
-right edge) and bottom-left (100% from top, at the left edge) are
-**anchored** at the section's corners and never move — each diagonal
-pivots around its anchor.
+**Staggered motion with a "tug" — top leads, bot catches up fast.**
+The section enters the viewport as a **plain rectangle** (no angle)
+and holds flat briefly. The **top edge** then develops over a normal
+window (p=0.10 → p=0.30, 0.20 wide). There's a deliberate **0.05
+"tug" gap** where top is fully angled and bot is still flat, then
+the **bottom edge** snaps into motion and catches up over half the
+window width (p=0.35 → p=0.45, 0.10 wide — so 2× top's velocity).
+Top-right (0% from top, at the right edge) and bottom-left (100%
+from top, at the left edge) are **anchored** at the section's
+corners and never move — each diagonal pivots around its anchor.
 
 Visually:
 
 - At viewport entry, the panel looks like a normal full-bleed
   rectangle. Brief hold-flat.
 - Top edge commits to motion almost immediately — tilts down on the
-  left, develops the angled cut.
-- As soon as top finishes, the bottom edge starts its own motion —
-  tilts up on the right.
-- By the time the section is roughly centred in the viewport, both
-  edges are fully developed. The section holds at full angle for the
-  rest of its scroll-through.
+  left, develops the angled cut at normal pace.
+- Top finishes. Brief beat where top is angled but bot is still
+  flat — the section reads as visibly out-of-balance for a moment.
+- Bot edge snaps into motion and catches up at ~2× top's velocity —
+  tilts up on the right, lands fully angled just before the section
+  reaches mid-viewport.
+- Both then hold at full angle for the rest of the section's
+  scroll-through.
 - Content inside (image, text, eyebrow, headline, body, CTA) stays
   anchored. Only the clip-path moves.
 
-The brief hold-then-move pattern gives a deliberate "this is moving
-now" beat without making the user wait through a long flat-rectangle
-phase. The stagger between edges reads as sequential rather than
-synchronized — top finishes, then bot starts.
+The "tug" beat between edges (top fully angled, bot still flat,
+brief pause) is the point — reads as **top pulling bot along** rather
+than two edges animating in parallel. Bot's faster window reinforces
+the "catching up" feel.
 
 > **Geometry note — why the moving vertices stay inside the box.**
 > Earlier attempts moved polygon vertices past the section's box edges
@@ -149,10 +150,11 @@ model — `cover 0% → cover 100%`:
 p = (viewport.height - rect.top) / (viewport.height + rect.height)
 ```
 
-- `p ∈ [0, 0.10]` — section is entering; both edges held flat (`--angle-grow-top: 0; --angle-grow-bot: 0`).
-- `p ∈ [0.10, 0.30]` — **top edge active window**. `--angle-grow-top` animates (softly eased) from `0` → `SLOPE × width`. Bot still flat.
-- `p ∈ [0.30, 0.50]` — **bot edge active window**. `--angle-grow-bot` animates from `0` → `SLOPE × width`. Top now held at full angle.
-- `p ∈ [0.50, 1]` — section centred and exiting; both edges held fully angled.
+- `p ∈ [0, 0.10]` — section is entering; both edges held flat.
+- `p ∈ [0.10, 0.30]` — **top edge active window** (0.20 wide). `--angle-grow-top` animates (softly eased) from `0` → `SLOPE × width`. Bot still flat.
+- `p ∈ [0.30, 0.35]` — **the tug**. Top is fully angled, bot is still flat. Brief out-of-balance read.
+- `p ∈ [0.35, 0.45]` — **bot edge active window** (0.10 wide, 2× top's velocity). `--angle-grow-bot` snaps from `0` → `SLOPE × width`.
+- `p ∈ [0.45, 1]` — section centred and exiting; both edges held fully angled.
 
 SLOPE = `tan(7°) ≈ 0.1228` — the value the JS uses to scale the depth to section width so the angle reads as the same 7° slope across viewport sizes.
 - 1280px section → fully-angled Δ = 157px (calibrated reference)
@@ -200,7 +202,7 @@ smoothstep(t) = t² × (3 - 2t)
 ease(t)       = t + 0.5 × (smoothstep(t) - t)   // 50% smoothstep, 50% linear
 
 pTop = ease(remap(p, TOP_START=0.10, TOP_END=0.30))
-pBot = ease(remap(p, BOT_START=0.30, BOT_END=0.50))
+pBot = ease(remap(p, BOT_START=0.35, BOT_END=0.45))
 --angle-grow-top = pTop × SLOPE × section.width
 --angle-grow-bot = pBot × SLOPE × section.width
 ```
