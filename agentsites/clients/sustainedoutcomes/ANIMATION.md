@@ -90,79 +90,97 @@ Net effect: card "trades vertical real estate" on hover — image compresses, mo
 
 ### Angle-grow — `FeatureSplit` angled variants
 
-> **Implementation status 2026-05-11 — shipped v3.** v2 (corners
-> flatten as polygon vertices go outside the box) and v2.5 (both
-> diagonals translate by ±24px) were both replaced by this v3 design
-> after on-staging review: the visual delta was too subtle to register
-> in either case. v3 is a clearer model — the section starts as a
-> plain rectangle and the angle **grows in** as the user scrolls.
+> **Implementation status 2026-05-12 — shipped v5.** v3/v4 used a
+> single section-wide progress (`p = (vh - rect.top) / (vh + h)`)
+> with staggered top/bot windows inside `p ∈ [0, 1]`. That worked
+> for desktop where the section is shorter than the viewport, but
+> broke on mobile: FeatureSplit stacks to a single column there,
+> so the section becomes ~800px tall in a ~700px viewport — and
+> the v4 bot window (`p ∈ [0.35, 0.45]`) completed while the bot
+> edge was still BELOW the viewport. By the time the user could
+> see the bottom of the section, the angle was already fully
+> developed. Read as static.
+>
+> v5 fixes that by anchoring each edge to its own viewport
+> progress (how far that specific edge has crossed the viewport),
+> not to overall section progress. Motion is always timed to when
+> the user can actually see the edge animating, regardless of how
+> tall the section is vs the viewport.
 >
 > The v1 one-shot entry reveal that sat on `data-reveal="angle-shift"`
 > remains dropped — the scroll-tied motion below serves as both the
 > entry effect and the through-scroll effect. One coherent motion, no
 > fighting transitions.
 
-**Staggered motion with a "tug" — top leads, bot catches up fast.**
-The section enters the viewport as a **plain rectangle** (no angle)
-and holds flat briefly. The **top edge** then develops over a normal
-window (p=0.10 → p=0.30, 0.20 wide). There's a deliberate **0.05
-"tug" gap** where top is fully angled and bot is still flat, then
-the **bottom edge** snaps into motion and catches up over half the
-window width (p=0.35 → p=0.45, 0.10 wide — so 2× top's velocity).
-Top-right (0% from top, at the right edge) and bottom-left (100%
-from top, at the left edge) are **anchored** at the section's
-corners and never move — each diagonal pivots around its anchor.
+**Per-edge motion with a natural section-height-aware "tug".**
+Each edge animates in its own viewport-progress window. Top develops
+as the section enters viewport; bot develops as it later reaches
+viewport. The gap between them stretches automatically on tall
+sections (mobile) and tightens on short ones (desktop) because the
+trigger for bot is simply "bot edge has entered the viewport" —
+which happens later on tall sections.
+
+Top-right (100%, 0%) and bottom-left (0%, 100%) are **anchored**
+at the section's corners and never move — each diagonal pivots
+around its anchor as the two opposite vertices slide inward.
 
 Visually:
 
 - At viewport entry, the panel looks like a normal full-bleed
-  rectangle. Brief hold-flat.
-- Top edge commits to motion almost immediately — tilts down on the
-  left, develops the angled cut at normal pace.
-- Top finishes. Brief beat where top is angled but bot is still
-  flat — the section reads as visibly out-of-balance for a moment.
-- Bot edge snaps into motion and catches up at ~2× top's velocity —
-  tilts up on the right, lands fully angled just before the section
-  reaches mid-viewport.
+  rectangle. Brief hold-flat as the top edge enters from below.
+- Top edge commits to motion as it crosses the lower half of the
+  viewport — tilts down on the left, develops the angled cut at
+  a steady pace, finishes around viewport mid-height.
+- Top holds at full angle. Bot edge is still below the viewport
+  (varies by section height — much longer beat on mobile, shorter
+  on desktop).
+- Bot edge enters viewport flat, holds briefly, then snaps into
+  motion and catches up over the bottom quarter of the viewport —
+  tilts up on the right, lands fully angled while the section's
+  bottom is still visible.
 - Both then hold at full angle for the rest of the section's
   scroll-through.
 - Content inside (image, text, eyebrow, headline, body, CTA) stays
   anchored. Only the clip-path moves.
 
-The "tug" beat between edges (top fully angled, bot still flat,
-brief pause) is the point — reads as **top pulling bot along** rather
-than two edges animating in parallel. Bot's faster window reinforces
-the "catching up" feel.
-
 > **Geometry note — why the moving vertices stay inside the box.**
 > Earlier attempts moved polygon vertices past the section's box edges
 > (e.g. `y < 0` at the top). The clipping engine has nowhere to draw
 > outside the box, so it kinks the diagonal against the box edge —
-> corners visibly **flatten** instead of the line moving. In v3 the
+> corners visibly **flatten** instead of the line moving. Here the
 > two moving vertices live strictly inside `0px..MAX` and each
 > diagonal pivots around an anchored corner. No edge collision, no
 > corner flatten — the diagonals develop as straight lines.
 
-Progress is defined exactly like the CSS `animation-timeline: view()`
-model — `cover 0% → cover 100%`:
+Progress is now **per-edge**, anchored to the edge's own viewport
+position:
 
 ```
-p = (viewport.height - rect.top) / (viewport.height + rect.height)
+e_top = clamp01((vh - rect.top)    / vh)   // 0 = top at viewport bottom, 1 = top at viewport top
+e_bot = clamp01((vh - rect.bottom) / vh)   // 0 = bot at viewport bottom, 1 = bot at viewport top
 ```
 
-- `p ∈ [0, 0.10]` — section is entering; both edges held flat.
-- `p ∈ [0.10, 0.30]` — **top edge active window** (0.20 wide). `--angle-grow-top` animates (softly eased) from `0` → `SLOPE × width`. Bot still flat.
-- `p ∈ [0.30, 0.35]` — **the tug**. Top is fully angled, bot is still flat. Brief out-of-balance read.
-- `p ∈ [0.35, 0.45]` — **bot edge active window** (0.10 wide, 2× top's velocity). `--angle-grow-bot` snaps from `0` → `SLOPE × width`.
-- `p ∈ [0.45, 1]` — section centred and exiting; both edges held fully angled.
+- `e_top ∈ [0, 0.15]` — top edge in the lower 15% of the viewport; held flat.
+- `e_top ∈ [0.15, 0.50]` — **top edge active window** (0.35 wide). `--angle-grow-top` animates (softly eased) from `0` → `SLOPE × width`.
+- `e_top ∈ [0.50, 1]` — top past mid-viewport; held fully angled.
+- `e_bot ∈ [0, 0.05]` — bot edge just appeared at viewport bottom; brief hold-flat.
+- `e_bot ∈ [0.05, 0.25]` — **bot edge active window** (0.20 wide). `--angle-grow-bot` snaps from `0` → `SLOPE × width`.
+- `e_bot ∈ [0.25, 1]` — bot well into viewport; held fully angled.
+
+The two windows are independent — top's progress depends only on `rect.top`, bot's only on `rect.bottom`. Each edge animates as the user is looking at it.
 
 SLOPE = `tan(7°) ≈ 0.1228` — the value the JS uses to scale the depth to section width so the angle reads as the same 7° slope across viewport sizes.
 - 1280px section → fully-angled Δ = 157px (calibrated reference)
 - 800px section  → fully-angled Δ = 98px
 - 375px mobile   → fully-angled Δ = 46px
 
-Re-tuning the stagger is four constants in `FeatureSplit.astro`:
-`TOP_START`, `TOP_END`, `BOT_START`, `BOT_END`. Make windows narrower → motion commits faster per edge. Increase `BOT_START - TOP_END` → longer pause between top finishing and bot starting (slower stagger). Set `BOT_START < TOP_END` → edges overlap (less sequential feel).
+Re-tuning is four constants in `FeatureSplit.astro`: `TOP_START`,
+`TOP_END`, `BOT_START`, `BOT_END` — all in **edge-viewport-progress**
+space now. Move `TOP_START` down → top motion begins earlier (less
+hold-flat near the bottom of the viewport). Move `TOP_END` up → top
+finishes higher in the viewport. Move `BOT_START` up → longer
+hold-flat after bot enters viewport. Make windows narrower → motion
+commits faster per edge.
 
 Progress is mapped **linearly** to the single CSS var (`--angle-grow`).
 Structural motion reads more honestly without easing — the
@@ -191,18 +209,21 @@ Implementation lives in `FeatureSplit.astro`:
 ```
 
 A small inline script (rAF-throttled scroll listener gated by
-`IntersectionObserver`) remaps the raw scroll progress through two
-edge-specific active windows, then applies a **half-strength
-smoothstep** ease so the motion eases in and out at the window
-boundaries without over-accelerating through the middle. Each
-variable is written per frame:
+`IntersectionObserver`) computes each edge's viewport progress
+independently, remaps each through its own active window, then
+applies a **half-strength smoothstep** ease so the motion eases in
+and out at the window boundaries without over-accelerating through
+the middle. Each variable is written per frame:
 
 ```
 smoothstep(t) = t² × (3 - 2t)
 ease(t)       = t + 0.5 × (smoothstep(t) - t)   // 50% smoothstep, 50% linear
 
-pTop = ease(remap(p, TOP_START=0.10, TOP_END=0.30))
-pBot = ease(remap(p, BOT_START=0.35, BOT_END=0.45))
+e_top = clamp01((vh - rect.top)    / vh)
+e_bot = clamp01((vh - rect.bottom) / vh)
+
+pTop = ease(remap(e_top, TOP_START=0.15, TOP_END=0.50))
+pBot = ease(remap(e_bot, BOT_START=0.05, BOT_END=0.25))
 --angle-grow-top = pTop × SLOPE × section.width
 --angle-grow-bot = pBot × SLOPE × section.width
 ```

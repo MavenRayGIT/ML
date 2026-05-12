@@ -33,30 +33,41 @@
  *         top-left   (0%,   var(--angle-grow-top))               — slides DOWN from y=0
  *         bot-right  (100%, calc(100% - var(--angle-grow-bot)))  — slides UP   from y=100%
  *
- *   v4 introduces a **staggered active window** for each edge. Each
- *   edge holds flat (0px) until its scroll-progress window starts,
- *   animates (softly eased) to fully-angled across the window, then
- *   holds fully-angled (SLOPE × width) until the section exits the
- *   viewport:
+ *   v5 (2026-05-12) — each edge is anchored to its **own** viewport
+ *   progress, not to overall section progress. The edge-specific
+ *   progress is how far that edge has crossed the viewport, measured
+ *   from y=vh (just appearing at the viewport bottom, e=0) to y=0
+ *   (just leaving through the viewport top, e=1):
  *
- *     TOP edge:   p < 0.10     →  flat               (brief hold at entry)
- *                 0.10 → 0.30  →  animating          (develops first, 0.20 wide)
- *                 p > 0.30     →  fully angled
+ *       e_top = clamp01((vh - rect.top)    / vh)
+ *       e_bot = clamp01((vh - rect.bottom) / vh)
  *
- *     BOT edge:   p < 0.35     →  flat               (waits — gives top a beat alone)
- *                 0.35 → 0.45  →  animating          (catches up fast, 0.10 wide)
- *                 p > 0.45     →  fully angled
+ *   This was a behaviour fix for mobile, where FeatureSplit stacks
+ *   to 1-column and the section becomes taller than the viewport.
+ *   With v4's single section-progress, the bot edge's active window
+ *   often completed entirely BELOW the viewport — by the time the
+ *   user could see the bottom of the section, the angle was already
+ *   fully developed. Looked static. Anchoring each edge to its own
+ *   viewport progress means the motion is timed to when the user
+ *   can actually see the edge, regardless of section height vs
+ *   viewport.
  *
- *   The bot window is **half** the width of top's, so bot animates
- *   at ~2× top's velocity — reads as top pulling bot along behind
- *   it. The 0.05 gap between TOP_END (0.30) and BOT_START (0.35)
- *   is the "tug" beat: top is fully angled, bot is still flat,
- *   you see the section visibly out-of-balance for a moment before
- *   bot snaps into motion and catches up.
+ *   Active windows are now defined in edge-viewport-progress space:
  *
- *   Both edges fully developed by p ≈ 0.45 — i.e. just before the
- *   section reaches centre-screen. After that the section holds at
- *   full angle as it scrolls up and out.
+ *     TOP edge:   e_top < 0.15        →  flat               (top in lower 15% of viewport)
+ *                 0.15 → 0.50         →  animating          (develops over 35% of viewport)
+ *                 e_top > 0.50        →  fully angled       (top past mid-viewport)
+ *
+ *     BOT edge:   e_bot < 0.05        →  flat               (bot just appeared at the bottom)
+ *                 0.05 → 0.25         →  animating          (catches up over 20% of viewport)
+ *                 e_bot > 0.25        →  fully angled
+ *
+ *   Bot's window is ~57% the width of top's, so bot still reads as
+ *   the faster "catching up" motion. The natural gap between top
+ *   finishing and bot starting now scales with section height — on
+ *   short desktop sections it's brief, on tall mobile sections it
+ *   expands automatically because the bot edge takes longer to
+ *   reach the viewport.
  *
  *   Depth at fully-angled = `SLOPE × section.width` where
  *   `SLOPE = tan(7°) ≈ 0.1228`. Width-relative so the apparent
@@ -371,46 +382,62 @@ const reveal = angled ? undefined : 'header';
 
 <script>
   /* Angled FeatureSplit — scroll-tied "angle-grow" motion with
-   * per-edge staggered windows.
+   * per-edge staggered windows, anchored to each edge's own viewport
+   * progress.
    *
-   * Maps each `.feature-split-angled` element's viewport progress to
-   * two CSS custom properties (`--angle-grow-top`, `--angle-grow-bot`)
+   * Maps each `.feature-split-angled` element's edge positions to two
+   * CSS custom properties (`--angle-grow-top`, `--angle-grow-bot`)
    * that drive the clip-path polygon defined in <style> above.
    *
-   * Progress definition matches the CSS `animation-timeline: view()`
-   * model — `cover 0% → cover 100%`:
+   * Per-edge progress: each edge has its own "how far through the
+   * viewport am I" progress, measured from the viewport bottom (edge
+   * just appeared, e=0) to the viewport top (edge just leaving, e=1).
    *
-   *     p = (viewport.height - rect.top) / (viewport.height + rect.height)
+   *     e_top = clamp01((vh - rect.top)    / vh)
+   *     e_bot = clamp01((vh - rect.bottom) / vh)
    *
-   *   p = 0  →  section's top edge is at the viewport bottom (just entering)
-   *   p = 1  →  section's bottom edge is at the viewport top  (just exited)
-   *   p = 0.5  →  section is roughly centred in the viewport
+   *   e = 0   →  edge is at viewport bottom (just appearing from below)
+   *   e = 0.5 →  edge is at viewport middle
+   *   e = 1   →  edge is at viewport top    (just leaving above)
    *
-   * Each edge gets its own active window inside `p ∈ [0, 1]`. Outside
-   * its window the edge holds flat (entering window) or fully angled
-   * (after window). Inside its window the edge animates from 0 to
-   * `SLOPE × width` with a smoothstep ease so the transition into
-   * and out of motion is gentle, not abrupt.
+   * Why per-edge progress and not one section-wide progress: on
+   * mobile, FeatureSplit stacks into a single column and the section
+   * becomes much taller than the viewport (image ~320px + text ~400px
+   * easily exceeds 700px). With a single section-wide progress, the
+   * bot edge's active window often completes ENTIRELY while the bot
+   * edge is still below the viewport — by the time the user can see
+   * the bottom of the section, the angle is already fully developed.
+   * Looks static. Anchoring each edge to its own viewport progress
+   * means motion is always timed to when the user can see that edge,
+   * regardless of section-vs-viewport height ratio. The natural gap
+   * between top finishing and bot starting now stretches automatically
+   * on tall sections (where bot takes longer to reach the viewport)
+   * and stays brief on short ones.
    *
-   *   TOP_WINDOW = [0.10, 0.30]   — top develops first, 0.20 wide
-   *   BOT_WINDOW = [0.35, 0.45]   — bot catches up fast, 0.10 wide (2× top's speed)
+   * Each edge has its own active window inside `e ∈ [0, 1]`. Outside
+   * its window the edge holds flat (before) or fully angled (after).
+   * Inside its window it animates from 0 to `SLOPE × width` with a
+   * soft ease so window boundaries don't read as abrupt.
+   *
+   *   TOP_WINDOW = [0.15, 0.50]   — top develops as it crosses the
+   *                                  lower-half of the viewport, 0.35 wide
+   *   BOT_WINDOW = [0.05, 0.25]   — bot catches up over the bottom
+   *                                  quarter of the viewport, 0.20 wide
    *   easing      = 50% smoothstep — softens window boundaries without
    *                 over-accelerating through the middle of the window
    *
-   * Net feel: section enters flat, holds flat through ~25% of its
-   * scroll-through, top edge then commits to motion as the section
-   * approaches the middle of the viewport, bottom edge follows after
-   * top finishes, both then hold at full angle until the section
-   * exits the viewport. The hold-then-move-then-hold pattern reads
-   * as a deliberate "this is moving now" beat rather than a
-   * continuous-but-imperceptible drift.
+   * Bot's window is ~57% the width of top's, so bot still reads as
+   * the faster "catching up" motion. Together with the section-height
+   * dependent gap, the result is: top develops as the section enters,
+   * a beat (longer on tall sections), then bot snaps in as the bottom
+   * of the section finally enters view.
    *
-   * To re-tune the stagger: edit the four boundary constants below.
-   * Move TOP_START down → motion begins earlier (less hold-flat).
-   * Move BOT_START up → longer pause between top finishing and bot
-   * starting (slower stagger). Make windows narrower → faster
-   * commit per edge. Bot can overlap top by setting BOT_START <
-   * TOP_END if a less-sequential feel is wanted.
+   * To re-tune: edit the four boundary constants below.
+   * Move TOP_START down → top motion begins earlier (less hold-flat at
+   *   the bottom of the viewport).
+   * Move TOP_END down → top finishes higher in the viewport.
+   * Move BOT_START up → longer hold-flat after bot enters viewport.
+   * Make windows narrower → faster commit per edge.
    *
    * Angle slope (SLOPE): tan(7°) ≈ 0.1228 — width-relative, so the
    * apparent angle is consistent across viewport sizes. Convenient
@@ -432,20 +459,21 @@ const reveal = angled ? undefined : 'header';
   (() => {
     const SLOPE = 0.1228; // tan(7°) — match the value in the reduced-motion CSS rule above
 
-    // Per-edge active windows in scroll progress p ∈ [0, 1].
-    // Both windows complete by p≈0.5 — by the time the section is
-    // centred in the viewport, the angled silhouette is fully
-    // developed.
+    // Per-edge active windows in EDGE-VIEWPORT progress e ∈ [0, 1].
+    // 0 = edge at viewport bottom (just appeared), 1 = edge at
+    // viewport top (just leaving).
     //
-    // The bot window is half as wide as top's and starts 0.05 after
-    // top ends, so there's a brief beat where top is fully angled
-    // and bot is still flat (the "tug"), then bot snaps into motion
-    // and catches up at ~2× top's speed. Reads as top pulling bot
-    // along behind it.
-    const TOP_START = 0.10;
-    const TOP_END   = 0.30;
-    const BOT_START = 0.35;
-    const BOT_END   = 0.45;
+    // Each edge animates relative to its OWN viewport position, so
+    // motion is always visible regardless of how tall the section is
+    // compared to the viewport. The natural gap between top finishing
+    // and bot starting is a function of section height vs viewport
+    // height — short sections (desktop): brief gap; tall sections
+    // (mobile, where image + text stack): longer gap. Either way,
+    // both motions happen on-screen.
+    const TOP_START = 0.15;
+    const TOP_END   = 0.50;
+    const BOT_START = 0.05;
+    const BOT_END   = 0.25;
 
     const remap = (p: number, start: number, end: number): number => {
       if (p <= start) return 0;
@@ -498,15 +526,23 @@ const reveal = angled ? undefined : 'header';
       const vh = window.innerHeight;
       for (const el of inView) {
         const r = el.getBoundingClientRect();
-        let p = (vh - r.top) / (vh + r.height);
-        if (p < 0) p = 0;
-        else if (p > 1) p = 1;
 
-        // Remap raw progress into each edge's active window, then
-        // smoothstep the result so the motion eases in/out at the
-        // window boundaries instead of starting/stopping abruptly.
-        const pTop = easeInOut(remap(p, TOP_START, TOP_END));
-        const pBot = easeInOut(remap(p, BOT_START, BOT_END));
+        // Per-edge viewport progress — how far each edge has crossed
+        // the viewport, independently. This is the key change that
+        // makes the bot animation actually visible on tall (mobile,
+        // single-column) sections, where the section is taller than
+        // the viewport and the bot edge enters viewport well after
+        // the top edge has scrolled out.
+        let eTop = (vh - r.top) / vh;
+        let eBot = (vh - (r.top + r.height)) / vh;
+        if (eTop < 0) eTop = 0; else if (eTop > 1) eTop = 1;
+        if (eBot < 0) eBot = 0; else if (eBot > 1) eBot = 1;
+
+        // Remap each edge's viewport progress into its active window,
+        // then ease so the motion fades in/out at the window
+        // boundaries instead of starting/stopping abruptly.
+        const pTop = easeInOut(remap(eTop, TOP_START, TOP_END));
+        const pBot = easeInOut(remap(eBot, BOT_START, BOT_END));
 
         // Width-relative depth so the slope is consistent across
         // viewport sizes — wider sections get more absolute pixels,
