@@ -41,6 +41,13 @@ import CTABand          from '../../components/sections/CTABand.astro';
 import BlogPostingJsonLd from '../../components/seo/BlogPostingJsonLd.astro';
 import siteIconRaster   from '../../assets/logos/SO-Icon-Color-small.png';
 
+// Opt into build-time prerendering — `getStaticPaths` only works on
+// prerendered routes once the project is SSR (`output: 'server'`).
+// Blog detail is stable per build (posts are MDX files in the repo);
+// agent edits to post content still trigger a worker rebuild via the
+// content collection, which is the same cost as any SSR route.
+export const prerender = true;
+
 export async function getStaticPaths() {
   const posts = await getCollection('blog', ({ data }) => !data.draft);
   return posts.map((post) => ({

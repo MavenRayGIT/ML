@@ -1,0 +1,45 @@
+{
+  // Cloudflare Workers config for Sustained Outcomes (SSR via @astrojs/cloudflare).
+  //
+  // This file is the source of truth for `wrangler deploy` and Workers Builds CI.
+  // The Astro adapter additionally writes a per-build wrangler.json into
+  // `dist/server/` — that one is generated, not edited; this one is committed.
+  //
+  // Why SSR over static: Phase -1 needs sub-15s "edit → see it" feedback for
+  // the M&L admin chat drawer. Static rebuilds were 30–90s; SSR is ~5–15s
+  // because the deploy is just a Worker bundle upload — no per-page HTML
+  // generation.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ml-sustainedoutcomes",
+  "compatibility_date": "2026-05-12",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // The Astro adapter compiles every non-prerendered route into this entry.
+  // dist/server/entry.mjs is built by `astro build` (output: 'server').
+  "main": "./dist/server/entry.mjs",
+
+  // Static assets — favicons, fonts, /_astro/* hashed bundles, /~partytown/*,
+  // and the prerendered routes (currently only /blog/[...slug]).
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./dist/client"
+  },
+
+  // KV namespace for Astro sessions — provisioned automatically by Astro's
+  // session feature, but we declare the binding here so wrangler.deploy
+  // doesn't complain. The namespace itself is created on first deploy.
+  // (We don't actually use sessions yet — this is here so the adapter's
+  // auto-generated dist/server/wrangler.json doesn't drift from this one.)
+  "kv_namespaces": [{ "binding": "SESSION" }],
+
+  // Logs, metrics, and request traces in the CF dashboard.
+  "observability": { "enabled": true }
+
+  // Env vars (PUBLIC_*) — set in the dashboard so they apply at build time
+  // (they get inlined into the Worker bundle by Vite). Phase -1 expects:
+  //   PUBLIC_HIDE_STAGING_BANNER=true   (on production-branch builds only)
+  //   PUBLIC_ML_EDIT_ENABLED=true       (on staging-branch builds only)
+  //   PUBLIC_ML_ADMIN_ORIGIN=https://admin.mackandlee.com  (optional)
+  //   PUBLIC_GTM_ID, PUBLIC_GA4_ID, PUBLIC_CLARITY_ID      (analytics, opt-in)
+  //   PUBLIC_SITE_URL                                       (optional override)
+}
