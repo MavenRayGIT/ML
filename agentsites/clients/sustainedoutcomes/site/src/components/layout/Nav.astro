@@ -32,8 +32,11 @@
  *   off → bg crossfades back to transparent and the logo grows back.
  *
  * Logo swaps via opacity-crossfade between the white (over-dark) and dark
- * (over-light/amber) marks. CTA button swaps by display-toggling three
- * pre-rendered `<Button>` variants (one per state) — keeps the JS simple.
+ * (over-light/amber) marks. The "Request a meeting" CTA is a single
+ * TextLink-style element (amber chip + chevron + amber label, inverts
+ * to white on hover) — same look across all three nav states. Refactored
+ * 2026-05-11 from the earlier 3-button swap, which read as visually
+ * heavy in a row of plain nav links.
  *
  * Heights / breakpoint:
  *   The desktop nav (logo + 5 links + CTA) needs ~1033px of viewport
@@ -48,8 +51,8 @@
  *   Desktop (≥ 1100px) — 74px tall at rest, 64px gutters.
  *                       Logo at rest: 40px icon + 28px wordmark.
  *                       Compact (scrolled): nav shrinks to 56px,
- *                       logo to 32px icon + 22px wordmark, CTA
- *                       padding shrinks 24×12 → 18×8.
+ *                       logo to 32px icon + 22px wordmark. CTA is
+ *                       now plain text so no padding shrink needed.
  *
  * Mobile (< 1100px): logo + hamburger only at rest. Tap → full amber
  * overlay with stacked nav + CTA. Body scroll locked while open.
@@ -121,16 +124,42 @@ const navItems = [
         </li>
       ))}
       <li class="ml-4">
-        {/* CTA — three pre-rendered variants; CSS shows the one matching nav state */}
-        <span class="nav-cta nav-cta--dark">
-          <Button variant="outline" surface="dark" href="/contact">Request a meeting</Button>
-        </span>
-        <span class="nav-cta nav-cta--white">
-          <Button variant="outline-emph" href="/contact">Request a meeting</Button>
-        </span>
-        <span class="nav-cta nav-cta--amber">
-          <Button variant="outline" surface="amber" href="/contact">Request a meeting</Button>
-        </span>
+        {/* CTA — TextLink-style: amber chip + white chevron + amber
+            label at rest; full inversion to white chip + amber chevron
+            + white label on hover. Single appearance across all three
+            nav states (dark / white / amber); 2026-05-11 refactor —
+            replaced the three pre-rendered button variants because the
+            outlined-pill CTA was visually heavy in a row of plain
+            nav links and the surface-specific styling was hard to
+            keep balanced as nav state changed. */}
+        <a
+          href="/contact"
+          class="nav-cta-link group inline-flex items-center gap-3 font-body text-nav text-amber transition-colors duration-quick ease-default hover:text-white"
+        >
+          <span
+            aria-hidden="true"
+            class="nav-cta-chip inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center bg-amber transition-colors duration-base ease-default group-hover:bg-white"
+          >
+            <svg
+              width="7"
+              height="10"
+              viewBox="0 0 7 10"
+              fill="none"
+              aria-hidden="true"
+              class="nav-cta-chev text-white transition-colors duration-base ease-default group-hover:text-amber"
+            >
+              <path
+                d="M1 1l4 4-4 4"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="square"
+                stroke-linejoin="miter"
+                fill="none"
+              />
+            </svg>
+          </span>
+          <span>Request a meeting</span>
+        </a>
       </li>
     </ul>
 
@@ -287,28 +316,6 @@ const navItems = [
     .site-nav[data-nav-compact='true']  .nav-logo-wordmark   { height: 22px; }
   }
 
-  /* CTA padding — transitions in lockstep with the height/logo change.
-     Override longhand (rather than the Tailwind `transition-colors`
-     shorthand) so hover-colour transitions stay snappy at 150ms while
-     padding eases at the base 250ms duration alongside the nav. */
-  .site-nav .nav-cta > a,
-  .site-nav .nav-cta > button {
-    transition:
-      background-color  var(--duration-quick) var(--ease-default),
-      color             var(--duration-quick) var(--ease-default),
-      border-color      var(--duration-quick) var(--ease-default),
-      padding           var(--duration-base)  var(--ease-default);
-  }
-  @media (min-width: 1100px) {
-    .site-nav[data-nav-compact='true'] .nav-cta > a,
-    .site-nav[data-nav-compact='true'] .nav-cta > button {
-      padding-left:  18px;
-      padding-right: 18px;
-      padding-top:    8px;
-      padding-bottom: 8px;
-    }
-  }
-
   /* Nav-link text colour (rest) */
   .site-nav[data-nav-state='dark']  .nav-link { color: var(--color-cream); }
   .site-nav[data-nav-state='white'] .nav-link { color: var(--color-black); }
@@ -334,25 +341,6 @@ const navItems = [
   .site-nav[data-nav-state='white'] .logo-dark   { opacity: 1; }
   .site-nav[data-nav-state='amber'] .logo-light  { opacity: 0; }
   .site-nav[data-nav-state='amber'] .logo-dark   { opacity: 1; }
-
-  /* CTA swap — render three buttons, show only the one matching state */
-  .site-nav .nav-cta                                       { display: none;          }
-  .site-nav[data-nav-state='dark']  .nav-cta--dark         { display: inline-block;  }
-  .site-nav[data-nav-state='white'] .nav-cta--white        { display: inline-block;  }
-  .site-nav[data-nav-state='amber'] .nav-cta--amber        { display: inline-block;  }
-
-  /* Nav CTA on the dark state shares `outline × dark` with hero-body
-     buttons, but the nav already sits on top of the hero gradient (and
-     in the compact state on a semi-opaque green-dark wash) so the 50%
-     green-dark plate that helps legibility in the hero body would
-     read as a redundant pill in the nav. Strip the plate here — at
-     rest AND on hover — and keep just the border-colour swap. */
-  .site-nav .nav-cta--dark > a,
-  .site-nav .nav-cta--dark > button,
-  .site-nav .nav-cta--dark > a:hover,
-  .site-nav .nav-cta--dark > button:hover {
-    background-color: transparent;
-  }
 
   /* ----- Mobile overlay ------------------------------------------------ */
   .mobile-nav-overlay {
